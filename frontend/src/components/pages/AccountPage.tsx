@@ -10,7 +10,6 @@ import { useNavigate } from "react-router-dom";
 import useUserDetails from "@/hooks/useUserDetails";
 import { Spinner } from "../ui/spinner";
 
-
 type AccountPageProps = {
   firstName: string;
   lastName: string;
