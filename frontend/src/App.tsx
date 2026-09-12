@@ -13,6 +13,9 @@ import { useSearchParams } from "react-router-dom";
 import SignupPage from "./components/pages/SignupPage";
 import AccountPage from "./components/pages/AccountPage";
 import CalendarGrid from "./components/pages/CalendarPage";
+import GroupsPage from "./components/pages/GroupsPage";
+import GroupDetailPage from "./components/pages/GroupDetailPage";
+import JoinGroupPage from "./components/pages/JoinGroupPage";
 
 function OAuthErrorPage() {
   const [searchParams] = useSearchParams();
@@ -111,6 +114,54 @@ function App() {
                 fullScreen={false}
               >
                 <ArchivePage />
+              </ReactErrorBoundary>
+            </DefaultLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/groups"
+        element={
+          <ProtectedRoute>
+            <DefaultLayout pageTitle="Deine Gruppen">
+              <ReactErrorBoundary
+                errorMessage="Deine Gruppen konnten nicht angezeigt werden."
+                fullScreen={false}
+              >
+                <GroupsPage />
+              </ReactErrorBoundary>
+            </DefaultLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/groups/:id"
+        element={
+          <ProtectedRoute>
+            <DefaultLayout pageTitle="Gruppendetails">
+              <ReactErrorBoundary
+                errorMessage="Die Gruppe konnte nicht angezeigt werden."
+                fullScreen={false}
+              >
+                <GroupDetailPage />
+              </ReactErrorBoundary>
+            </DefaultLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/groups/join/:code"
+        element={
+          <ProtectedRoute>
+            <DefaultLayout pageTitle="Gruppe beitreten">
+              <ReactErrorBoundary
+                errorMessage="Der Einladungslink konnte nicht verarbeitet werden."
+                fullScreen={false}
+              >
+                <JoinGroupPage />
               </ReactErrorBoundary>
             </DefaultLayout>
           </ProtectedRoute>

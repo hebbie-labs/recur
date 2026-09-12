@@ -80,6 +80,10 @@ public class Task {
         @Column(name = "is_archived", nullable = false, columnDefinition = "boolean default false")
         private Boolean isArchived = false;
 
+        // Bei einem persönlichen Task gesetzt. Ist der Task stattdessen einem
+        // Projekt zugeordnet (siehe unten), ist er ein geteiltes Item ohne
+        // einzelnen Besitzer - dann bleibt owner null und der Zugriff läuft
+        // über die Mitgliedschaft in project.group.
         @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "user_id")
         private User owner;
@@ -89,4 +93,18 @@ public class Task {
 
         @Column(name = "start_time")
         private Instant startTime;
+
+        // Optionale Zuordnung zu einem Gruppen-Projekt. Gesetzt <=> der Task ist
+        // ein geteiltes Checklisten-Item für alle Mitglieder der Projekt-Gruppe
+        // statt eines persönlichen Tasks.
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "project_id")
+        private Project project;
+
+        // Wird gesetzt, sobald der Task (für ein Projekt) als erledigt markiert
+        // wird, und wieder auf null gesetzt sobald er zurückgesetzt wird. Nur für
+        // geteilte Projekt-Tasks relevant, bei persönlichen Tasks ungenutzt.
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "completed_by")
+        private User completedBy;
 }

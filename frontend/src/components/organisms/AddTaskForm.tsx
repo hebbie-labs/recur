@@ -36,6 +36,7 @@ function AddTaskForm({ onClose, onTaskCreated, prefill }: AddTaskFormProps) {
         startDate: "",
         startTimeOfDay: "",
         startTime: null,
+        projectId: "",
         ...prefill,
       }}
       onSubmit={async (values, formikHelpers) => {
@@ -93,6 +94,7 @@ function AddTaskForm({ onClose, onTaskCreated, prefill }: AddTaskFormProps) {
                     startDate: "",
                     startTimeOfDay: "",
                     startTime: null,
+                    projectId: "",
                   });
                 }}
               >

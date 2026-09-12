@@ -25,6 +25,8 @@ export const taskValidationSchema = yup.object({
     .oneOf(Object.values(TaskFrequency))
     .required("Frequenz ist erforderlich"),
 
+  projectId: yup.string(),
+
   dateUntil: yup
     .date()
     .required("Fälligkeitsdatum ist erforderlich")

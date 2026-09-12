@@ -17,6 +17,7 @@ const validationSchema = yup.object().shape({
   name: yup.string(),
   description: yup.string(),
   category: yup.string(),
+  projectId: yup.string(),
   progress: yup
     .number()
     .min(0, "Fortschritt muss mindestens 0 sein")
@@ -107,6 +108,7 @@ function EditTaskForm({ task, onClose, onTaskUpdated }: EditTaskFormProps) {
         durationMinutes: task.durationMinutes ?? null,
         startDate: localStartDate,
         startTimeOfDay: localStartTime,
+        projectId: task.project?.id ?? "",
       }}
       onSubmit={handleSubmit}
       validationSchema={validationSchema}

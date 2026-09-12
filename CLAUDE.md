@@ -38,3 +38,4 @@ Postgres runs on host port **5436** (not 5432) — see `docker-compose.yml` and 
 - Git: feature branches `feat/<Area>-<thing>` (or `feat/<Area>/<thing>`), merged into `dev`, which merges into `main`. Commits use a loose bracketed tag prefix, e.g. `[Added] ...`, `[Updated] ...`.
 - Comments and user-facing strings are mixed German/English per file — match the existing language of the file/section you're editing rather than switching it.
 - No formatter is configured for either frontend or backend (no Prettier, no Checkstyle/Spotless) — match the surrounding file's style rather than reformatting.
+- Before planning or implementing a new feature, run the `grill-mich` skill to interview the user and settle the design first.

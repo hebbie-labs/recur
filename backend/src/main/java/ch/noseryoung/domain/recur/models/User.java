@@ -5,6 +5,8 @@ import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import ch.noseryoung.domain.recur.enums.AuthProvider;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -33,6 +35,10 @@ public class User {
     private String email;
 
     // Bleibt null für Nutzer, die sich nur über OAuth2 (Google) registriert haben.
+    // @JsonIgnore, da User-Objekte über verschachtelte Referenzen (z.B. Task.owner,
+    // TaskGroup.members) direkt serialisiert werden und der Hash sonst an jeden
+    // mitliest, der ein Task/eine Gruppe abruft.
+    @JsonIgnore
     @Size(min = 8, message = "Passwort muss mindestens 8 Zeichen lang sein")
     @Column(name = "password_hash")
     private String passwordHash;

@@ -6,6 +6,7 @@ import FormTextField from "@/components/molecules/FormTextField";
 import FormDateField from "@/components/molecules/FormDateField";
 import FormSelector from "@/components/molecules/FormSelector";
 import FormTimeField from "@/components/molecules/FormTimeField";
+import ProjectSelector from "@/components/molecules/ProjectSelector";
 
 export type FormValues = {
   name: string;
@@ -17,6 +18,7 @@ export type FormValues = {
   startDate: string;
   startTimeOfDay: string;
   startTime: string | null;
+  projectId: string;
 };
 
 type FormProps = {
@@ -73,6 +75,7 @@ function Form({
       />
       <FormSelector variant="category" />
       <FormSelector variant="frequency" />
+      <ProjectSelector />
       <FormTextField
         name="durationMinutes"
         label="Dauer (Minuten)"

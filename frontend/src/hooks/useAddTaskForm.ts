@@ -52,6 +52,7 @@ function useAddTaskForm({ onClose, onTaskCreated }: UseAddTaskFormParams) {
       durationMinutes:
         values.durationMinutes !== null ? Number(values.durationMinutes) : null,
       startTime: startTimeIso,
+      projectId: values.projectId || null,
     };
 
     try {

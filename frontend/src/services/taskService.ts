@@ -20,6 +20,21 @@ export const TaskCategory = {
 
 export type TaskCategory = (typeof TaskCategory)[keyof typeof TaskCategory];
 
+/** Wer ein geteiltes Projekt-Task erledigt/zugeordnet hat - Kurzform von User. */
+export interface TaskPerson {
+  id: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl: string | null;
+}
+
+/** Projekt-Referenz auf einem geteilten Gruppen-Task. */
+export interface TaskProject {
+  id: string;
+  name: string;
+  isArchived: boolean;
+}
+
 export interface Task {
   id: string;
   name: string;
@@ -34,23 +49,29 @@ export interface Task {
   isFavorite?: boolean | null;
   durationMinutes?: number | null;
   startTime?: string | null;
+  /** Gesetzt <=> geteiltes Item eines Gruppen-Projekts statt persönlicher Task. */
+  project?: TaskProject | null;
+  /** Wer den Task zuletzt als erledigt markiert hat (nur bei Projekt-Tasks relevant). */
+  completedBy?: TaskPerson | null;
 }
 
 /** Fields the server owns and the client must never send on create/patch. */
-export type ServerOwnedFields = "id" | "dateCreated";
+export type ServerOwnedFields = "id" | "dateCreated" | "project" | "completedBy";
 
 /** Payload shape for creating a new task (no id/dateCreated yet). */
-export type NewTask = Omit<Task, ServerOwnedFields>;
+export type NewTask = Omit<Task, ServerOwnedFields> & { projectId?: string | null };
 
 /** Options for patchTask: partial task fields plus query-param flags. */
 export type PatchTaskOptions = {
-  task?: Partial<Omit<Task, ServerOwnedFields>>;
+  task?: Partial<Omit<Task, ServerOwnedFields>> & { projectId?: string | null };
   resetProgress?: boolean;
   favorite?: boolean;
   archived?: boolean;
   amountDid?: number;
   durationMinutes?: number;
   startTime?: string;
+  /** Setzt den Task explizit zurück auf persönlich (kein Projekt mehr). */
+  unassignProject?: boolean;
 };
 
 function extractErrorMessage(err: unknown, fallback: string): string {
@@ -84,6 +105,21 @@ function normalizeTaskDates<T extends { dateUntil?: string | null }>(
   return { ...task, dateUntil: toInstantString(task.dateUntil) };
 }
 
+/**
+ * Wandelt das frontend-freundliche `projectId` in die verschachtelte
+ * `project: { id }`-Referenz um, die das Backend (Task.project) erwartet.
+ * `projectId` bleibt dabei nicht Teil des gesendeten Bodys.
+ */
+function withProjectReference<T extends { projectId?: string | null }>(
+  payload: T
+): Omit<T, "projectId"> & { project?: { id: string } } {
+  const { projectId, ...rest } = payload;
+  return {
+    ...rest,
+    ...(projectId ? { project: { id: projectId } } : {}),
+  };
+}
+
 function getTasks(archived?: boolean, favorite?: boolean): Promise<Task[]> {
   return api
     .get("/task", { params: { archived, favorite } })
@@ -97,7 +133,7 @@ function getTasks(archived?: boolean, favorite?: boolean): Promise<Task[]> {
 
 function createTask(task: NewTask): Promise<Task> {
   return api
-    .post("/task", normalizeTaskDates(task))
+    .post("/task", withProjectReference(normalizeTaskDates(task)))
     .then((response) => response.data as Task)
     .catch((err: unknown) => {
       throw new Error(
@@ -107,10 +143,17 @@ function createTask(task: NewTask): Promise<Task> {
 }
 
 function patchTask(id: string, options: PatchTaskOptions = {}): Promise<Task> {
-  const { task = {}, resetProgress, favorite, archived, amountDid } = options;
+  const {
+    task = {},
+    resetProgress,
+    favorite,
+    archived,
+    amountDid,
+    unassignProject,
+  } = options;
   return api
-    .patch(`/task/${id}`, normalizeTaskDates(task), {
-      params: { resetProgress, favorite, archived, amountDid },
+    .patch(`/task/${id}`, withProjectReference(normalizeTaskDates(task)), {
+      params: { resetProgress, favorite, archived, amountDid, unassignProject },
     })
     .then((response) => response.data as Task)
     .catch((err: unknown) => {

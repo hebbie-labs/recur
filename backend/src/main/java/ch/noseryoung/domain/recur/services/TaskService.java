@@ -1,8 +1,13 @@
 package ch.noseryoung.domain.recur.services;
 
+import ch.noseryoung.domain.recur.enums.Frequency;
+import ch.noseryoung.domain.recur.exceptions.NotGroupMemberException;
+import ch.noseryoung.domain.recur.exceptions.ProjectNotFoundException;
 import ch.noseryoung.domain.recur.exceptions.TaskNotFoundException;
+import ch.noseryoung.domain.recur.models.Project;
 import ch.noseryoung.domain.recur.models.Task;
 import ch.noseryoung.domain.recur.models.User;
+import ch.noseryoung.domain.recur.repositories.ProjectRepository;
 import ch.noseryoung.domain.recur.repositories.TaskRepository;
 import ch.noseryoung.domain.recur.security.CustomUserDetails;
 import ch.noseryoung.domain.recur.utils.TaskUtil;
@@ -18,11 +23,54 @@ import org.springframework.http.ResponseEntity;
 public class TaskService {
 
         private final TaskRepository taskRepository;
+        private final ProjectRepository projectRepository;
         private final TaskUtil taskUtil;
 
-        public TaskService(TaskRepository taskRepository, TaskUtil taskUtil) {
+        public TaskService(TaskRepository taskRepository, ProjectRepository projectRepository, TaskUtil taskUtil) {
                 this.taskRepository = taskRepository;
+                this.projectRepository = projectRepository;
                 this.taskUtil = taskUtil;
+        }
+
+        // Ein Task ist sichtbar/bearbeitbar für seinen persönlichen owner, oder -
+        // falls er einem Projekt zugeordnet ist - für jedes Mitglied der
+        // Projekt-Gruppe (geteiltes Item, alle gleichberechtigt).
+        private boolean hasAccess(Task task, User user) {
+                if (task.getOwner() != null && task.getOwner().equals(user)) {
+                        return true;
+                }
+                return task.getProject() != null
+                                && task.getProject().getGroup() != null
+                                && task.getProject().getGroup().getMembers().contains(user);
+        }
+
+        // Löst eine vom Client mitgeschickte Projekt-Referenz (nur die id ist
+        // relevant) in das gemanagte Project auf und prüft dabei, dass der User
+        // Mitglied der zugehörigen Gruppe ist.
+        private Project resolveProjectForAssignment(Project requestedProject, User user) {
+                Project managedProject = projectRepository.findById(requestedProject.getId())
+                                .orElseThrow(() -> new ProjectNotFoundException(requestedProject.getId()));
+
+                if (managedProject.getGroup() == null || !managedProject.getGroup().getMembers().contains(user)) {
+                        throw new NotGroupMemberException();
+                }
+
+                return managedProject;
+        }
+
+        // Bestimmt nach einer Änderung, ob der Task (für geteilte Projekt-Tasks)
+        // als erledigt gilt, und pflegt completedBy entsprechend nach - bei
+        // persönlichen Tasks bleibt completedBy ungenutzt.
+        private void updateCompletedBy(Task task, User actingUser) {
+                if (task.getProject() == null) {
+                        return;
+                }
+
+                boolean isDone = task.getFrequency() == Frequency.ONCE
+                                ? task.getAmountDid() != null && task.getAmountDid() > 0
+                                : task.getProgress() != null && task.getProgress() >= 100.0;
+
+                task.setCompletedBy(isDone ? actingUser : null);
         }
 
         // Liest den eingeloggten User aus dem SecurityContext. Funktioniert für
@@ -47,8 +95,8 @@ public class TaskService {
                 if (favorite != null && favorite)
                         return getFavoriteTasks();
 
-                User owner = getCurrentUser();
-                Collection<Task> tasks = taskRepository.findByOwner(owner);
+                User user = getCurrentUser();
+                Collection<Task> tasks = taskRepository.findVisibleToUser(user);
                 recalculateAll(tasks);
 
                 return ResponseEntity.ok(tasks);
@@ -78,8 +126,9 @@ public class TaskService {
         }
 
         public ResponseEntity<Task> getTask(UUID id) {
-                User owner = getCurrentUser();
-                Task task = taskRepository.findByIdAndOwner(id, owner)
+                User user = getCurrentUser();
+                Task task = taskRepository.findById(id)
+                                .filter(t -> hasAccess(t, user))
                                 .orElseThrow(() -> new TaskNotFoundException(id));
 
                 return ResponseEntity.ok(task);
@@ -88,11 +137,19 @@ public class TaskService {
         // POST METHODS
         public ResponseEntity<Task> createTask(Task task) {
 
-                task.setOwner(getCurrentUser());
-                
+                User currentUser = getCurrentUser();
+
+                if (task.getProject() != null && task.getProject().getId() != null) {
+                        task.setProject(resolveProjectForAssignment(task.getProject(), currentUser));
+                        task.setOwner(null);
+                } else {
+                        task.setProject(null);
+                        task.setOwner(currentUser);
+                }
 
                 TaskUtil.calculateDaysInSpan(task);
                 taskUtil.calculateProgress(task);
+                updateCompletedBy(task, currentUser);
 
                 taskRepository.save(task);
 
@@ -106,10 +163,12 @@ public class TaskService {
                         Boolean resetProgress,
                         Boolean favorite,
                         Boolean archived,
-                        Integer amountDid) {
+                        Integer amountDid,
+                        Boolean unassignProject) {
 
-                User owner = getCurrentUser();
-                Task existingTask = taskRepository.findByIdAndOwner(id, owner)
+                User currentUser = getCurrentUser();
+                Task existingTask = taskRepository.findById(id)
+                                .filter(t -> hasAccess(t, currentUser))
                                 .orElseThrow(() -> new TaskNotFoundException(id));
 
                 if (task.getName() != null) {
@@ -164,8 +223,20 @@ public class TaskService {
                         existingTask.setStartTime(task.getStartTime());
                 }
 
+                // Nachträgliche Projekt-Zuordnung: entweder explizit auf ein anderes/neues
+                // Projekt setzen (mit Mitgliedschafts-Check), oder über unassignProject
+                // zurück zu einem persönlichen Task machen.
+                if (Boolean.TRUE.equals(unassignProject)) {
+                        existingTask.setProject(null);
+                        existingTask.setOwner(currentUser);
+                } else if (task.getProject() != null && task.getProject().getId() != null) {
+                        existingTask.setProject(resolveProjectForAssignment(task.getProject(), currentUser));
+                        existingTask.setOwner(null);
+                }
+
                 TaskUtil.calculateDaysInSpan(existingTask);
                 taskUtil.calculateProgress(existingTask);
+                updateCompletedBy(existingTask, currentUser);
 
                 taskRepository.save(existingTask);
 
@@ -191,8 +262,9 @@ public class TaskService {
         // DELETE METHODS
         public ResponseEntity<Task> deleteTask(UUID id) {
 
-                User owner = getCurrentUser();
-                Task task = taskRepository.findByIdAndOwner(id, owner)
+                User user = getCurrentUser();
+                Task task = taskRepository.findById(id)
+                                .filter(t -> hasAccess(t, user))
                                 .orElseThrow(() -> new TaskNotFoundException(id));
 
                 if (!Boolean.TRUE.equals(task.getIsArchived())) {

@@ -1,0 +1,68 @@
+package ch.noseryoung.domain.recur.controllers;
+
+import java.util.Collection;
+import java.util.UUID;
+
+import jakarta.validation.Valid;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import ch.noseryoung.domain.recur.dto.GroupInvitePreview;
+import ch.noseryoung.domain.recur.models.TaskGroup;
+import ch.noseryoung.domain.recur.services.GroupService;
+
+@RestController
+@RequestMapping("/api/group")
+@CrossOrigin(origins = "${app.cors.allowed-origin}")
+public class GroupController {
+
+    private final GroupService groupService;
+
+    public GroupController(GroupService groupService) {
+        this.groupService = groupService;
+    }
+
+    @PostMapping({ "", "/" })
+    public ResponseEntity<TaskGroup> createGroup(@Valid @RequestBody TaskGroup group) {
+        return groupService.createGroup(group);
+    }
+
+    @GetMapping({ "", "/" })
+    public ResponseEntity<Collection<TaskGroup>> getMyGroups() {
+        return groupService.getMyGroups();
+    }
+
+    @GetMapping({ "/{id}", "/{id}/" })
+    public ResponseEntity<TaskGroup> getGroup(@PathVariable UUID id) {
+        return groupService.getGroup(id);
+    }
+
+    @DeleteMapping({ "/{id}", "/{id}/" })
+    public ResponseEntity<Void> deleteGroup(@PathVariable UUID id) {
+        return groupService.deleteGroup(id);
+    }
+
+    @PostMapping({ "/{id}/leave", "/{id}/leave/" })
+    public ResponseEntity<Void> leaveGroup(@PathVariable UUID id) {
+        return groupService.leaveGroup(id);
+    }
+
+    @DeleteMapping({ "/{id}/members/{memberId}", "/{id}/members/{memberId}/" })
+    public ResponseEntity<Void> removeMember(@PathVariable UUID id, @PathVariable UUID memberId) {
+        return groupService.removeMember(id, memberId);
+    }
+
+    // Vorschau vor dem eigentlichen Beitritt (kein Auto-Join), damit ein
+    // vorab abgerufener Link (z.B. Chat-Link-Preview) niemanden versehentlich
+    // in die Gruppe holt.
+    @GetMapping({ "/invite/{inviteCode}", "/invite/{inviteCode}/" })
+    public ResponseEntity<GroupInvitePreview> previewInvite(@PathVariable String inviteCode) {
+        return groupService.previewInvite(inviteCode);
+    }
+
+    @PostMapping({ "/invite/{inviteCode}/join", "/invite/{inviteCode}/join/" })
+    public ResponseEntity<TaskGroup> joinGroup(@PathVariable String inviteCode) {
+        return groupService.joinGroup(inviteCode);
+    }
+}

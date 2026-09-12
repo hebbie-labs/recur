@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { type Task } from "@/services/taskService";
 import TaskFavorite from "@/components/atoms/TaskFavorite";
@@ -133,6 +134,11 @@ function TaskCard({
         <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
           <span className={cn("size-1.5 rounded-full", categoryDot[task.category])} />
           {categoryLabels[task.category]}
+          {task.project && (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
+              {task.project.name}
+            </span>
+          )}
         </div>
         <div className="line-clamp-1">
           <TaskTitle title={task.name} />
@@ -142,10 +148,23 @@ function TaskCard({
         </div>
         <div className="mt-auto flex items-center gap-4 justify-between">
           <TaskTimeFrame start={task.startTime} end={task.dateUntil} />
-          <TaskFavorite
-            isFavorite={task.isFavorite || false}
-            onClick={handleToggleFavorite}
-          />
+          <div className="flex items-center gap-2">
+            {task.completedBy && (
+              <Avatar
+                size="sm"
+                title={`Erledigt von ${task.completedBy.firstName} ${task.completedBy.lastName}`}
+              >
+                <AvatarImage src={task.completedBy.avatarUrl ?? undefined} />
+                <AvatarFallback>
+                  {`${task.completedBy.firstName[0] ?? ""}${task.completedBy.lastName[0] ?? ""}`.toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            )}
+            <TaskFavorite
+              isFavorite={task.isFavorite || false}
+              onClick={handleToggleFavorite}
+            />
+          </div>
         </div>
       </CardContent>
     </Card>

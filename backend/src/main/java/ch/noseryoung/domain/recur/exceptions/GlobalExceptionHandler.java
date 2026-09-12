@@ -80,6 +80,70 @@ public class GlobalExceptionHandler {
                                                 getPath(request)));
         }
 
+        @ExceptionHandler(GroupNotFoundException.class)
+        public ResponseEntity<ErrorResponse> handleGroupNotFound(
+                        GroupNotFoundException ex,
+                        WebRequest request) {
+
+                logger.info("Group not found: {}", ex.getMessage());
+
+                return ResponseEntity
+                                .status(HttpStatus.NOT_FOUND)
+                                .body(ErrorResponse.of(
+                                                404,
+                                                "Group not found",
+                                                ex.getMessage(),
+                                                getPath(request)));
+        }
+
+        @ExceptionHandler(ProjectNotFoundException.class)
+        public ResponseEntity<ErrorResponse> handleProjectNotFound(
+                        ProjectNotFoundException ex,
+                        WebRequest request) {
+
+                logger.info("Project not found: {}", ex.getMessage());
+
+                return ResponseEntity
+                                .status(HttpStatus.NOT_FOUND)
+                                .body(ErrorResponse.of(
+                                                404,
+                                                "Project not found",
+                                                ex.getMessage(),
+                                                getPath(request)));
+        }
+
+        @ExceptionHandler(NotGroupMemberException.class)
+        public ResponseEntity<ErrorResponse> handleNotGroupMember(
+                        NotGroupMemberException ex,
+                        WebRequest request) {
+
+                logger.info("Access denied, not a group member: {}", ex.getMessage());
+
+                return ResponseEntity
+                                .status(HttpStatus.FORBIDDEN)
+                                .body(ErrorResponse.of(
+                                                403,
+                                                "Forbidden",
+                                                ex.getMessage(),
+                                                getPath(request)));
+        }
+
+        @ExceptionHandler(ProjectNotArchivedException.class)
+        public ResponseEntity<ErrorResponse> handleProjectNotArchived(
+                        ProjectNotArchivedException ex,
+                        WebRequest request) {
+
+                logger.info("Project deletion rejected: {}", ex.getMessage());
+
+                return ResponseEntity
+                                .status(HttpStatus.FORBIDDEN)
+                                .body(ErrorResponse.of(
+                                                403,
+                                                "Forbidden",
+                                                ex.getMessage(),
+                                                getPath(request)));
+        }
+
         @ExceptionHandler(EmailAlreadyExistsException.class)
         public ResponseEntity<ErrorResponse> handleEmailAlreadyExists(
                         EmailAlreadyExistsException ex,

@@ -46,8 +46,9 @@ public class TaskController {
                         @RequestParam(required = false) Boolean resetProgress,
                         @RequestParam(required = false) Boolean favorite,
                         @RequestParam(required = false) Boolean archived,
-                        @RequestParam(required = false) Integer amountDid) {
-                return taskService.patchTask(id, task, resetProgress, favorite, archived, amountDid);
+                        @RequestParam(required = false) Integer amountDid,
+                        @RequestParam(required = false) Boolean unassignProject) {
+                return taskService.patchTask(id, task, resetProgress, favorite, archived, amountDid, unassignProject);
         }
 
         @DeleteMapping({ "/{id}", "/{id}/" })
