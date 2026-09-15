@@ -1,6 +1,9 @@
-*._
+._*
 
 .env
+
+# Local agent planning/tracking doc - not meant to be pushed or reviewed
+AGENT_TASK.md
 
 # Gebautes Frontend-Bundle - wird beim Build erzeugt, gehört nicht ins Repo (5.2)
 backend/src/main/resources/static/

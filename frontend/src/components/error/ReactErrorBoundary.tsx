@@ -1,6 +1,6 @@
 import ErrorPage from "@/components/pages/ErrorPage";
 import InlineErrorFallback from "@/components/error/InlineErrorFallback";
-import { ErrorBoundary } from "react-error-boundary";
+import { ErrorBoundary, getErrorMessage } from "react-error-boundary";
 import { type ReactNode } from "react";
 
 type ReactErrorBoundaryProps = {
@@ -27,14 +27,14 @@ function ReactErrorBoundary({
                 variant === "inline" ? (
                     <InlineErrorFallback
                         resetErrorBoundary={resetErrorBoundary}
-                        errorMessage={errorMessage ?? error?.message}
+                        errorMessage={errorMessage ?? getErrorMessage(error)}
                         className={className}
                     />
                 ) : (
                     <ErrorPage
                         resetErrorBoundary={resetErrorBoundary}
                         errorCode={errorCode}
-                        errorMessage={errorMessage ?? error?.message}
+                        errorMessage={errorMessage ?? getErrorMessage(error)}
                         fullScreen={fullScreen}
                     />
                 )

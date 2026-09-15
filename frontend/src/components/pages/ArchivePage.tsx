@@ -4,13 +4,13 @@ import ArchiveSelectionToolbar from "@/components/molecules/ArchiveSelectionTool
 import { OctagonXIcon } from "lucide-react";
 import { useTasksContext } from "@/contexts/TasksContext";
 import { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import TaskCardGrid from "@/components/molecules/TaskCardGrid";
 import useArchiveSelection from "@/hooks/useArchiveSelection";
 import TaskCardGridSkeleton from "../molecules/TaskCardGridSkeleton";
 
 function ArchivePage() {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const {
     archivedTasks,
@@ -55,7 +55,7 @@ function ArchivePage() {
         title="Keine archivierten Aufgaben"
         description="Es gibt derzeit keine archivierten Aufgaben."
         buttonText="Zurück zu den Aufgaben"
-        onButtonClick={() => navigate("/")}
+        onButtonClick={() => router.push("/")}
         icon={() => <OctagonXIcon className="h-12 w-12 text-muted-foreground" />}
       />
     );

@@ -3,11 +3,11 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useOAuthCallback } from "@/hooks/useOAuthCallback";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 
 function OAuthCallbackPage() {
     const { status, errorMessage } = useOAuthCallback();
-    const navigate = useNavigate();
+    const router = useRouter();
 
     return (
         <div className="flex min-h-svh w-full flex-col items-center justify-center gap-6 bg-background px-4 py-8">
@@ -35,7 +35,7 @@ function OAuthCallbackPage() {
                             : "Du wirst gleich weitergeleitet."}
                     </CardDescription>
                     {status === "error" && (
-                        <Button className="w-full font-semibold" onClick={() => navigate("/login")}>
+                        <Button className="w-full font-semibold" onClick={() => router.push("/login")}>
                             Zurück zum Login
                         </Button>
                     )}

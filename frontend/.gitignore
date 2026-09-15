@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Next.js
+.next
+out
+next-env.d.ts
+
 # Environment variables
 .env
 
@@ -27,7 +32,8 @@ dist-ssr
 *.sw?
 
 
-*._
+._*
+*.tsbuildinfo
 
 # design-sync
 .ds-sync/

@@ -1,7 +1,10 @@
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldSeparator,
 } from "@/components/ui/field";
@@ -31,6 +34,7 @@ type SignupFormProps = {
   handleBlur: (
     event: FocusEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => void;
+  setFieldValue: (field: string, value: unknown) => void;
   loading?: boolean;
   submitDisabled?: boolean;
   backendError?: string;
@@ -44,10 +48,12 @@ function SignupForm({
   touched,
   handleChange,
   handleBlur,
+  setFieldValue,
   loading,
   submitDisabled,
   backendError,
 }: SignupFormProps) {
+  const router = useRouter();
   return (
     <FormikForm className="flex flex-col gap-6" onSubmit={onSubmit}>
       <FieldGroup>
@@ -145,6 +151,39 @@ function SignupForm({
               : "Bitte bestätige dein Passwort."
           }
         />
+
+        <Field orientation="horizontal">
+          <Checkbox
+            id="acceptTerms"
+            checked={values.acceptTerms}
+            onCheckedChange={(checked) =>
+              setFieldValue("acceptTerms", checked === true)
+            }
+            aria-invalid={touched.acceptTerms && !!errors.acceptTerms}
+          />
+          <label htmlFor="acceptTerms" className="text-sm text-muted-foreground">
+            Ich akzeptiere die{" "}
+            <button
+              type="button"
+              className="text-primary underline underline-offset-4 hover:text-foreground"
+              onClick={() => router.push("/datenschutz")}
+            >
+              Datenschutzerklärung
+            </button>{" "}
+            und die{" "}
+            <button
+              type="button"
+              className="text-primary underline underline-offset-4 hover:text-foreground"
+              onClick={() => router.push("/agb")}
+            >
+              Nutzungsbedingungen
+            </button>
+            .
+          </label>
+        </Field>
+        {touched.acceptTerms && (
+          <FieldError errors={[{ message: errors.acceptTerms }]} />
+        )}
 
         <Field>
           <LoadingButton

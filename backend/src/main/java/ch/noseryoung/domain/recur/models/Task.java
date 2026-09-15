@@ -10,7 +10,6 @@ import ch.noseryoung.domain.recur.enums.Category;
 import ch.noseryoung.domain.recur.enums.Frequency;
 import lombok.*;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -56,7 +55,6 @@ public class Task {
         private String description;
 
         @NotNull(message = "Fälligkeitsdatum ist erforderlich", groups = OnCreate.class)
-        @Future(message = "Fälligkeitsdatum muss in der Zukunft liegen", groups = OnCreate.class)
         @Column(name = "date_until")
         private Instant dateUntil;
 

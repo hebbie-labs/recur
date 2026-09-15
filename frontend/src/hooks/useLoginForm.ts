@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { type LoginRequest } from "@/types/auth";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -10,7 +10,7 @@ function useLoginForm() {
   const [submitDisabled, setSubmitDisabled] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const handleSubmit = async (values: LoginRequest) => {
     setLoading(true);
@@ -19,7 +19,7 @@ function useLoginForm() {
 
     try {
       await login(values);
-      navigate("/", { replace: true });
+      router.replace("/");
     } catch (error) {
       setBackendError(
         error instanceof Error

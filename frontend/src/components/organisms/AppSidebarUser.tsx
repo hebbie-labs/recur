@@ -1,5 +1,5 @@
 import type { UserResponse } from "@/types/auth";
-import {Popover, PopoverTrigger} from "@/components/ui/popover";
+import { DropdownMenu, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 import {
   Avatar,
@@ -11,11 +11,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import AppSidebarUserPopover from "../molecules/AppSidebarUserPopover";
+import AppSidebarUserMenu from "../molecules/AppSidebarUserMenu";
 
 
 type AppSidebarUserProps = {
-    user: UserResponse;
+    user: UserResponse | null;
 };
 
 function AppSidebarUser({ user }: AppSidebarUserProps) {
@@ -27,8 +27,8 @@ function AppSidebarUser({ user }: AppSidebarUserProps) {
   return (
     <SidebarMenu className="w-full border-t pt-2">
       <SidebarMenuItem>
-        <Popover>
-          <PopoverTrigger
+        <DropdownMenu>
+          <DropdownMenuTrigger
             render={
               <SidebarMenuButton size="lg" className="w-full">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
@@ -44,8 +44,8 @@ function AppSidebarUser({ user }: AppSidebarUserProps) {
               </SidebarMenuButton>
             }
           />
-        <AppSidebarUserPopover />
-        </Popover>
+        <AppSidebarUserMenu />
+        </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
   )

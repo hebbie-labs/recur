@@ -2,12 +2,12 @@ import Empty from "@/components/molecules/Empty";
 import { OctagonXIcon } from "lucide-react";
 import { useTasksContext } from "@/contexts/TasksContext";
 import { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import TaskCardGrid from "@/components/molecules/TaskCardGrid";
 import TaskCardGridSkeleton from "../molecules/TaskCardGridSkeleton";
 
 function FavoritesPage() {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const {
     loading,
@@ -37,7 +37,7 @@ function FavoritesPage() {
         title="Keine favorisierten Aufgaben"
         description="Es gibt derzeit keine favorisierten Aufgaben."
         buttonText="Zurück zu den Aufgaben"
-        onButtonClick={() => navigate("/")}
+        onButtonClick={() => router.push("/")}
       />
     );
   }

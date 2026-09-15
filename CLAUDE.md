@@ -4,13 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Recur — a full-stack habit/task tracker. Backend: Java 25 / Spring Boot 4.0.6 (`backend/`). Frontend: React + TypeScript + Vite (`frontend/`). Postgres via Docker (`database/`).
+Recur — a full-stack habit/task tracker. Backend: Java 25 / Spring Boot 4.0.6 (`backend/`). Frontend: React + TypeScript + Next.js (`frontend/`). Postgres via Docker (`database/`).
 
 ## Commands
 
-Frontend (`frontend/`, package manager is **yarn** — a stale `package-lock.json` also exists, ignore it):
-- `yarn dev` — start dev server (port 5173)
-- `yarn build` — `tsc -b && vite build`
+Frontend (`frontend/`, package manager is **yarn**):
+- `yarn dev` — start dev server (port 3000)
+- `yarn build` — `next build`
+- `yarn typecheck` — `tsc --noEmit`
 - `yarn lint` — ESLint (flat config, no Prettier configured)
 - No test script or test framework exists in the frontend.
 
@@ -27,11 +28,11 @@ Full stack locally: `./start-dev.ps1` (Windows) starts Docker, backend, and fron
 
 Auth is hybrid: stateless JWT (`jjwt`) for normal API calls via `JwtAuthenticationFilter`, plus Spring Security OAuth2/OIDC login for Google, sharing one `SecurityFilterChain` in `SecurityConfig`. Touch `SecurityConfig`/`JwtAuthenticationFilter`/OAuth2 handlers together when changing auth.
 
-**Frontend** follows atomic design under `src/components/`: `atoms/ molecules/ organisms/ pages/ templates/`, plus `ui/` (shadcn primitives) and `auth/`, `error/`. Path alias `@/` → `src/`. State is plain React Context (`TasksContext`, `AddTaskContext`, `AuthContext`) — no Redux/Zustand. Forms use **Formik + Yup** (not react-hook-form/zod, despite the `schemas/` folder name). Domain types (`Task`, `TaskCategory`, `TaskFrequency`, etc.) live colocated in `services/taskService.ts`, not in `types/`. All API calls go through the shared axios instance in `services/api.ts`; service functions normalize errors via `extractErrorMessage` and convert dates to ISO instants before sending (backend fields are Java `Instant`).
+**Frontend** routing lives in `src/app/` (Next.js App Router — folder structure is the URL structure, `page.tsx` files mark routable segments), but those `page.tsx` files are thin wrappers: actual page logic lives in `src/components/pages/`, which follows atomic design under `src/components/`: `atoms/ molecules/ organisms/ pages/ templates/`, plus `ui/` (shadcn primitives) and `auth/`, `error/`. Path alias `@/` → `src/`. State is plain React Context (`TasksContext`, `AddTaskContext`, `AuthContext`) — no Redux/Zustand. Forms use **Formik + Yup** (not react-hook-form/zod, despite the `schemas/` folder name). Domain types (`Task`, `TaskCategory`, `TaskFrequency`, etc.) live colocated in `services/taskService.ts`, not in `types/`. All API calls go through the shared axios instance in `services/api.ts`; service functions normalize errors via `extractErrorMessage` and convert dates to ISO instants before sending (backend fields are Java `Instant`).
 
 ## Environment
 
-Postgres runs on host port **5436** (not 5432) — see `docker-compose.yml` and `application.properties`. Required env vars: backend `.env` needs `JWT_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`; frontend `.env` needs `VITE_API_URL`.
+Postgres runs on host port **5436** (not 5432) — see `docker-compose.yml` and `application.properties`. Required env vars: backend `.env` needs `JWT_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`; frontend `.env` needs `NEXT_PUBLIC_API_URL`.
 
 ## Conventions
 

@@ -6,7 +6,7 @@ import { patchUser } from "../../services/authService";
 import { Button } from "@/components/ui/button";
 import LoadingButton from "@/components/atoms/LoadingButton";
 import AccountForm from "../organisms/AccountForm";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import useUserDetails from "@/hooks/useUserDetails";
 import { Spinner } from "../ui/spinner";
 
@@ -111,7 +111,7 @@ function AccountPage({
 
 function AccountPageWrapper() {
   const { user } = useUserDetails();
-  const navigate = useNavigate();
+  const router = useRouter();
 
   if (!user) {
     return (
@@ -127,7 +127,7 @@ function AccountPageWrapper() {
       lastName={user.lastName}
       email={user.email}
       avatarUrl={user.avatarUrl}
-      onClose={() => navigate(-1)}
+      onClose={() => router.back()}
     />
   );
 }

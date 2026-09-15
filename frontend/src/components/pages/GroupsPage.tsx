@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { UsersIcon, PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import CreateGroupDialog from "@/components/organisms/CreateGroupDialog";
 import { useGroupsContext } from "@/contexts/GroupsContext";
 
 function GroupsPage() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { groups, loading } = useGroupsContext();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
@@ -37,7 +37,7 @@ function GroupsPage() {
             <Card
               key={group.id}
               className="cursor-pointer transition-colors hover:bg-accent/50"
-              onClick={() => navigate(`/groups/${group.id}`)}
+              onClick={() => router.push(`/groups/${group.id}`)}
             >
               <CardHeader className="flex flex-row items-center gap-2">
                 <UsersIcon className="h-5 w-5 text-muted-foreground" />
@@ -57,7 +57,7 @@ function GroupsPage() {
       {showCreateDialog && (
         <CreateGroupDialog
           onClose={() => setShowCreateDialog(false)}
-          onCreated={(group) => navigate(`/groups/${group.id}`)}
+          onCreated={(group) => router.push(`/groups/${group.id}`)}
         />
       )}
     </div>

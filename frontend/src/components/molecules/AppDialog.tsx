@@ -20,6 +20,8 @@ type AppDialogProps = {
   contentClassName?: string;
   closeLabel?: string;
   submitLabel?: string;
+  /** Ersetzt den Standard-Footer (Abbrechen + Speichern) - für Dialoge mit eigener Button-Reihe, z.B. ein Wizard mit Zurück/Weiter/Erstellen. */
+  footer?: ReactNode;
 };
 
 function AppDialog({
@@ -33,6 +35,7 @@ function AppDialog({
   contentClassName,
   closeLabel = "Abbrechen",
   submitLabel = "Speichern",
+  footer,
 }: AppDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
@@ -46,16 +49,20 @@ function AppDialog({
         {children}
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            {closeLabel}
-          </Button>
-          <LoadingButton
-            onClick={onSubmit}
-            disabled={submitDisabled}
-            loading={loading}
-          >
-            {submitLabel}
-          </LoadingButton>
+          {footer ?? (
+            <>
+              <Button variant="outline" onClick={onClose}>
+                {closeLabel}
+              </Button>
+              <LoadingButton
+                onClick={onSubmit}
+                disabled={submitDisabled}
+                loading={loading}
+              >
+                {submitLabel}
+              </LoadingButton>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

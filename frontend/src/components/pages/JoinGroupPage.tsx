@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useRouter, useParams } from "next/navigation";
 import { UsersIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -11,7 +11,7 @@ import { showErrorToast, showSuccessToast } from "@/lib/toast";
 
 function JoinGroupPage() {
   const { code } = useParams<{ code: string }>();
-  const navigate = useNavigate();
+  const router = useRouter();
   const { fetchGroups } = useGroupsContext();
 
   const [preview, setPreview] = useState<GroupInvitePreview | null>(null);
@@ -36,7 +36,7 @@ function JoinGroupPage() {
       const group = await joinGroup(code);
       await fetchGroups();
       showSuccessToast(`Du bist der Gruppe "${group.name}" beigetreten.`);
-      navigate(`/groups/${group.id}`);
+      router.push(`/groups/${group.id}`);
     } catch (err) {
       showErrorToast(err instanceof Error ? err.message : "Fehler beim Beitreten der Gruppe.");
       setJoining(false);
@@ -45,7 +45,7 @@ function JoinGroupPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
+      <div className="flex min-h-screen items-center justify-center">
         <Spinner className="size-8 text-primary" />
       </div>
     );
@@ -73,7 +73,7 @@ function JoinGroupPage() {
         </p>
 
         {preview.alreadyMember ? (
-          <Button onClick={() => navigate(`/groups/${preview.groupId}`)}>
+          <Button onClick={() => router.push(`/groups/${preview.groupId}`)}>
             Du bist bereits Mitglied - zur Gruppe
           </Button>
         ) : (

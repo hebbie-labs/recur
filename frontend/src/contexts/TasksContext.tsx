@@ -86,6 +86,10 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     if (isAuthLoading) return;
 
     if (!isAuthenticated) {
+      // Intentional: reset local state in response to the AuthContext
+      // singleton logging out, not derivable during render - there's no
+      // per-user instance of this provider to key-remount instead.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTasks([]);
       setLoading(false);
       return;

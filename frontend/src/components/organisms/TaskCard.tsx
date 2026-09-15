@@ -126,7 +126,6 @@ function TaskCard({
             onResetProgress={handleResetProgress}
             onTaskUpdated={onTaskUpdated}
             isArchived={task.isArchived || false}
-            durationMinutes={task.durationMinutes}
           />
         )}
       </CardHeader>
@@ -147,7 +146,7 @@ function TaskCard({
           <TaskDescription description={task.description} />
         </div>
         <div className="mt-auto flex items-center gap-4 justify-between">
-          <TaskTimeFrame start={task.startTime} end={task.dateUntil} />
+          <TaskTimeFrame start={task.startTime ?? null} end={task.dateUntil} />
           <div className="flex items-center gap-2">
             {task.completedBy && (
               <Avatar

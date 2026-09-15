@@ -23,6 +23,12 @@ import lombok.*;
 @NoArgsConstructor
 @Entity
 @Table(name = "app_user", uniqueConstraints = @UniqueConstraint(columnNames = "email"))
+// Ownership/membership checks (TaskService.hasAccess, group.getMembers().contains(user),
+// etc.) compare User instances loaded from unrelated Hibernate sessions - e.g. the
+// JWT-authenticated principal vs. a Task's owner loaded inside the request's own
+// transaction. Those are never the same Java object, so without an id-based equals()
+// the default reference equality made every such check silently fail.
+@EqualsAndHashCode(of = "id")
 public class User {
 
     @Id

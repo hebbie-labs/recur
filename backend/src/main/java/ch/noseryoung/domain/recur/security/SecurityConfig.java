@@ -64,13 +64,19 @@ public class SecurityConfig {
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers(
-                                                                "/api/auth/**",
+                                                                "/api/auth/register",
+                                                                "/api/auth/login",
                                                                 "/oauth2/**",
                                                                 "/login/**",
                                                                 "/swagger-ui/**",
                                                                 "/v3/api-docs/**",
                                                                 "/error/**")
                                                 .permitAll()
+                                                // /api/auth/me (GET/PATCH/DELETE) intentionally NOT
+                                                // permitAll - the "/api/auth/**" wildcard used to
+                                                // cover it too, so anonymous requests reached
+                                                // AuthService instead of being rejected here, only
+                                                // failing because "anonymousUser" isn't a real email.
                                                 .anyRequest().authenticated())
                                 .exceptionHandling(exceptions -> exceptions
                                                 .authenticationEntryPoint(

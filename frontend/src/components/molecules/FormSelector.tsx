@@ -18,9 +18,6 @@ type FormSelectorProps = {
   className?: string;
 };
 
-type SelectOnValueChange = React.ComponentProps<typeof Select>["onValueChange"];
-type SelectOnOpenChange = React.ComponentProps<typeof Select>["onOpenChange"];
-
 function FormSelector({ variant, disabled, className }: FormSelectorProps) {
   const uid = useId();
   const isCategory = variant === "category";
@@ -42,12 +39,16 @@ function FormSelector({ variant, disabled, className }: FormSelectorProps) {
   const error = meta.touched && !!meta.error;
   const helperText = meta.touched ? meta.error : undefined;
 
-  const handleValueChange: SelectOnValueChange = (newValue) => {
+  // Select infers its value type as plain `string` (from the `value` prop's
+  // "" sentinel for "nothing selected"), narrower than that isn't assignable
+  // here - the cast is safe since every item's value comes from
+  // CATEGORY_OPTIONS/FREQUENCY_OPTIONS.
+  const handleValueChange = (newValue: string | null) => {
     justSelectedRef.current = true;
-    setValue(newValue ?? "");
+    setValue((newValue as TaskCategory | TaskFrequency | null) ?? "");
   };
 
-  const handleOpenChange: SelectOnOpenChange = (open) => {
+  const handleOpenChange = (open: boolean) => {
     if (open) return;
 
     if (justSelectedRef.current) {

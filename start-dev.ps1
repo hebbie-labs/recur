@@ -86,7 +86,7 @@ $frontendReady = $false
 $frontendAttempts = 0
 while (-not $frontendReady -and $frontendAttempts -lt 60) {
     try {
-        $response = Invoke-WebRequest -Uri "http://localhost:5173" -UseBasicParsing -TimeoutSec 2
+        $response = Invoke-WebRequest -Uri "http://localhost:3000" -UseBasicParsing -TimeoutSec 2
         if ($response.StatusCode -eq 200) { $frontendReady = $true }
     } catch {
         $frontendAttempts++
@@ -100,8 +100,8 @@ if (-not $frontendReady) {
 }
 Write-Host "Frontend is ready!" -ForegroundColor Green
 
-Write-Host "All services are up and running! Open Browser at http://localhost:5173" -ForegroundColor Green
+Write-Host "All services are up and running! Open Browser at http://localhost:3000" -ForegroundColor Green
 
-Start-Process "http://localhost:5173"
+Start-Process "http://localhost:3000"
 
 exit

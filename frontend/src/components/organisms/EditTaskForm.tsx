@@ -1,8 +1,18 @@
+import { ChevronRight } from "lucide-react";
 import { Formik } from "formik";
-import type { Task } from "@/services/taskService";
-import * as yup from "yup";
+import type { Task, TaskCategory, TaskFrequency } from "@/services/taskService";
 import AppDialog from "@/components/molecules/AppDialog";
-import Form from "./Form";
+import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { editTaskValidationSchema } from "@/schemas/taskSchema";
+import {
+  TaskBasicsFields,
+  TaskDetailFields,
+} from "@/components/organisms/Form";
 import useEditTaskForm, {
   type EditableTaskFields,
 } from "@/hooks/useEditTaskForm";
@@ -12,67 +22,6 @@ type EditTaskFormProps = {
   onClose: () => void;
   onTaskUpdated?: (task: Task) => void;
 };
-
-const validationSchema = yup.object().shape({
-  name: yup.string(),
-  description: yup.string(),
-  category: yup.string(),
-  projectId: yup.string(),
-  progress: yup
-    .number()
-    .min(0, "Fortschritt muss mindestens 0 sein")
-    .max(100, "Fortschritt darf höchstens 100 sein"),
-  frequency: yup.string(),
-  dateUntil: yup
-    .date()
-    .nullable()
-    .min(yup.ref("startDate"), "Fälligkeitsdatum muss nach dem Startdatum liegen"),
-  // Leere Strings müssen explizit auf null transformiert werden: Yups
-  // number()/date()-Cast wandelt "" sonst in NaN/Invalid Date um, was trotz
-  // .nullable() als Typfehler durchfällt statt als "leer" zu gelten.
-  durationMinutes: yup
-    .number()
-    .transform((value, originalValue) => (originalValue === "" ? null : value))
-    .min(1, "Dauer muss mindestens 1 Minute betragen")
-    .nullable(),
-  // Startdatum/-zeit sind optional (z.B. aus dem Quartalsplan importierte
-  // Aufgaben haben keine), aber wenn eines gesetzt ist, muss auch das andere
-  // gesetzt sein - sonst lässt sich kein vollständiger startTime bilden.
-  startDate: yup
-    .date()
-    .transform((value, originalValue) => (originalValue === "" ? null : value))
-    .nullable()
-    .test(
-      "start-pair",
-      "Datum und Uhrzeit müssen beide gesetzt sein oder beide leer bleiben",
-      function (value) {
-        return Boolean(value) === Boolean(this.parent.startTimeOfDay);
-      }
-    ),
-  startTimeOfDay: yup
-    .string()
-    .nullable()
-    .test(
-      "start-pair",
-      "Datum und Uhrzeit müssen beide gesetzt sein oder beide leer bleiben",
-      function (value) {
-        return Boolean(value) === Boolean(this.parent.startDate);
-      }
-    )
-    .test(
-      "time-format",
-      "Ungültiges Zeitformat (Format muss HH:mm sein)",
-      (value) => !value || /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(value)
-    )
-    .test("min-time", "Die Zeit muss ab 08:00 Uhr liegen", (value) => {
-      if (!value) return true;
-      return value >= "08:00";
-    })
-    .test("max-time", "Die Zeit muss vor oder um 23:00 Uhr liegen", (value) => {
-      if (!value) return true;
-      return value <= "23:00";
-    }),
-});
 
 function toLocalDateParts(isoString: string) {
   const d = new Date(isoString);
@@ -101,8 +50,8 @@ function EditTaskForm({ task, onClose, onTaskUpdated }: EditTaskFormProps) {
       initialValues={{
         name: task.name ?? "",
         description: task.description ?? "",
-        category: task.category ?? "",
-        frequency: task.frequency ?? "",
+        category: task.category ?? ("" as TaskCategory),
+        frequency: task.frequency ?? ("" as TaskFrequency),
         progress: task.progress ?? 0,
         dateUntil: task.dateUntil ? task.dateUntil.slice(0, 10) : "",
         durationMinutes: task.durationMinutes ?? null,
@@ -111,7 +60,7 @@ function EditTaskForm({ task, onClose, onTaskUpdated }: EditTaskFormProps) {
         projectId: task.project?.id ?? "",
       }}
       onSubmit={handleSubmit}
-      validationSchema={validationSchema}
+      validationSchema={editTaskValidationSchema}
     >
       {({
         values,
@@ -131,15 +80,33 @@ function EditTaskForm({ task, onClose, onTaskUpdated }: EditTaskFormProps) {
           loading={loading}
           submitDisabled={loading || !dirty || !isValid}
         >
-          <Form
-            onSubmit={formikHandleSubmit}
-            values={values}
-            handleChange={handleChange}
-            handleBlur={handleBlur}
-            errors={errors}
-            touched={touched}
-            className="addTaskForm"
-          />
+          <form onSubmit={formikHandleSubmit}>
+            <TaskBasicsFields
+              values={values}
+              errors={errors}
+              touched={touched}
+              handleChange={handleChange}
+              handleBlur={handleBlur}
+            />
+
+            <Collapsible className="group/edit-details mt-2">
+              <CollapsibleTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full justify-start px-0 text-sm text-muted-foreground hover:bg-transparent hover:text-foreground"
+                  >
+                    <ChevronRight className="h-4 w-4 transition-transform group-data-open/edit-details:rotate-90" />
+                    Weitere Details
+                  </Button>
+                }
+              />
+              <CollapsibleContent>
+                <TaskDetailFields values={values} />
+              </CollapsibleContent>
+            </Collapsible>
+          </form>
         </AppDialog>
       )}
     </Formik>

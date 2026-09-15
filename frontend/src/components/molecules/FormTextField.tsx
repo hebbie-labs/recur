@@ -12,6 +12,7 @@ type FormTextFieldProps = {
   helperText?: string;
   type?: string;
   required?: boolean;
+  autoFocus?: boolean;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
   endAdornment?: ReactNode;
@@ -26,6 +27,7 @@ function FormTextField({
   helperText,
   type = "text",
   required,
+  autoFocus,
   onChange,
   onBlur,
   endAdornment,
@@ -41,6 +43,7 @@ function FormTextField({
           name={name}
           placeholder={label}
           type={type}
+          autoFocus={autoFocus}
           onChange={onChange}
           onBlur={onBlur}
           className={cn(

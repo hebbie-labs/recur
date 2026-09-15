@@ -1,12 +1,15 @@
-import type { FormEvent, ChangeEvent, FocusEvent } from "react";
-import { Form as FormikForm } from "formik";
-import type { FormikErrors, FormikTouched } from "formik";
+import { useEffect, type ChangeEvent, type FocusEvent } from "react";
+import { useFormikContext, type FormikErrors, type FormikTouched } from "formik";
 import { TaskFrequency, type TaskCategory } from "@/services/taskService";
 import FormTextField from "@/components/molecules/FormTextField";
+import FormTextAreaField from "@/components/molecules/FormTextAreaField";
 import FormDateField from "@/components/molecules/FormDateField";
+import FormDateTimeField from "@/components/molecules/FormDateTimeField";
+import FormDurationField from "@/components/molecules/FormDurationField";
 import FormSelector from "@/components/molecules/FormSelector";
-import FormTimeField from "@/components/molecules/FormTimeField";
 import ProjectSelector from "@/components/molecules/ProjectSelector";
+import { toDateOnlyString } from "@/utils/formatDate";
+import { roundUpToQuarterHour } from "@/utils/taskFormDefaults";
 
 export type FormValues = {
   name: string;
@@ -17,99 +20,109 @@ export type FormValues = {
   durationMinutes: number | null;
   startDate: string;
   startTimeOfDay: string;
-  startTime: string | null;
   projectId: string;
 };
 
-type FormProps = {
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+// Fehler werden nur nach dem Verlassen des Felds (touched) angezeigt, nicht
+// schon während des Tippens - Formik validiert trotzdem laufend im
+// Hintergrund, die Meldung aktualisiert sich also sofort, sobald sie einmal
+// sichtbar ist.
+type FieldErrorProps<K extends keyof FormValues> = {
+  name: K;
+  touched: FormikTouched<FormValues>;
+  errors: FormikErrors<FormValues>;
+};
+
+function fieldErrorProps<K extends keyof FormValues>({
+  name,
+  touched,
+  errors,
+}: FieldErrorProps<K>) {
+  const error = !!touched[name] && !!errors[name];
+  return {
+    error,
+    helperText: touched[name] ? (errors[name] as string | undefined) : undefined,
+  };
+}
+
+type BasicsFieldsProps = {
   values: FormValues;
   errors: FormikErrors<FormValues>;
   touched: FormikTouched<FormValues>;
-  className?: string;
   handleChange: (
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => void;
   handleBlur: (
     event: FocusEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => void;
+  autoFocusName?: boolean;
 };
 
-function Form({
-  onSubmit,
+/** Name, Beschreibung, Kategorie - die Felder, die immer sichtbar sind (Step 1 beim Add-Dialog, oben im Edit-Dialog). */
+export function TaskBasicsFields({
   values,
-  handleChange,
-  handleBlur,
   errors,
   touched,
-  className,
-}: FormProps) {
+  handleChange,
+  handleBlur,
+  autoFocusName,
+}: BasicsFieldsProps) {
   return (
-    <FormikForm onSubmit={onSubmit} className={className}>
+    <>
       <FormTextField
         name="name"
         label="Name"
         value={values.name}
         onChange={handleChange}
         onBlur={handleBlur}
-        error={(touched.name || values.name.length > 0) && !!errors.name}
-        helperText={
-          touched.name || values.name.length > 0 ? errors.name : undefined
-        }
+        autoFocus={autoFocusName}
+        {...fieldErrorProps({ name: "name", touched, errors })}
       />
-      <FormTextField
+      <FormTextAreaField
         name="description"
         label="Beschreibung"
         value={values.description}
         onChange={handleChange}
         onBlur={handleBlur}
-        error={
-          (touched.description || values.description.length > 0) &&
-          !!errors.description
-        }
-        helperText={
-          touched.description || values.description.length > 0
-            ? errors.description
-            : undefined
-        }
+        {...fieldErrorProps({ name: "description", touched, errors })}
       />
       <FormSelector variant="category" />
-      <FormSelector variant="frequency" />
-      <ProjectSelector />
-      <FormTextField
-        name="durationMinutes"
-        label="Dauer (Minuten)"
-        value={values.durationMinutes ?? ""}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        error={
-          (touched.durationMinutes || (values.durationMinutes ?? 0) > 0) &&
-          !!errors.durationMinutes
-        }
-        helperText={
-          touched.durationMinutes || (values.durationMinutes ?? 0) > 0
-            ? errors.durationMinutes
-            : undefined
-        }
-      />
-      <FormDateField name="startDate" label="Startdatum" />
-      <FormTimeField
-        name="startTimeOfDay"
-        label="Startzeit"
-        value={values.startTimeOfDay}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        error={
-          (touched.startTimeOfDay || values.startTimeOfDay.length > 0) &&
-          !!errors.startTimeOfDay
-        }
-        helperText={
-          touched.startTimeOfDay || values.startTimeOfDay.length > 0
-            ? errors.startTimeOfDay
-            : undefined
-        }
-      />
+    </>
+  );
+}
 
+type DetailFieldsProps = {
+  values: FormValues;
+};
+
+/** Frequenz, Fälligkeitsdatum, Dauer, Projekt, Start - optionale/defaultierte Felder (Step 2 beim Add-Dialog, "Weitere Details" beim Edit-Dialog). */
+export function TaskDetailFields({ values }: DetailFieldsProps) {
+  const { setFieldValue } = useFormikContext<FormValues>();
+
+  // Wechselt die Frequenz auf wiederkehrend, während Start noch leer ist,
+  // wird "jetzt" sichtbar vorbelegt statt den Anker erst beim Absenden still
+  // zu setzen (siehe utils/taskFormDefaults.ts) - eine wiederkehrende Aufgabe
+  // ohne startTime würde im Kalender sonst nie erscheinen (occursOn).
+  useEffect(() => {
+    const isRecurring =
+      values.frequency !== "" && values.frequency !== TaskFrequency.ONCE;
+
+    if (!isRecurring || values.startDate) return;
+
+    const rounded = roundUpToQuarterHour(new Date());
+    const pad = (n: number) => String(n).padStart(2, "0");
+
+    setFieldValue("startDate", toDateOnlyString(rounded));
+    setFieldValue(
+      "startTimeOfDay",
+      `${pad(rounded.getHours())}:${pad(rounded.getMinutes())}`
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [values.frequency]);
+
+  return (
+    <>
+      <FormSelector variant="frequency" />
       <FormDateField
         name="dateUntil"
         label={
@@ -118,7 +131,9 @@ function Form({
             : "Wiederholt bis"
         }
       />
-    </FormikForm>
+      <FormDurationField />
+      <ProjectSelector />
+      <FormDateTimeField label="Start" />
+    </>
   );
 }
-export default Form;

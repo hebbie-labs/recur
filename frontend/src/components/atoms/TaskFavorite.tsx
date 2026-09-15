@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 type TaskFavoriteProps = {
   isFavorite: boolean;
-  onClick: (e: React.MouseEvent) => void;
+  onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
 };
 
 function TaskFavorite({ isFavorite, onClick }: TaskFavoriteProps) {

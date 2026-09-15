@@ -1,0 +1,114 @@
+# .github/workflows/deploy.yml
+name: build-and-deploy
+on:
+  push:
+    branches: [dev]
+    tags: ["v*", "coming-soon-*"]
+  workflow_dispatch: {}
+
+# GITHUB_TOKEN needs explicit packages:write, or GHCR push fails on repos
+# where default token permissions are read-only.
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: set tag
+        id: tag
+        run: |
+          # deploy-prod/deploy-dev always pull a fixed tag (":latest"/":dev")
+          # from compose.yml, so every build also pushes that moving tag
+          # alongside the immutable one (the git tag for prod releases).
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "env=prod" >> $GITHUB_OUTPUT
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            echo "moving_tag=latest" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == refs/tags/coming-soon-* ]]; then
+            echo "env=coming-soon" >> $GITHUB_OUTPUT
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            echo "moving_tag=coming-soon" >> $GITHUB_OUTPUT
+          else
+            echo "env=dev" >> $GITHUB_OUTPUT
+            echo "tag=dev" >> $GITHUB_OUTPUT
+            echo "moving_tag=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ghcr.io/lelelon225/recur-backend:${{ steps.tag.outputs.tag }}
+            ghcr.io/lelelon225/recur-backend:${{ steps.tag.outputs.moving_tag }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ghcr.io/lelelon225/recur-frontend:${{ steps.tag.outputs.tag }}
+            ghcr.io/lelelon225/recur-frontend:${{ steps.tag.outputs.moving_tag }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./database
+          push: true
+          tags: |
+            ghcr.io/lelelon225/recur-db:${{ steps.tag.outputs.tag }}
+            ghcr.io/lelelon225/recur-db:${{ steps.tag.outputs.moving_tag }}
+
+  deploy-dev:
+    needs: build
+    if: github.ref == 'refs/heads/dev'
+    runs-on: [self-hosted, homelab]
+    steps:
+      # GHCR packages are private by default - the build job's login only
+      # covers its own (github-hosted) docker daemon, so this runner needs
+      # its own login before it can pull.
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - run: docker compose -f /opt/recur/compose.yml pull backend-dev frontend-dev db-dev
+      - run: docker compose -f /opt/recur/compose.yml up -d backend-dev frontend-dev db-dev
+
+  deploy-prod:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: [self-hosted, homelab]
+    environment: production # requires manual approval, see below
+    steps:
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - run: docker compose -f /opt/recur/compose.yml pull backend-prod frontend-prod db-prod
+      - run: docker compose -f /opt/recur/compose.yml up -d backend-prod frontend-prod db-prod
+
+  deploy-www:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/coming-soon-')
+    runs-on: [self-hosted, homelab]
+    steps:
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      # frontend-www is COMING_SOON_MODE-gated (no real user data behind it),
+      # so unlike deploy-prod this doesn't need manual approval - and it
+      # needs no backend/db, see compose.deployment.yml.
+      - run: docker compose -f /opt/recur/compose.yml pull frontend-www
+      - run: docker compose -f /opt/recur/compose.yml up -d frontend-www

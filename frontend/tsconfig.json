@@ -1,13 +1,46 @@
 {
-  "files": [],
   "compilerOptions": {
-    "baseUrl": ".",
+    "target": "ES2023",
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "moduleDetection": "force",
+    "jsx": "react-jsx",
+    "verbatimModuleSyntax": false,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "incremental": true,
+    "strict": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
     "paths": {
-      "@/*": ["./src/*"]
-    }
+      "@/*": [
+        "./src/*"
+      ]
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "allowJs": true
   },
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
   ]
 }

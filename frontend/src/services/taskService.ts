@@ -49,6 +49,7 @@ export interface Task {
   daysInSpan?: number | null;
   amountDid?: number | null;
   isFavorite?: boolean | null;
+  isArchived: boolean;
   durationMinutes?: number | null;
   startTime?: string | null;
   /** Gesetzt <=> geteiltes Item eines Gruppen-Projekts statt persönlicher Task. */
@@ -58,7 +59,13 @@ export interface Task {
 }
 
 /** Fields the server owns and the client must never send on create/patch. */
-export type ServerOwnedFields = "id" | "dateCreated" | "updatedAt" | "project" | "completedBy";
+export type ServerOwnedFields =
+  | "id"
+  | "dateCreated"
+  | "updatedAt"
+  | "project"
+  | "completedBy"
+  | "isArchived";
 
 /** Payload shape for creating a new task (no id/dateCreated yet). */
 export type NewTask = Omit<Task, ServerOwnedFields> & { projectId?: string | null };

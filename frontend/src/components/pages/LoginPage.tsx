@@ -1,5 +1,6 @@
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import LoginForm from "@/components/organisms/LoginForm";
+import LegalFooterLinks from "@/components/molecules/LegalFooterLinks";
 import { Card, CardContent } from "../ui/card";
 import { useLoginForm } from "@/hooks/useLoginForm";
 import { Formik } from "formik";
@@ -15,12 +16,12 @@ const loginSchema = yup.object().shape({
 });
 
 function LoginPage() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { handleSubmit, submitDisabled, loading, backendError } =
     useLoginForm();
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-background w-full h-full px-4 py-8">
+    <div className="flex min-h-svh flex-col items-center justify-center bg-background w-full h-full px-4 py-8">
       <Card className="w-full max-w-md border-none shadow-lg">
         <CardContent className="p-6">
           <Formik<LoginRequest>
@@ -37,7 +38,7 @@ function LoginPage() {
               touched,
             }) => (
               <LoginForm
-                navigate={() => navigate("/register")}
+                navigate={() => router.push("/register")}
                 onSubmit={formikHandleSubmit}
                 values={values}
                 errors={errors}
@@ -52,6 +53,7 @@ function LoginPage() {
           </Formik>
         </CardContent>
       </Card>
+      <LegalFooterLinks />
     </div>
   );
 }

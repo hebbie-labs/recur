@@ -1,6 +1,5 @@
-import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem } from "@/components/ui/sidebar";
+import { SidebarGroup, SidebarGroupLabel, SidebarMenu } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import DarkModeToggle from "@/components/atoms/DarkModeToggle";
 import SidebarSettingsItem from "@/components/molecules/SidebarSettingsItem";
 import type { LucideIcon } from "lucide-react";
 
@@ -19,9 +18,6 @@ function SidebarSettingsGroup({ SettingsItem }: SidebarSettingsGroupProps) {
             <SidebarGroupLabel>Einstellungen</SidebarGroupLabel>
                 <Separator className="my-2" />
                     <SidebarMenu>
-                        <SidebarMenuItem>
-                            <DarkModeToggle />
-                        </SidebarMenuItem>
                             {SettingsItem.map((item, index) => (
                                 <SidebarSettingsItem
                                     key={index}

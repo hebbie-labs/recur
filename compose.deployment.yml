@@ -1,0 +1,158 @@
+# Deployment compose for the self-hosted home server (reached from the
+# internet via a Cloudflare Tunnel pointed at the frontend containers'
+# published ports below - nothing else needs to be publicly reachable).
+#
+# This represents /opt/recur/compose.yml, which .github/workflows/deploy.yml
+# expects to already exist on the self-hosted runner and drives with:
+#   docker compose -f /opt/recur/compose.yml pull backend-dev frontend-dev db-dev
+#   docker compose -f /opt/recur/compose.yml up -d backend-dev frontend-dev db-dev
+# (and the -prod equivalents on a version tag push). Service names below
+# match those exactly - do not rename them without also updating that
+# workflow. Until now that file only existed on the host itself, hand-
+# edited and un-reviewed; this brings it into version control as the
+# source of truth. Whoever manages the host needs to copy this file to
+# /opt/recur/compose.yml (or point the deploy workflow at a synced copy)
+# for it to actually take effect - this repo change alone doesn't do that.
+#
+# All three services (backend/frontend/db) are pre-built images pulled from
+# GHCR - the host needs no repo source checked out, only this compose.yml
+# and the ".env" described below. The db image bakes in the schema/seed
+# init scripts from ./database (see that directory's Dockerfile) at build
+# time in CI; it is never built on the host.
+#
+# No secret or credential value is hardcoded here - everything sensitive is
+# a ${VARIABLE} that Docker Compose resolves from a ".env" file sitting next
+# to this one on the host (NOT this repo's frontend/.env or backend/.env,
+# and NOT committed - Compose reads a file literally named ".env" in the
+# same directory as this file by default). It needs:
+#   DEV_DB_PASSWORD, PROD_DB_PASSWORD          - Postgres passwords, one per environment
+#   DEV_JWT_SECRET, PROD_JWT_SECRET            - backend JWT signing secrets
+#   DEV_GOOGLE_CLIENT_ID, DEV_GOOGLE_CLIENT_SECRET,
+#   PROD_GOOGLE_CLIENT_ID, PROD_GOOGLE_CLIENT_SECRET  - Google OAuth2 app credentials
+#   DEV_PUBLIC_ORIGIN, PROD_PUBLIC_ORIGIN      - the public hostnames below (Cloudflare Tunnel), e.g. https://dev.recur.example.com
+# Generate real values for all of these before running this file for real -
+# the point of ${...} here is that a plain `docker compose up` without that
+# .env file fails loudly (missing required value) instead of silently
+# running with a guessable default.
+#
+# Ports are deliberately non-default and split per environment so dev and
+# prod can run side by side without colliding with each other or with any
+# other service on the same host:
+#   frontend-dev  -> host 3080  (container 3000)
+#   frontend-prod -> host 3081  (container 3000)
+#   frontend-www  -> host 3082  (container 3000)
+#   db-dev        -> host 5480  (container 5432, for direct psql/debugging)
+#   db-prod       -> host 5481  (container 5432, for direct psql/debugging)
+# backend-dev/backend-prod publish no host port at all - the frontend
+# containers are the only public-facing service; they reach their paired
+# backend purely over the internal compose network (see BACKEND_URL below),
+# and src/proxy.ts forwards /api, /oauth2, and /login/oauth2 to it from
+# there. Adjust the host ports here (and the Cloudflare Tunnel config,
+# which lives outside this repo) if they clash with something else already
+# running on the host.
+#
+# frontend-www is the public www./main placeholder: a frontend image with
+# COMING_SOON_MODE=true - proxy.ts then redirects every request (API/OAuth2
+# paths included, except /impressum and /datenschutz) to /coming-soon, so it
+# needs no backend or db of its own. deploy.yml's deploy-www job builds and
+# pulls it automatically on a `coming-soon-*` tag push (its own release
+# channel, independent of dev/prod - see the image tag comment below); the
+# Cloudflare Tunnel route pointing at it is still manual, set up once.
+
+services:
+  backend-dev:
+    image: ghcr.io/lelelon225/recur-backend:dev
+    container_name: recur-backend-dev
+    restart: unless-stopped
+    environment:
+      DB_URL: jdbc:postgresql://db-dev:5432/recur
+      DB_USERNAME: postgres
+      DB_PASSWORD: ${DEV_DB_PASSWORD:?DEV_DB_PASSWORD is required}
+      JWT_SECRET: ${DEV_JWT_SECRET:?DEV_JWT_SECRET is required}
+      GOOGLE_CLIENT_ID: ${DEV_GOOGLE_CLIENT_ID:?DEV_GOOGLE_CLIENT_ID is required}
+      GOOGLE_CLIENT_SECRET: ${DEV_GOOGLE_CLIENT_SECRET:?DEV_GOOGLE_CLIENT_SECRET is required}
+      CORS_ALLOWED_ORIGIN: ${DEV_PUBLIC_ORIGIN:?DEV_PUBLIC_ORIGIN is required}
+    depends_on:
+      - db-dev
+
+  frontend-dev:
+    image: ghcr.io/lelelon225/recur-frontend:dev
+    container_name: recur-frontend-dev
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: /api
+      BACKEND_URL: http://backend-dev:8080
+    ports:
+      - "3080:3000"
+    depends_on:
+      - backend-dev
+
+  db-dev:
+    image: ghcr.io/lelelon225/recur-db:dev
+    container_name: recur-db-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DEV_DB_PASSWORD:?DEV_DB_PASSWORD is required}
+      POSTGRES_DB: recur
+    ports:
+      - "5480:5432"
+    volumes:
+      - recur-db-dev-data:/var/lib/postgresql/data
+
+  backend-prod:
+    image: ghcr.io/lelelon225/recur-backend:latest
+    container_name: recur-backend-prod
+    restart: unless-stopped
+    environment:
+      DB_URL: jdbc:postgresql://db-prod:5432/recur
+      DB_USERNAME: postgres
+      DB_PASSWORD: ${PROD_DB_PASSWORD:?PROD_DB_PASSWORD is required}
+      JWT_SECRET: ${PROD_JWT_SECRET:?PROD_JWT_SECRET is required}
+      GOOGLE_CLIENT_ID: ${PROD_GOOGLE_CLIENT_ID:?PROD_GOOGLE_CLIENT_ID is required}
+      GOOGLE_CLIENT_SECRET: ${PROD_GOOGLE_CLIENT_SECRET:?PROD_GOOGLE_CLIENT_SECRET is required}
+      CORS_ALLOWED_ORIGIN: ${PROD_PUBLIC_ORIGIN:?PROD_PUBLIC_ORIGIN is required}
+    depends_on:
+      - db-prod
+
+  frontend-prod:
+    image: ghcr.io/lelelon225/recur-frontend:latest
+    container_name: recur-frontend-prod
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: /api
+      BACKEND_URL: http://backend-prod:8080
+    ports:
+      - "3081:3000"
+    depends_on:
+      - backend-prod
+
+  db-prod:
+    image: ghcr.io/lelelon225/recur-db:latest
+    container_name: recur-db-prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${PROD_DB_PASSWORD:?PROD_DB_PASSWORD is required}
+      POSTGRES_DB: recur
+    ports:
+      - "5481:5432"
+    volumes:
+      - recur-db-prod-data:/var/lib/postgresql/data
+
+  frontend-www:
+    # :coming-soon - the moving tag deploy.yml's build job pushes on every
+    # `coming-soon-*` tag push (see deploy-www). Independent of :dev/:latest
+    # since the underlying app version is moot while COMING_SOON_MODE gates
+    # every route before it matters.
+    image: ghcr.io/lelelon225/recur-frontend:coming-soon
+    container_name: recur-frontend-www
+    restart: unless-stopped
+    environment:
+      COMING_SOON_MODE: "true"
+    ports:
+      - "3082:3000"
+
+volumes:
+  recur-db-dev-data:
+  recur-db-prod-data:

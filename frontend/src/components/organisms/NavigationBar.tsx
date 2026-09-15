@@ -45,7 +45,7 @@ function NavigationBar({ destinations, className }: NavigationBarProps) {
               )}
             >
               <span className="[&>svg]:h-5 [&>svg]:w-5 sm:[&>svg]:h-6 sm:[&>svg]:w-6 transition-transform duration-200 group-data-[state=active]:-translate-y-0.5">
-                {destination.icon}
+                <destination.icon />
               </span>
               <span className="text-[10px] sm:text-xs font-medium leading-none">
                 {destination.label}

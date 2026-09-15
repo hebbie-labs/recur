@@ -18,7 +18,7 @@ Track your habits and routines with ease. Recur is a simple, intuitive habit tra
 ## How to Use Recur
 
 1. **Download and Install**:
-   - Visit the [Recur GitHub repository](https://github.com/rem1706/recur.git)
+   - Visit the [Recur GitHub repository](https://github.com/lelelon225/recur.git)
    - Clone the repository or download the latest release for your platform.
    - Follow the installation instructions provided for your specific operating system.
 

@@ -6,6 +6,7 @@ import {
   showSuccessToast,
   showWarningToast,
 } from "@/lib/toast";
+import { resolveStartTime } from "@/utils/taskFormDefaults";
 
 export type EditableTaskFields = Pick<
   Task,
@@ -86,10 +87,11 @@ function useEditTaskForm({
 
       setLoading(true);
 
-      const startTimeIso =
-        values.startDate && values.startTimeOfDay
-          ? new Date(`${values.startDate}T${values.startTimeOfDay}`).toISOString()
-          : null;
+      const startTimeIso = resolveStartTime(
+        values.startDate,
+        values.startTimeOfDay,
+        values.frequency
+      );
 
       const { startDate, startTimeOfDay, projectId, ...restValues } = values;
 

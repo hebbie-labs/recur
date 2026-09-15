@@ -9,7 +9,9 @@ import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon
 // folgt, unabhängig davon, welche Komponente ihn umschaltet.
 function useAppTheme(): "light" | "dark" {
   const [isDark, setIsDark] = useState(
-    () => document.documentElement.classList.contains("dark")
+    () =>
+      typeof document !== "undefined" &&
+      document.documentElement.classList.contains("dark")
   )
 
   useEffect(() => {

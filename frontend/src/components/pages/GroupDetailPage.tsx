@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useRouter, useParams } from "next/navigation";
 import { LinkIcon, PlusIcon, TrashIcon, ArchiveIcon, ArchiveRestoreIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -18,7 +18,7 @@ function initials(firstName: string, lastName: string) {
 
 function GroupDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const router = useRouter();
   const { user } = useAuth();
   const { groups, projectsByGroupId, loading, leaveGroup, removeMember, deleteGroup, patchProject, deleteProject } =
     useGroupsContext();
@@ -27,6 +27,18 @@ function GroupDetailPage() {
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [confirmDeleteGroupOpen, setConfirmDeleteGroupOpen] = useState(false);
   const [confirmDeleteProjectId, setConfirmDeleteProjectId] = useState<string | null>(null);
+
+  // window.location.origin doesn't exist during Next's server-render pass
+  // for this route (it's server-rendered on demand, not statically
+  // prerendered) - starts empty and fills in once mounted client-side.
+  const [origin, setOrigin] = useState("");
+  useEffect(() => {
+    // Intentional: window.location.origin can only be read after mount -
+    // no synchronous SSR-safe equivalent exists (unlike next/navigation's
+    // searchParams, which Next provides consistently on both sides).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setOrigin(window.location.origin);
+  }, []);
 
   const group = groups.find((g) => g.id === id);
   const projects = useMemo(() => projectsByGroupId[id ?? ""] ?? [], [projectsByGroupId, id]);
@@ -41,7 +53,7 @@ function GroupDetailPage() {
   // entfernt - dann zurück zur Übersicht statt eine leere Seite zu zeigen.
   // Löscht/verlässt man die Gruppe selbst, verschwindet "group" genauso, daher
   // unterdrückt selfInitiatedRemovalRef den Hinweis für den eigenen Aktions-Flow
-  // (der bereits seinen eigenen Erfolgs-Toast + navigate erledigt).
+  // (der bereits seinen eigenen Erfolgs-Toast + router.push erledigt).
   const hadGroupRef = useRef(false);
   const selfInitiatedRemovalRef = useRef(false);
   useEffect(() => {
@@ -52,17 +64,17 @@ function GroupDetailPage() {
     if (!loading && hadGroupRef.current) {
       if (!selfInitiatedRemovalRef.current) {
         showInfoToast("Diese Gruppe ist nicht mehr verfügbar - sie wurde gelöscht oder du wurdest entfernt.");
-        navigate("/groups");
+        router.push("/groups");
       }
       hadGroupRef.current = false;
     }
-  }, [group, loading, navigate]);
+  }, [group, loading, router]);
 
   if (!group || !id) {
     return null;
   }
 
-  const inviteLink = `${window.location.origin}/groups/join/${group.inviteCode}`;
+  const inviteLink = `${origin}/groups/join/${group.inviteCode}`;
 
   const handleCopyInviteLink = async () => {
     try {
@@ -78,7 +90,7 @@ function GroupDetailPage() {
       if (memberId === user?.id) {
         selfInitiatedRemovalRef.current = true;
         await leaveGroup(id);
-        navigate("/groups");
+        router.push("/groups");
         return;
       }
       await removeMember(id, memberId);
@@ -94,7 +106,7 @@ function GroupDetailPage() {
       selfInitiatedRemovalRef.current = true;
       await deleteGroup(id);
       showSuccessToast("Gruppe gelöscht.");
-      navigate("/groups");
+      router.push("/groups");
     } catch (err) {
       selfInitiatedRemovalRef.current = false;
       showErrorToast(err instanceof Error ? err.message : "Fehler beim Löschen der Gruppe.");
