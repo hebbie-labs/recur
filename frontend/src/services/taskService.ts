@@ -44,6 +44,8 @@ export interface Task {
   dateUntil: string;
   progress: number;
   dateCreated: string;
+  /** Vom Server bei jedem Save neu gesetzt - Basis für den Sync-Merge (Last-Write-Wins). */
+  updatedAt?: string | null;
   daysInSpan?: number | null;
   amountDid?: number | null;
   isFavorite?: boolean | null;
@@ -56,7 +58,7 @@ export interface Task {
 }
 
 /** Fields the server owns and the client must never send on create/patch. */
-export type ServerOwnedFields = "id" | "dateCreated" | "project" | "completedBy";
+export type ServerOwnedFields = "id" | "dateCreated" | "updatedAt" | "project" | "completedBy";
 
 /** Payload shape for creating a new task (no id/dateCreated yet). */
 export type NewTask = Omit<Task, ServerOwnedFields> & { projectId?: string | null };

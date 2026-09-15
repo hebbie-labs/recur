@@ -27,6 +27,8 @@ type GroupsContextValue = {
   projectsByGroupId: Record<string, Project[]>;
   loading: boolean;
   fetchGroups: () => Promise<void>;
+  /** Für den Auto-Sync-Poll: kein loading-Flicker, wirft bei Fehler statt showBoundary. */
+  syncGroups: () => Promise<void>;
   createGroup: (name: string) => Promise<Group>;
   deleteGroup: (groupId: string) => Promise<void>;
   leaveGroup: (groupId: string) => Promise<void>;
@@ -51,25 +53,41 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
   const { showBoundary } = useErrorBoundary();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
+  const loadGroupsAndProjects = useCallback(async () => {
+    const fetchedGroups = await getGroups();
+    const projectEntries = await Promise.all(
+      fetchedGroups.map(async (group) => {
+        const projects = await getProjects(group.id);
+        return [group.id, projects] as const;
+      })
+    );
+    return {
+      fetchedGroups,
+      fetchedProjectsByGroupId: Object.fromEntries(projectEntries),
+    };
+  }, []);
+
   const fetchGroups = useCallback(async () => {
     try {
       setLoading(true);
-      const fetchedGroups = await getGroups();
+      const { fetchedGroups, fetchedProjectsByGroupId } = await loadGroupsAndProjects();
       setGroups(fetchedGroups);
-
-      const projectEntries = await Promise.all(
-        fetchedGroups.map(async (group) => {
-          const projects = await getProjects(group.id);
-          return [group.id, projects] as const;
-        })
-      );
-      setProjectsByGroupId(Object.fromEntries(projectEntries));
+      setProjectsByGroupId(fetchedProjectsByGroupId);
     } catch (err) {
       showBoundary(err);
     } finally {
       setLoading(false);
     }
-  }, [showBoundary]);
+  }, [showBoundary, loadGroupsAndProjects]);
+
+  // Auto-Sync-Poll: Gruppen/Projekte haben kein updatedAt, daher reicht ein
+  // simples Ersetzen statt Merge - anders als bei Tasks gibt es hier keine
+  // langlebigen optimistischen lokalen Updates, die dadurch verloren gehen könnten.
+  const syncGroups = useCallback(async () => {
+    const { fetchedGroups, fetchedProjectsByGroupId } = await loadGroupsAndProjects();
+    setGroups(fetchedGroups);
+    setProjectsByGroupId(fetchedProjectsByGroupId);
+  }, [loadGroupsAndProjects]);
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -165,6 +183,7 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
     projectsByGroupId,
     loading,
     fetchGroups,
+    syncGroups,
     createGroup,
     deleteGroup,
     leaveGroup,

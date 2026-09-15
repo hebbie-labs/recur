@@ -48,9 +48,9 @@ function CalendarWeekView({
   return (
     <div className="overflow-hidden rounded-xl border border-border">
       <div
-        className="relative grid overflow-x-auto"
+        className="relative grid"
         style={{
-          gridTemplateColumns: "56px repeat(7, minmax(120px, 1fr))",
+          gridTemplateColumns: `56px repeat(${days.length}, minmax(0, 1fr))`,
           gridTemplateRows: `auto repeat(${HOURS.length * 4}, 15px)`,
         }}
       >

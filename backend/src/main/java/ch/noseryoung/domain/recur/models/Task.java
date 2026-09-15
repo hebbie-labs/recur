@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.*;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import ch.noseryoung.domain.recur.enums.Category;
 import ch.noseryoung.domain.recur.enums.Frequency;
@@ -65,6 +66,13 @@ public class Task {
         @CreationTimestamp
         @Column(name = "date_created", updatable = false)
         private Instant dateCreated;
+
+        // Wird bei jedem Save automatisch neu gesetzt (Hibernate). Dient dem
+        // Frontend-Polling als Last-Write-Wins-Vergleichswert, damit ein Sync-Poll
+        // laufende optimistische UI-Updates nicht überschreibt.
+        @UpdateTimestamp
+        @Column(name = "updated_at")
+        private Instant updatedAt;
 
         @Column(name = "days_in_span")
         private Integer daysInSpan;

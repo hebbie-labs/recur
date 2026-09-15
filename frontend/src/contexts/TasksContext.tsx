@@ -27,6 +27,8 @@ type TasksContextValue = {
   handleToggleDone: (taskId: string) => Promise<void>;
   handleUpdateTask: (updatedTask: Task) => void;
   fetchTasks: () => Promise<void>;
+  /** Für den Auto-Sync-Poll: merged statt zu überschreiben, wirft bei Fehler statt showBoundary. */
+  syncTasks: () => Promise<void>;
 };
 
 const TasksContext = createContext<TasksContextValue | null>(null);
@@ -53,6 +55,29 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     }
   }, [showBoundary]);
+
+  // Last-Write-Wins-Merge für den Auto-Sync-Poll: ein vom Server geholter Task
+  // ersetzt den lokalen Stand nur, wenn sein updatedAt neuer ist. So überschreibt
+  // ein Poll kein laufendes optimistisches Update (z.B. "erledigt"-Toggle), dessen
+  // PATCH-Response server-seitig noch nicht verarbeitet wurde. Tasks, die im
+  // Poll-Ergebnis fehlen, wurden von jemand anderem gelöscht und fallen raus.
+  const mergeTasks = useCallback((incoming: Task[]) => {
+    setTasks((prev) => {
+      const prevById = new Map(prev.map((t) => [t.id, t]));
+      return incoming.map((next) => {
+        const existing = prevById.get(next.id);
+        if (!existing) return next;
+        const existingTime = existing.updatedAt ? Date.parse(existing.updatedAt) : 0;
+        const nextTime = next.updatedAt ? Date.parse(next.updatedAt) : 0;
+        return nextTime > existingTime ? next : existing;
+      });
+    });
+  }, []);
+
+  const syncTasks = useCallback(async () => {
+    const fetchedTasks = await getTasks();
+    mergeTasks(fetchedTasks);
+  }, [mergeTasks]);
 
   // Erst laden, sobald der AuthContext fertig gebootstrapped ist UND ein
   // gültiger User eingeloggt ist. Vorher/ohne Login gäbe es 401s, die den
@@ -174,6 +199,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     handleToggleDone,
     handleUpdateTask,
     fetchTasks,
+    syncTasks,
   };
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;

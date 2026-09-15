@@ -16,6 +16,7 @@ import CalendarGrid from "./components/pages/CalendarPage";
 import GroupsPage from "./components/pages/GroupsPage";
 import GroupDetailPage from "./components/pages/GroupDetailPage";
 import JoinGroupPage from "./components/pages/JoinGroupPage";
+import { useAutoSync } from "./hooks/useAutoSync";
 
 function OAuthErrorPage() {
   const [searchParams] = useSearchParams();
@@ -34,6 +35,7 @@ function OAuthErrorPage() {
 
 function App() {
   const navigate = useNavigate();
+  useAutoSync();
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />

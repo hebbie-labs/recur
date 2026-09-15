@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { addWeeks, addMonths, format } from "date-fns";
+import { addWeeks, addMonths, addDays, isSameDay, format } from "date-fns";
 import { de } from "date-fns/locale";
-import { ArrowRight, ArrowLeft } from "lucide-react";
+import { ArrowRight, ArrowLeft, Menu, CalendarDays } from "lucide-react";
 import { useTasksContext } from "@/contexts/TasksContext";
 import { useAddTask } from "@/contexts/AddTaskContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { TaskCategory, type Task, type TaskCategory as TaskCategoryType } from "@/services/taskService";
 import { categoryLabels, frequencyLabels, ALL_CATEGORIES_LABEL } from "@/lib/taskCategoryStyles";
 import {
@@ -12,16 +13,20 @@ import {
   getWeekLabel,
   getMonthLabel,
   categoryDot,
+  type CalendarDay,
 } from "@/utils/calendarGrid";
 import { toDateOnlyString } from "@/utils/formatDate";
 import { showSuccessToast } from "@/lib/toast";
+import { cn } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import ProgressIndicator from "@/components/atoms/ProgressIndicator";
 import DetailDialog from "@/components/molecules/DetailDialog";
 import TaskCardMenu from "@/components/organisms/TaskCardMenu";
 import CalendarWeekView from "@/components/organisms/CalendarWeekView";
 import CalendarMonthView from "@/components/organisms/CalendarMonthView";
+import CalendarDayStrip from "@/components/organisms/CalendarDayStrip";
 
 type ViewMode = "month" | "week";
 
@@ -36,6 +41,7 @@ function CalendarGrid() {
     handleUpdateTask,
   } = useTasksContext();
   const { openAddTaskForm } = useAddTask();
+  const isMobile = useIsMobile();
 
   const [view, setView] = useState<ViewMode>("month");
   const [anchorDate, setAnchorDate] = useState(new Date());
@@ -43,6 +49,7 @@ function CalendarGrid() {
     "All"
   );
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [quickNavOpen, setQuickNavOpen] = useState(false);
   const selectedTask: Task | null = selectedTaskId
     ? tasks.find((task) => task.id === selectedTaskId) ?? null
     : null;
@@ -58,11 +65,32 @@ function CalendarGrid() {
   }
 
   function goPrev() {
-    setAnchorDate((d) => (view === "month" ? addMonths(d, -1) : addWeeks(d, -1)));
+    setAnchorDate((d) => {
+      if (view === "month") return addMonths(d, -1);
+      // Mobile Wochenansicht zeigt nur einen Tag auf einmal (siehe
+      // CalendarDayStrip) - dort blättern die Pfeile tagweise statt wochenweise.
+      if (isMobile) return addDays(d, -1);
+      return addWeeks(d, -1);
+    });
   }
 
   function goNext() {
-    setAnchorDate((d) => (view === "month" ? addMonths(d, 1) : addWeeks(d, 1)));
+    setAnchorDate((d) => {
+      if (view === "month") return addMonths(d, 1);
+      if (isMobile) return addDays(d, 1);
+      return addWeeks(d, 1);
+    });
+  }
+
+  // Eigene Monats-Navigation für den Mini-Kalender (Popover auf Mobile,
+  // permanente Sidebar auf Desktop) - unabhängig von goPrev/goNext, die je
+  // nach Ansicht/Gerät wochen- oder tagweise blättern.
+  function miniCalPrev() {
+    setAnchorDate((d) => addMonths(d, -1));
+  }
+
+  function miniCalNext() {
+    setAnchorDate((d) => addMonths(d, 1));
   }
 
   function handleSelectDay(date: Date) {
@@ -74,6 +102,35 @@ function CalendarGrid() {
       startDate: toDateOnlyString(date),
       startTimeOfDay: `${String(hour).padStart(2, "0")}:00`,
     });
+  }
+
+  function handleSelectWeek(days: CalendarDay[]) {
+    setAnchorDate(days[0].date);
+    setView("week");
+  }
+
+  // Tag-Auswahl im Schnellsprung-Popover: nur navigieren (Wochenansicht mit
+  // diesem Tag zeigen), im Gegensatz zu handleSelectDay im Hauptgrid, das
+  // direkt "Task hinzufügen" öffnet.
+  function handleQuickNavigateToDay(date: Date) {
+    setAnchorDate(date);
+    setView("week");
+    setQuickNavOpen(false);
+  }
+
+  function handleQuickNavigateToWeek(days: CalendarDay[]) {
+    handleSelectWeek(days);
+    setQuickNavOpen(false);
+  }
+
+  function handleQuickNavigateToTask(task: Task) {
+    setSelectedTaskId(task.id);
+    setQuickNavOpen(false);
+  }
+
+  function goToTodayAndNavigate() {
+    goToday();
+    setQuickNavOpen(false);
   }
 
   if (loading) {
@@ -89,54 +146,172 @@ function CalendarGrid() {
   const label = view === "month" ? getMonthLabel(anchorDate) : getWeekLabel(weekDays);
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-0.5 rounded-full border border-border p-0.5">
+    <div className={cn("flex gap-6", isMobile && "flex-col gap-5")}>
+      {!isMobile && (
+        <aside className="flex w-72 shrink-0 flex-col gap-3">
+          <div className="flex items-center justify-between gap-2 px-1">
             <Button
               variant="ghost"
               size="icon-sm"
               className="rounded-full"
-              onClick={goPrev}
+              onClick={miniCalPrev}
               aria-label="Zurück"
             >
               <ArrowLeft className="size-4" />
             </Button>
+            <span className="text-sm font-semibold capitalize">
+              {getMonthLabel(anchorDate)}
+            </span>
             <Button
               variant="ghost"
               size="icon-sm"
               className="rounded-full"
-              onClick={goNext}
+              onClick={miniCalNext}
               aria-label="Weiter"
             >
               <ArrowRight className="size-4" />
             </Button>
           </div>
-          <Button variant="outline" size="sm" className="rounded-full" onClick={goToday}>
-            Heute
-          </Button>
-          <h2 className="text-xl font-semibold tracking-tight capitalize">{label}</h2>
-        </div>
+          <CalendarMonthView
+            compact
+            weeks={monthWeeks}
+            tasks={visibleTasks}
+            onSelectTask={handleQuickNavigateToTask}
+            onSelectDay={handleQuickNavigateToDay}
+            onSelectWeek={handleQuickNavigateToWeek}
+          />
+        </aside>
+      )}
 
-        <div className="flex items-center gap-0.5 rounded-full border border-border p-0.5">
-          <Button
-            variant={view === "month" ? "default" : "ghost"}
-            size="sm"
-            className="rounded-full"
-            onClick={() => setView("month")}
-          >
-            Monat
-          </Button>
-          <Button
-            variant={view === "week" ? "default" : "ghost"}
-            size="sm"
-            className="rounded-full"
-            onClick={() => setView("week")}
-          >
-            Woche
-          </Button>
+      <div className="flex min-w-0 flex-1 flex-col gap-5">
+      {isMobile ? (
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-2">
+            <Popover open={quickNavOpen} onOpenChange={setQuickNavOpen}>
+              <PopoverTrigger
+                render={
+                  <Button variant="ghost" size="icon-sm" aria-label="Schnellsprung öffnen">
+                    <Menu className="size-5" />
+                  </Button>
+                }
+              />
+              <PopoverContent align="start" className="w-[min(90vw,360px)] gap-3 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="rounded-full"
+                    onClick={miniCalPrev}
+                    aria-label="Zurück"
+                  >
+                    <ArrowLeft className="size-4" />
+                  </Button>
+                  <span className="text-sm font-semibold capitalize">
+                    {getMonthLabel(anchorDate)}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="rounded-full"
+                    onClick={miniCalNext}
+                    aria-label="Weiter"
+                  >
+                    <ArrowRight className="size-4" />
+                  </Button>
+                </div>
+                <CalendarMonthView
+                  compact
+                  weeks={monthWeeks}
+                  tasks={visibleTasks}
+                  onSelectTask={handleQuickNavigateToTask}
+                  onSelectDay={handleQuickNavigateToDay}
+                  onSelectWeek={handleQuickNavigateToWeek}
+                />
+              </PopoverContent>
+            </Popover>
+
+            <h2 className="truncate text-base font-semibold tracking-tight capitalize">
+              {getMonthLabel(anchorDate)}
+            </h2>
+
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={goToTodayAndNavigate}
+              aria-label="Heute anzeigen"
+            >
+              <CalendarDays className="size-5" />
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-0.5 self-start rounded-full border border-border p-0.5">
+            <Button
+              variant={view === "month" ? "default" : "ghost"}
+              size="sm"
+              className="rounded-full"
+              onClick={() => setView("month")}
+            >
+              Monat
+            </Button>
+            <Button
+              variant={view === "week" ? "default" : "ghost"}
+              size="sm"
+              className="rounded-full"
+              onClick={() => setView("week")}
+            >
+              Woche
+            </Button>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-0.5 rounded-full border border-border p-0.5">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="rounded-full"
+                onClick={goPrev}
+                aria-label="Zurück"
+              >
+                <ArrowLeft className="size-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="rounded-full"
+                onClick={goNext}
+                aria-label="Weiter"
+              >
+                <ArrowRight className="size-4" />
+              </Button>
+            </div>
+            <Button variant="outline" size="sm" className="rounded-full" onClick={goToday}>
+              Heute
+            </Button>
+            <h2 className="text-xl font-semibold tracking-tight capitalize">{label}</h2>
+          </div>
+
+          <div className="flex items-center gap-0.5 rounded-full border border-border p-0.5">
+            <Button
+              variant={view === "month" ? "default" : "ghost"}
+              size="sm"
+              className="rounded-full"
+              onClick={() => setView("month")}
+            >
+              Monat
+            </Button>
+            <Button
+              variant={view === "week" ? "default" : "ghost"}
+              size="sm"
+              className="rounded-full"
+              onClick={() => setView("week")}
+            >
+              Woche
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-1.5">
         <button
@@ -181,7 +356,22 @@ function CalendarGrid() {
           tasks={visibleTasks}
           onSelectTask={(task) => setSelectedTaskId(task.id)}
           onSelectDay={handleSelectDay}
+          onSelectWeek={handleSelectWeek}
         />
+      ) : isMobile ? (
+        <div className="flex flex-col gap-3">
+          <CalendarDayStrip
+            days={weekDays}
+            selectedDate={anchorDate}
+            onSelectDay={setAnchorDate}
+          />
+          <CalendarWeekView
+            days={[weekDays.find((day) => isSameDay(day.date, anchorDate)) ?? weekDays[0]]}
+            tasks={visibleTasks}
+            onSelectTask={(task) => setSelectedTaskId(task.id)}
+            onSelectSlot={handleSelectSlot}
+          />
+        </div>
       ) : (
         <CalendarWeekView
           days={weekDays}
@@ -277,6 +467,7 @@ function CalendarGrid() {
           </div>
         )}
       </DetailDialog>
+      </div>
     </div>
   );
 }
