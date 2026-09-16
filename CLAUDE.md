@@ -9,6 +9,7 @@ Recur — a full-stack habit/task tracker. Backend: Java 25 / Spring Boot 4.0.6 
 ## Commands
 
 Frontend (`frontend/`, package manager is **yarn**):
+
 - `yarn dev` — start dev server (port 3000)
 - `yarn build` — `next build`
 - `yarn typecheck` — `tsc --noEmit`
@@ -16,6 +17,7 @@ Frontend (`frontend/`, package manager is **yarn**):
 - No test script or test framework exists in the frontend.
 
 Backend (`backend/`, Gradle wrapper):
+
 - `./gradlew bootRun` — run (Windows: `gradlew.bat bootRun`)
 - `./gradlew build`
 - `./gradlew test` — **currently broken**: `RecurApplicationTests` lives in package `ch.noseryoung.recur`, but the `@SpringBootApplication` class is in `ch.noseryoung.domain` (a sibling, not an ancestor), so Spring's context scan can't find it. If this test fails, it's likely this pre-existing issue, not your change.
@@ -36,6 +38,7 @@ Postgres runs on host port **5436** (not 5432) — see `docker-compose.yml` and 
 
 ## Conventions
 
+- DONT CO-AUTHORE COMMITS!
 - Git: feature branches `feat/<Area>-<thing>` (or `feat/<Area>/<thing>`), merged into `dev`, which merges into `main`. Commits use a loose bracketed tag prefix, e.g. `[Added] ...`, `[Updated] ...`.
 - Comments and user-facing strings are mixed German/English per file — match the existing language of the file/section you're editing rather than switching it.
 - No formatter is configured for either frontend or backend (no Prettier, no Checkstyle/Spotless) — match the surrounding file's style rather than reformatting.
