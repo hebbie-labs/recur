@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import ch.noseryoung.domain.recur.dto.CreateGroupRequest;
 import ch.noseryoung.domain.recur.dto.GroupInvitePreview;
 import ch.noseryoung.domain.recur.exceptions.GroupNotFoundException;
 import ch.noseryoung.domain.recur.exceptions.NotGroupMemberException;
@@ -73,11 +74,11 @@ public class GroupService {
         return group;
     }
 
-    public ResponseEntity<TaskGroup> createGroup(TaskGroup group) {
+    public ResponseEntity<TaskGroup> createGroup(CreateGroupRequest request) {
         User currentUser = getCurrentUser();
 
         TaskGroup newGroup = TaskGroup.builder()
-                .name(group.getName())
+                .name(request.name())
                 .inviteCode(generateUniqueInviteCode())
                 .createdBy(currentUser)
                 .build();

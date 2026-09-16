@@ -13,18 +13,27 @@ import ch.noseryoung.domain.recur.enums.AuthProvider;
 import ch.noseryoung.domain.recur.exceptions.EmailAlreadyExistsException;
 import ch.noseryoung.domain.recur.exceptions.InvalidCredentialsException;
 import ch.noseryoung.domain.recur.models.User;
+import ch.noseryoung.domain.recur.repositories.NotificationSettingsRepository;
+import ch.noseryoung.domain.recur.repositories.UserPrivacySettingsRepository;
 import ch.noseryoung.domain.recur.repositories.UserRepository;
 import ch.noseryoung.domain.recur.security.JwtService;
+import io.jsonwebtoken.JwtException;
 
 @Service
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final UserPrivacySettingsRepository privacySettingsRepository;
+    private final NotificationSettingsRepository notificationSettingsRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public AuthService(UserRepository userRepository, UserPrivacySettingsRepository privacySettingsRepository,
+            NotificationSettingsRepository notificationSettingsRepository,
+            PasswordEncoder passwordEncoder, JwtService jwtService) {
         this.userRepository = userRepository;
+        this.privacySettingsRepository = privacySettingsRepository;
+        this.notificationSettingsRepository = notificationSettingsRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
     }
@@ -63,6 +72,28 @@ public class AuthService {
         return new AuthResponse(token, UserResponse.from(user));
     }
 
+    // Tauscht das kurzlebige HttpOnly-Handoff-Cookie (siehe
+    // OAuth2AuthenticationSuccessHandler) gegen die gleiche AuthResponse-Form
+    // wie beim normalen Login - der Token selbst wird dabei nicht neu
+    // ausgestellt, nur validiert und an den Client zurückgegeben.
+    public AuthResponse exchangeOAuth2Token(String token) {
+        String email;
+        try {
+            email = jwtService.extractEmail(token);
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new InvalidCredentialsException();
+        }
+
+        if (email == null || !jwtService.isTokenValid(token, email)) {
+            throw new InvalidCredentialsException();
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(InvalidCredentialsException::new);
+
+        return new AuthResponse(token, UserResponse.from(user));
+    }
+
     public UserResponse getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
@@ -95,6 +126,14 @@ public class AuthService {
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalStateException("Authentifizierter User nicht gefunden: " + email));
+
+        // Muss vor dem User gelöscht werden, sonst schlägt der Delete an der
+        // FK-Constraint von user_privacy_settings.user_id bzw.
+        // notification_settings.user_id fehl.
+        privacySettingsRepository.findByUserId(user.getId())
+                .ifPresent(privacySettingsRepository::delete);
+        notificationSettingsRepository.findByUserId(user.getId())
+                .ifPresent(notificationSettingsRepository::delete);
 
         userRepository.delete(user);
     }

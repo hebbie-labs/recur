@@ -1,5 +1,4 @@
 import { useRouter } from "next/navigation";
-import { GITHUB_REPO_URL } from "@/constants/links";
 
 function LegalFooterLinks() {
   const router = useRouter();
@@ -29,15 +28,6 @@ function LegalFooterLinks() {
       >
         AGB
       </button>
-      <span aria-hidden>•</span>
-      <a
-        href={GITHUB_REPO_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="hover:text-foreground hover:underline"
-      >
-        GitHub
-      </a>
     </div>
   );
 }

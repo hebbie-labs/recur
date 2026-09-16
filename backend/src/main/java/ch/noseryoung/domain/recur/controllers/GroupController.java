@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import ch.noseryoung.domain.recur.dto.CreateGroupRequest;
 import ch.noseryoung.domain.recur.dto.GroupInvitePreview;
 import ch.noseryoung.domain.recur.models.TaskGroup;
 import ch.noseryoung.domain.recur.services.GroupService;
@@ -24,8 +25,8 @@ public class GroupController {
     }
 
     @PostMapping({ "", "/" })
-    public ResponseEntity<TaskGroup> createGroup(@Valid @RequestBody TaskGroup group) {
-        return groupService.createGroup(group);
+    public ResponseEntity<TaskGroup> createGroup(@Valid @RequestBody CreateGroupRequest request) {
+        return groupService.createGroup(request);
     }
 
     @GetMapping({ "", "/" })

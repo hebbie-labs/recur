@@ -46,7 +46,8 @@ export function useAutoSync() {
         failureCountRef.current = 0;
         dismissSyncErrorToast();
         scheduleNext(SYNC_INTERVAL_MS);
-      } catch {
+      } catch (err) {
+        console.error("Auto-sync failed:", err);
         failureCountRef.current += 1;
         if (failureCountRef.current >= FAILURES_BEFORE_WARNING) {
           showSyncErrorToast("Sync unterbrochen – wird automatisch weiter versucht.");

@@ -45,7 +45,7 @@ Start-Sleep -Seconds 5
 
 Write-Host "Starte Backend" -ForegroundColor Cyan
 Set-Location "backend"
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "./gradlew bootRun" 
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "./gradlew bootRun --args='--spring.profiles.active=dev'"
 Set-Location ..
 
 

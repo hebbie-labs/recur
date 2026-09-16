@@ -1,20 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { exchangeOAuth2Token } from "@/services/authService";
 
 type OAuthCallbackStatus = "loading" | "error";
 
 export function useOAuthCallback() {
-    const searchParams = useSearchParams();
     const router = useRouter();
     const { completeOAuthLogin } = useAuth();
 
-    const token = searchParams.get("token");
-
-    const [status, setStatus] = useState<OAuthCallbackStatus>(token ? "loading" : "error");
-    const [errorMessage, setErrorMessage] = useState<string | null>(
-        token ? null : "Kein Token in der Antwort von Google erhalten."
-    );
+    const [status, setStatus] = useState<OAuthCallbackStatus>("loading");
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const hasRun = useRef(false);
 
@@ -22,15 +18,17 @@ export function useOAuthCallback() {
         if (hasRun.current) return;
         hasRun.current = true;
 
-        if (!token) return;
-
-        completeOAuthLogin(token)
+        // Der Handoff-Token kommt nicht mehr aus der URL, sondern aus einem
+        // HttpOnly-Cookie, das der OAuth2-Redirect gesetzt hat - siehe
+        // authService.exchangeOAuth2Token.
+        exchangeOAuth2Token()
+            .then((response) => completeOAuthLogin(response.token))
             .then(() => router.replace("/"))
             .catch((err) => {
                 setStatus("error");
                 setErrorMessage(err instanceof Error ? err.message : "Google-Login fehlgeschlagen.");
             });
-    }, [token, completeOAuthLogin, router]);
+    }, [completeOAuthLogin, router]);
 
     return { status, errorMessage };
 }

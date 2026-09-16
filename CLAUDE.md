@@ -43,3 +43,4 @@ Postgres runs on host port **5436** (not 5432) — see `docker-compose.yml` and 
 - Comments and user-facing strings are mixed German/English per file — match the existing language of the file/section you're editing rather than switching it.
 - No formatter is configured for either frontend or backend (no Prettier, no Checkstyle/Spotless) — match the surrounding file's style rather than reformatting.
 - Before planning or implementing a new feature, run the `grill-mich` skill to interview the user and settle the design first.
+- Any change that adds or changes what personal/usage data the app collects, stores, or processes must update `frontend/src/components/pages/DatenschutzPage.tsx` in the same PR, so the Datenschutzerklärung never drifts from actual behavior.

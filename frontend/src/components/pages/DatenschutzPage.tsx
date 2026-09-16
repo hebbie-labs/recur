@@ -7,7 +7,7 @@ function DatenschutzPage() {
   return (
     <LegalPageLayout
       title="Datenschutzerklärung"
-      lastUpdated="14. September 2026"
+      lastUpdated="15. September 2026"
     >
       <p className="text-muted-foreground">
         Diese Datenschutzerklärung informiert dich darüber, welche
@@ -61,7 +61,41 @@ function DatenschutzPage() {
             ein Anmelde-Token (JWT), das lokal in deinem Browser
             (localStorage) gespeichert wird, um dich eingeloggt zu halten.
           </li>
+          <li>
+            <span className="font-medium text-foreground">
+              Nutzungsanalyse (optional, aktuell nicht aktiv):
+            </span>{" "}
+            In deinen Privatsphäre-Einstellungen kannst du "Nutzungsdaten
+            teilen" aktivieren oder deaktivieren. Aktuell erfassen wir keine
+            Analyse- oder Trackingdaten; die Einstellung reserviert deine
+            Präferenz für den Fall, dass wir eine solche Funktion künftig
+            einführen. Wird diese Funktion eingeführt, aktualisieren wir
+            diese Datenschutzerklärung entsprechend.
+          </li>
+          <li>
+            <span className="font-medium text-foreground">
+              Benachrichtigungseinstellungen (optional, aktuell nicht aktiv):
+            </span>{" "}
+            In deinen Benachrichtigungseinstellungen kannst du E-Mail- und
+            Push-Benachrichtigungen aktivieren oder deaktivieren. Aktuell
+            versenden wir keine Benachrichtigungen; die Einstellung
+            reserviert deine Präferenz für den Fall, dass wir eine solche
+            Funktion künftig einführen. Wird diese Funktion eingeführt,
+            aktualisieren wir diese Datenschutzerklärung entsprechend.
+          </li>
         </ul>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <h2 className="text-base font-semibold text-foreground">
+          Sichtbarkeit in Gruppen
+        </h2>
+        <p>
+          Wenn du Aufgaben über die Gruppen-Funktion mit anderen teilst, sind
+          dein Vor- und Nachname sowie dein Profilbild für die anderen
+          Mitglieder dieser Gruppe sichtbar. Du kannst diese Sichtbarkeit in
+          deinen Privatsphäre-Einstellungen einschränken.
+        </p>
       </section>
 
       <section className="flex flex-col gap-2">

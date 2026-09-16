@@ -81,8 +81,17 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
   }, [showBoundary, loadGroupsAndProjects]);
 
   // Auto-Sync-Poll: Gruppen/Projekte haben kein updatedAt, daher reicht ein
-  // simples Ersetzen statt Merge - anders als bei Tasks gibt es hier keine
-  // langlebigen optimistischen lokalen Updates, die dadurch verloren gehen könnten.
+  // simples Ersetzen statt Merge wie bei TasksContext.mergeTasks - aktuell setzt
+  // jede Mutation hier (createGroup, deleteGroup, leaveGroup, removeMember,
+  // createProject, patchProject, deleteProject) den State erst NACH dem await
+  // der Server-Antwort, es gibt also keine langlebige optimistische Änderung,
+  // die ein zwischenzeitlicher Poll überschreiben könnte.
+  // ACHTUNG: Wer hier eine optimistische Änderung VOR dem await einbaut (z.B.
+  // ein sofortiges Projekt-Rename in der UI), MUSS vorher entweder ein
+  // updatedAt auf Group/Project einführen und hier per Timestamp mergen
+  // (siehe mergeTasks in TasksContext.tsx), oder syncGroups so anpassen, dass
+  // es diese eine Änderung gezielt schont - sonst überschreibt der nächste
+  // 15s-Poll die optimistische Änderung wieder.
   const syncGroups = useCallback(async () => {
     const { fetchedGroups, fetchedProjectsByGroupId } = await loadGroupsAndProjects();
     setGroups(fetchedGroups);

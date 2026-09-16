@@ -112,15 +112,20 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   const handleToggleFavorite = useCallback(async (taskId: string) => {
     const task = tasksRef.current.find((t) => t.id === taskId);
     if (!task) return;
-    const newFavorite = !task.isFavorite;
+    const previousFavorite = task.isFavorite;
+    const newFavorite = !previousFavorite;
 
-    const previousTasks = tasksRef.current;
     setTasks((prev) =>
       prev.map((t) => (t.id === taskId ? { ...t, isFavorite: newFavorite } : t))
     );
 
+    // Nur das eigene Feld zurückrollen statt eines vollen Snapshots, damit
+    // ein zweites, noch laufendes optimistisches Update auf demselben Task
+    // (z.B. Archivieren) nicht durch diesen Rollback überschrieben wird.
     await patchTask(taskId, { favorite: newFavorite }).catch((err) => {
-      setTasks(previousTasks);
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, isFavorite: previousFavorite } : t))
+      );
       showErrorToast(err instanceof Error ? err.message : "Fehler beim Aktualisieren des Favoritenstatus");
     });
   }, []);
@@ -128,29 +133,37 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   const handleToggleArchive = useCallback(async (taskId: string) => {
     const task = tasksRef.current.find((t) => t.id === taskId);
     if (!task) return;
-    const newArchived = !task.isArchived;
+    const previousArchived = task.isArchived;
+    const newArchived = !previousArchived;
 
-    const previousTasks = tasksRef.current;
     setTasks((prev) =>
       prev.map((t) => (t.id === taskId ? { ...t, isArchived: newArchived } : t))
     );
 
     await patchTask(taskId, { archived: newArchived }).catch((err) => {
-      setTasks(previousTasks);
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, isArchived: previousArchived } : t))
+      );
       showErrorToast(err instanceof Error ? err.message : "Fehler beim Archivieren der Aufgabe");
     });
   }, []);
 
   const handleResetProgress = useCallback(async (taskId: string) => {
-    const previousTasks = tasksRef.current;
+    const task = tasksRef.current.find((t) => t.id === taskId);
+    if (!task) return;
+    const previousAmountDid = task.amountDid;
+    const previousProgress = task.progress;
+
     setTasks((prev) =>
-      prev.map((task) =>
-        task.id === taskId ? { ...task, amountDid: 0, progress: 0 } : task
-      )
+      prev.map((t) => (t.id === taskId ? { ...t, amountDid: 0, progress: 0 } : t))
     );
 
     await patchTask(taskId, { resetProgress: true, amountDid: 0 }).catch((err) => {
-      setTasks(previousTasks);
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === taskId ? { ...t, amountDid: previousAmountDid, progress: previousProgress } : t
+        )
+      );
       showErrorToast(err instanceof Error ? err.message : "Fehler beim Zurücksetzen des Fortschritts");
     });
   }, []);
@@ -169,8 +182,8 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     const targetTask = tasksRef.current.find((task) => task.id === taskId);
     if (!targetTask) return;
 
-    const newAmountDid = (targetTask.amountDid ?? 0) + 1;
-    const previousTasks = tasksRef.current;
+    const previousAmountDid = targetTask.amountDid;
+    const newAmountDid = (previousAmountDid ?? 0) + 1;
 
     setTasks((prev) =>
       prev.map((task) => (task.id === taskId ? { ...task, amountDid: newAmountDid } : task))
@@ -181,7 +194,9 @@ export function TasksProvider({ children }: { children: ReactNode }) {
         setTasks((prev) => prev.map((task) => (task.id === taskId ? updatedTask : task)));
       })
       .catch((err) => {
-        setTasks(previousTasks);
+        setTasks((prev) =>
+          prev.map((task) => (task.id === taskId ? { ...task, amountDid: previousAmountDid } : task))
+        );
         showErrorToast(err instanceof Error ? err.message : "Fehler beim Aktualisieren der erledigten Menge");
       });
   }, []);

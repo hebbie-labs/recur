@@ -10,6 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import ch.noseryoung.domain.recur.dto.CreateProjectRequest;
 import ch.noseryoung.domain.recur.exceptions.GroupNotFoundException;
 import ch.noseryoung.domain.recur.exceptions.NotGroupMemberException;
 import ch.noseryoung.domain.recur.exceptions.ProjectNotArchivedException;
@@ -57,11 +58,11 @@ public class ProjectService {
         return group;
     }
 
-    public ResponseEntity<Project> createProject(UUID groupId, Project project) {
+    public ResponseEntity<Project> createProject(UUID groupId, CreateProjectRequest request) {
         TaskGroup group = requireMembership(groupId, getCurrentUser());
 
         Project newProject = Project.builder()
-                .name(project.getName())
+                .name(request.name())
                 .group(group)
                 .build();
 

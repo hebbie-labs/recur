@@ -1,5 +1,8 @@
 package ch.noseryoung.domain.recur.services;
 
+import ch.noseryoung.domain.recur.dto.CreateTaskRequest;
+import ch.noseryoung.domain.recur.dto.PatchTaskRequest;
+import ch.noseryoung.domain.recur.dto.ProjectReference;
 import ch.noseryoung.domain.recur.enums.Frequency;
 import ch.noseryoung.domain.recur.exceptions.NotGroupMemberException;
 import ch.noseryoung.domain.recur.exceptions.ProjectNotFoundException;
@@ -47,9 +50,9 @@ public class TaskService {
         // Löst eine vom Client mitgeschickte Projekt-Referenz (nur die id ist
         // relevant) in das gemanagte Project auf und prüft dabei, dass der User
         // Mitglied der zugehörigen Gruppe ist.
-        private Project resolveProjectForAssignment(Project requestedProject, User user) {
-                Project managedProject = projectRepository.findById(requestedProject.getId())
-                                .orElseThrow(() -> new ProjectNotFoundException(requestedProject.getId()));
+        private Project resolveProjectForAssignment(UUID projectId, User user) {
+                Project managedProject = projectRepository.findById(projectId)
+                                .orElseThrow(() -> new ProjectNotFoundException(projectId));
 
                 if (managedProject.getGroup() == null || !managedProject.getGroup().getMembers().contains(user)) {
                         throw new NotGroupMemberException();
@@ -135,15 +138,25 @@ public class TaskService {
         }
 
         // POST METHODS
-        public ResponseEntity<Task> createTask(Task task) {
+        public ResponseEntity<Task> createTask(CreateTaskRequest request) {
 
                 User currentUser = getCurrentUser();
 
-                if (task.getProject() != null && task.getProject().getId() != null) {
-                        task.setProject(resolveProjectForAssignment(task.getProject(), currentUser));
+                Task task = Task.builder()
+                                .name(request.name())
+                                .category(request.category())
+                                .frequency(request.frequency())
+                                .description(request.description())
+                                .dateUntil(request.dateUntil())
+                                .durationMinutes(request.durationMinutes())
+                                .startTime(request.startTime())
+                                .build();
+
+                ProjectReference project = request.project();
+                if (project != null && project.id() != null) {
+                        task.setProject(resolveProjectForAssignment(project.id(), currentUser));
                         task.setOwner(null);
                 } else {
-                        task.setProject(null);
                         task.setOwner(currentUser);
                 }
 
@@ -159,7 +172,7 @@ public class TaskService {
         // PATCH METHODS
         public ResponseEntity<Task> patchTask(
                         UUID id,
-                        Task task,
+                        PatchTaskRequest request,
                         Boolean resetProgress,
                         Boolean favorite,
                         Boolean archived,
@@ -171,36 +184,36 @@ public class TaskService {
                                 .filter(t -> hasAccess(t, currentUser))
                                 .orElseThrow(() -> new TaskNotFoundException(id));
 
-                if (task.getName() != null) {
-                        existingTask.setName(task.getName());
+                if (request.name() != null) {
+                        existingTask.setName(request.name());
                 }
 
-                if (task.getCategory() != null) {
-                        existingTask.setCategory(task.getCategory());
+                if (request.category() != null) {
+                        existingTask.setCategory(request.category());
                 }
 
-                if (task.getDescription() != null) {
-                        existingTask.setDescription(task.getDescription());
+                if (request.description() != null) {
+                        existingTask.setDescription(request.description());
                 }
 
-                if (task.getDateUntil() != null) {
-                        existingTask.setDateUntil(task.getDateUntil());
+                if (request.dateUntil() != null) {
+                        existingTask.setDateUntil(request.dateUntil());
                 }
 
-                if (task.getFrequency() != null) {
-                        existingTask.setFrequency(task.getFrequency());
+                if (request.frequency() != null) {
+                        existingTask.setFrequency(request.frequency());
                 }
 
-                if (task.getDurationMinutes() != null) {
-                        existingTask.setDurationMinutes(task.getDurationMinutes());
+                if (request.durationMinutes() != null) {
+                        existingTask.setDurationMinutes(request.durationMinutes());
                 }
 
-                if (task.getIsFavorite() != null) {
-                        existingTask.setIsFavorite(task.getIsFavorite());
+                if (request.isFavorite() != null) {
+                        existingTask.setIsFavorite(request.isFavorite());
                 }
 
-                if (task.getIsArchived() != null) {
-                        existingTask.setIsArchived(task.getIsArchived());
+                if (request.isArchived() != null) {
+                        existingTask.setIsArchived(request.isArchived());
                 }
 
                 if (favorite != null) {
@@ -219,18 +232,19 @@ public class TaskService {
                         existingTask.setAmountDid(amountDid);
                 }
 
-                if (task.getStartTime() != null) {
-                        existingTask.setStartTime(task.getStartTime());
+                if (request.startTime() != null) {
+                        existingTask.setStartTime(request.startTime());
                 }
 
                 // Nachträgliche Projekt-Zuordnung: entweder explizit auf ein anderes/neues
                 // Projekt setzen (mit Mitgliedschafts-Check), oder über unassignProject
                 // zurück zu einem persönlichen Task machen.
+                ProjectReference project = request.project();
                 if (Boolean.TRUE.equals(unassignProject)) {
                         existingTask.setProject(null);
                         existingTask.setOwner(currentUser);
-                } else if (task.getProject() != null && task.getProject().getId() != null) {
-                        existingTask.setProject(resolveProjectForAssignment(task.getProject(), currentUser));
+                } else if (project != null && project.id() != null) {
+                        existingTask.setProject(resolveProjectForAssignment(project.id(), currentUser));
                         existingTask.setOwner(null);
                 }
 

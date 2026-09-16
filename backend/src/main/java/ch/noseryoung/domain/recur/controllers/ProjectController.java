@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import ch.noseryoung.domain.recur.dto.CreateProjectRequest;
 import ch.noseryoung.domain.recur.models.Project;
 import ch.noseryoung.domain.recur.services.ProjectService;
 
@@ -23,8 +24,9 @@ public class ProjectController {
     }
 
     @PostMapping({ "", "/" })
-    public ResponseEntity<Project> createProject(@PathVariable UUID groupId, @Valid @RequestBody Project project) {
-        return projectService.createProject(groupId, project);
+    public ResponseEntity<Project> createProject(@PathVariable UUID groupId,
+            @Valid @RequestBody CreateProjectRequest request) {
+        return projectService.createProject(groupId, request);
     }
 
     @GetMapping({ "", "/" })

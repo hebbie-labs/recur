@@ -11,9 +11,10 @@ import AppSidebarUser from "@/components/organisms/AppSidebarUser";
 import SidebarNavigation from "@/components/molecules/SidebarNavigation";
 import SidebarBrand from "@/components/molecules/SidebarBrand";
 import SidebarLegalGroup from "@/components/organisms/SidebarLegalGroup";
+import SidebarGithubLink from "@/components/organisms/SidebarGithubLink";
 import { Bell, Palette, ShieldCheck, ClipboardPaste } from "lucide-react";
 import SidebarSettingsGroup from "./SidebarSettingsGroup";
-import useUserDetails from "@/hooks/useUserDetails";
+import { useAuth } from "@/contexts/AuthContext";
 import { useImportQuartalsplan } from "@/contexts/ImportQuartalsplanContext";
 
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
@@ -22,7 +23,7 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
 
 function AppSidebar({ destinations, ...props }: AppSidebarProps) {
   const router = useRouter();
-  const { user } = useUserDetails();
+  const { user } = useAuth();
   const { openImportQuartalsplan } = useImportQuartalsplan();
 
   const navDestinations: NavigationDestination[] = [
@@ -74,6 +75,7 @@ function AppSidebar({ destinations, ...props }: AppSidebarProps) {
       </SidebarContent>
       <SidebarFooter>
         <SidebarLegalGroup />
+        <SidebarGithubLink />
         <AppSidebarUser user={user} />
       </SidebarFooter>
     </Sidebar>

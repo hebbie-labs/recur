@@ -77,8 +77,6 @@ export type PatchTaskOptions = {
   favorite?: boolean;
   archived?: boolean;
   amountDid?: number;
-  durationMinutes?: number;
-  startTime?: string;
   /** Setzt den Task explizit zurück auf persönlich (kein Projekt mehr). */
   unassignProject?: boolean;
 };

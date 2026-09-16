@@ -1,10 +1,14 @@
 package ch.noseryoung.domain.recur.controllers;
 
+import ch.noseryoung.domain.recur.dto.CreateTaskRequest;
+import ch.noseryoung.domain.recur.dto.PatchTaskRequest;
 import ch.noseryoung.domain.recur.models.Task;
 import ch.noseryoung.domain.recur.services.TaskService;
 
 import java.util.*;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/task")
 @CrossOrigin(origins = "${app.cors.allowed-origin}")
+@Validated
 public class TaskController {
 
         private final TaskService taskService;
@@ -31,24 +36,21 @@ public class TaskController {
                 return taskService.getTask(id);
         };
 
-        // OnCreate-Gruppe statt @Valid, damit die Pflichtfeld-Constraints (name,
-        // category, frequency, description, dateUntil) nur beim Erstellen greifen.
         @PostMapping({ "", "/" })
-        public ResponseEntity<Task> createTask(@Validated(Task.OnCreate.class) @RequestBody Task task) {
-                return taskService.createTask(task);
+        public ResponseEntity<Task> createTask(@Valid @RequestBody CreateTaskRequest request) {
+                return taskService.createTask(request);
         };
 
-        // Bewusst weiterhin @Valid (Default-Gruppe) statt OnCreate: patchTask()
-        // erlaubt partielle Updates mit leeren Feldern, das würde mit den
-        // OnCreate-Pflichtfeld-Constraints sonst fehlschlagen.
+        // Alle Felder auf PatchTaskRequest sind optional (null = nicht ändern),
+        // deshalb reicht hier @Valid ohne eigene Validation-Group.
         @PatchMapping({ "/{id}", "/{id}/" })
-        public ResponseEntity<Task> patchTask(@PathVariable UUID id, @Valid @RequestBody Task task,
+        public ResponseEntity<Task> patchTask(@PathVariable UUID id, @Valid @RequestBody PatchTaskRequest request,
                         @RequestParam(required = false) Boolean resetProgress,
                         @RequestParam(required = false) Boolean favorite,
                         @RequestParam(required = false) Boolean archived,
-                        @RequestParam(required = false) Integer amountDid,
+                        @RequestParam(required = false) @Min(0) @Max(1_000_000) Integer amountDid,
                         @RequestParam(required = false) Boolean unassignProject) {
-                return taskService.patchTask(id, task, resetProgress, favorite, archived, amountDid, unassignProject);
+                return taskService.patchTask(id, request, resetProgress, favorite, archived, amountDid, unassignProject);
         }
 
         @DeleteMapping({ "/{id}", "/{id}/" })
