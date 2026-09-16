@@ -70,6 +70,13 @@ public class User {
     @Column(name = "enabled", nullable = false, columnDefinition = "boolean default true")
     private Boolean enabled = true;
 
+    // DB-Default "true" grandfathert bestehende Zeilen beim Hinzufügen dieser
+    // Spalte (kein Flyway/Liquibase, ddl-auto=update). Neue LOCAL-Registrierungen
+    // setzen diesen Wert explizit auf false in AuthService#register.
+    @Builder.Default
+    @Column(name = "email_verified", nullable = false, columnDefinition = "boolean default true")
+    private Boolean emailVerified = true;
+
     @CreationTimestamp
     @Column(name = "date_created", updatable = false)
     private Instant dateCreated;

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import ch.noseryoung.domain.recur.enums.AuthProvider;
 import ch.noseryoung.domain.recur.models.User;
 import ch.noseryoung.domain.recur.repositories.UserRepository;
+import ch.noseryoung.domain.recur.services.EmailService;
 import lombok.RequiredArgsConstructor;
 
 @Component
@@ -15,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 public class OAuth2UserAttributeResolver {
 
     private final UserRepository userRepository;
+    private final EmailService emailService;
 
     public User resolve(Map<String, Object> attributes) {
         String email = (String) attributes.get("email");
@@ -53,14 +55,31 @@ public class OAuth2UserAttributeResolver {
                         .email(email)
                         .provider(AuthProvider.GOOGLE)
                         .enabled(true)
+                        .emailVerified(true)
                         .build());
+
+        // Vor dem Speichern gemerkt, da user.getId() danach in jedem Fall gesetzt
+        // ist - nur so lässt sich unterscheiden, ob dieser Google-Login gerade
+        // erst das Konto angelegt hat (Willkommens-Mail) oder nur ein
+        // bestehendes aktualisiert (kein erneuter Mailversand bei jedem Login).
+        boolean isNewUser = user.getId() == null;
 
         user.setFirstName(firstName);
         user.setLastName(lastName);
         user.setAvatarUrl(avatarUrl);
         user.setProvider(AuthProvider.GOOGLE);
         user.setEnabled(true);
+        // Google verifiziert die Adresse bereits über OIDC - auch wenn dieses
+        // Konto ursprünglich lokal registriert und nie bestätigt wurde, gilt es
+        // ab jetzt als verifiziert.
+        user.setEmailVerified(true);
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        if (isNewUser) {
+            emailService.sendWelcomeEmail(savedUser);
+        }
+
+        return savedUser;
     }
 }

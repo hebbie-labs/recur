@@ -176,6 +176,22 @@ public class GlobalExceptionHandler {
                                                 getPath(request)));
         }
 
+        @ExceptionHandler(EmailNotVerifiedException.class)
+        public ResponseEntity<ErrorResponse> handleEmailNotVerified(
+                        EmailNotVerifiedException ex,
+                        WebRequest request) {
+
+                logger.info("Login rejected, email not verified");
+
+                return ResponseEntity
+                                .status(HttpStatus.FORBIDDEN)
+                                .body(ErrorResponse.of(
+                                                403,
+                                                "Email not verified",
+                                                ex.getMessage(),
+                                                getPath(request)));
+        }
+
         @ExceptionHandler(DataIntegrityViolationException.class)
         public ResponseEntity<ErrorResponse> handleDatabaseError(
                         DataIntegrityViolationException ex,

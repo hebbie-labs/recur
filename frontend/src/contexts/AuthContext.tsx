@@ -28,6 +28,7 @@ type AuthContextValue = {
     logout: () => void;
 };
 
+
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -73,12 +74,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
+    // Registrierung startet keine Session mehr - das Konto muss erst per
+    // E-Mail-Link bestätigt werden, bevor ein Login möglich ist (siehe
+    // AuthService#register im Backend).
     const register = useCallback(async (request: RegisterRequest) => {
         setError(null);
         try {
-            const response = await registerService(request);
-            setToken(response.token);
-            setUser(response.user);
+            await registerService(request);
         } catch (err) {
             const message = err instanceof Error ? err.message : "Registration failed";
             setError(message);

@@ -7,7 +7,7 @@ function DatenschutzPage() {
   return (
     <LegalPageLayout
       title="Datenschutzerklärung"
-      lastUpdated="15. September 2026"
+      lastUpdated="16. September 2026"
     >
       <p className="text-muted-foreground">
         Diese Datenschutzerklärung informiert dich darüber, welche
@@ -78,12 +78,34 @@ function DatenschutzPage() {
             </span>{" "}
             In deinen Benachrichtigungseinstellungen kannst du E-Mail- und
             Push-Benachrichtigungen aktivieren oder deaktivieren. Aktuell
-            versenden wir keine Benachrichtigungen; die Einstellung
-            reserviert deine Präferenz für den Fall, dass wir eine solche
-            Funktion künftig einführen. Wird diese Funktion eingeführt,
-            aktualisieren wir diese Datenschutzerklärung entsprechend.
+            versenden wir noch keine inhaltlichen Benachrichtigungen (z.B.
+            Erinnerungen); die Einstellung reserviert deine Präferenz für den
+            Fall, dass wir eine solche Funktion künftig einführen. Davon
+            unberührt sind technisch notwendige E-Mails wie die
+            E-Mail-Bestätigung bei der Registrierung (siehe unten). Wird eine
+            inhaltliche Benachrichtigungsfunktion eingeführt, aktualisieren
+            wir diese Datenschutzerklärung entsprechend.
           </li>
         </ul>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <h2 className="text-base font-semibold text-foreground">
+          E-Mail-Verifizierung
+        </h2>
+        <p>
+          Wenn du dich per E-Mail/Passwort registrierst, senden wir dir eine
+          Bestätigungs-E-Mail mit einem Verifizierungslink, um sicherzustellen,
+          dass die angegebene E-Mail-Adresse dir gehört. Der zugehörige Token
+          wird serverseitig gespeichert, ist 24 Stunden gültig und wird nach
+          Bestätigung bzw. Ablauf gelöscht. Eine Anmeldung ist erst nach
+          Bestätigung der E-Mail-Adresse möglich.
+        </p>
+        <p>
+          Der Versand erfolgt über unseren E-Mail-Dienstleister Brevo als
+          Auftragsverarbeiter; dabei wird ausschliesslich deine E-Mail-Adresse
+          (nebst Vorname und Bestätigungslink) an Brevo übermittelt.
+        </p>
       </section>
 
       <section className="flex flex-col gap-2">

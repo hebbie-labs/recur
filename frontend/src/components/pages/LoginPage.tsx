@@ -17,7 +17,7 @@ const loginSchema = yup.object().shape({
 
 function LoginPage() {
   const router = useRouter();
-  const { handleSubmit, submitDisabled, loading, backendError } =
+  const { handleSubmit, submitDisabled, loading, backendError, unverifiedEmail } =
     useLoginForm();
 
   return (
@@ -48,6 +48,7 @@ function LoginPage() {
                 loading={loading}
                 submitDisabled={submitDisabled}
                 backendError={backendError}
+                unverifiedEmail={unverifiedEmail}
               />
             )}
           </Formik>

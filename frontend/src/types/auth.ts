@@ -19,6 +19,10 @@ export type AuthResponse = {
     user: UserResponse;
 };
 
+export type MessageResponse = {
+    message: string;
+};
+
 export type RegisterRequest = {
     email: string;
     password: string;
@@ -29,4 +33,8 @@ export type RegisterRequest = {
 export type LoginRequest = {
     email: string;
     password: string;
+};
+
+export type ResendVerificationRequest = {
+    email: string;
 };
