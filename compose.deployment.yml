@@ -30,6 +30,8 @@
 #   DEV_GOOGLE_CLIENT_ID, DEV_GOOGLE_CLIENT_SECRET,
 #   PROD_GOOGLE_CLIENT_ID, PROD_GOOGLE_CLIENT_SECRET  - Google OAuth2 app credentials
 #   DEV_PUBLIC_ORIGIN, PROD_PUBLIC_ORIGIN      - the public hostnames below (Cloudflare Tunnel), e.g. https://dev.recur.example.com
+#   MAIL_USERNAME, MAIL_PASSWORD, MAIL_FROM    - Brevo SMTP login/key and verified sender address
+#                                                 (one Brevo account shared by dev+prod - not split per environment)
 # Generate real values for all of these before running this file for real -
 # the point of ${...} here is that a plain `docker compose up` without that
 # .env file fails loudly (missing required value) instead of silently
@@ -73,6 +75,9 @@ services:
       GOOGLE_CLIENT_SECRET: ${DEV_GOOGLE_CLIENT_SECRET:?DEV_GOOGLE_CLIENT_SECRET is required}
       CORS_ALLOWED_ORIGIN: ${DEV_PUBLIC_ORIGIN:?DEV_PUBLIC_ORIGIN is required}
       FRONTEND_URL: ${DEV_PUBLIC_ORIGIN:?DEV_PUBLIC_ORIGIN is required}
+      MAIL_USERNAME: ${MAIL_USERNAME:?MAIL_USERNAME is required}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:?MAIL_PASSWORD is required}
+      MAIL_FROM: ${MAIL_FROM:?MAIL_FROM is required}
     depends_on:
       - db-dev
 
@@ -114,6 +119,9 @@ services:
       GOOGLE_CLIENT_SECRET: ${PROD_GOOGLE_CLIENT_SECRET:?PROD_GOOGLE_CLIENT_SECRET is required}
       CORS_ALLOWED_ORIGIN: ${PROD_PUBLIC_ORIGIN:?PROD_PUBLIC_ORIGIN is required}
       FRONTEND_URL: ${PROD_PUBLIC_ORIGIN:?PROD_PUBLIC_ORIGIN is required}
+      MAIL_USERNAME: ${MAIL_USERNAME:?MAIL_USERNAME is required}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:?MAIL_PASSWORD is required}
+      MAIL_FROM: ${MAIL_FROM:?MAIL_FROM is required}
     depends_on:
       - db-prod
 

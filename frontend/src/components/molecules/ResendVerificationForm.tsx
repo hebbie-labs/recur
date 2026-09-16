@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import LoadingButton from "@/components/atoms/LoadingButton";
 import { resendVerification } from "@/services/authService";
@@ -21,8 +21,11 @@ function ResendVerificationForm({ email, className }: ResendVerificationFormProp
 
   const targetEmail = email ?? inputEmail;
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
+  // Plain onClick, not a <form onSubmit> - this component is embedded inside
+  // LoginForm's own Formik <Form>, and a nested <form> is invalid HTML with
+  // undefined submit behavior (observed: it triggered a native full-page
+  // reload instead of this handler, wiping the outer form's state).
+  const handleSubmit = async () => {
     if (!targetEmail) return;
 
     setLoading(true);
@@ -48,27 +51,34 @@ function ResendVerificationForm({ email, className }: ResendVerificationFormProp
   }
 
   return (
-    <form onSubmit={handleSubmit} className={className ? className + " flex flex-col gap-2" : "flex flex-col gap-2"}>
+    <div className={className ? className + " flex flex-col gap-2" : "flex flex-col gap-2"}>
       {!email && (
         <Input
           type="email"
           placeholder="E-Mail"
           value={inputEmail}
           onChange={(e) => setInputEmail(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleSubmit();
+            }
+          }}
           required
         />
       )}
       {error && <p className="text-sm text-destructive">{error}</p>}
       <LoadingButton
-        type="submit"
+        type="button"
         variant="outline"
         size="sm"
         loading={loading}
         disabled={!targetEmail}
+        onClick={handleSubmit}
       >
         Bestätigungs-E-Mail erneut senden
       </LoadingButton>
-    </form>
+    </div>
   );
 }
 
