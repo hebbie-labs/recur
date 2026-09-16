@@ -16,7 +16,6 @@ import {
   type CalendarDay,
 } from "@/utils/calendarGrid";
 import { toDateOnlyString } from "@/utils/formatDate";
-import { showSuccessToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
@@ -30,7 +29,7 @@ import CalendarDayStrip from "@/components/organisms/CalendarDayStrip";
 
 type ViewMode = "month" | "week";
 
-function CalendarGrid() {
+function CalendarPage() {
   const {
     tasks,
     loading,
@@ -456,10 +455,7 @@ function CalendarGrid() {
               <Button
                 size="sm"
                 disabled={selectedTask.progress >= 100}
-                onClick={() => {
-                  handleToggleDone(selectedTask.id);
-                  showSuccessToast("Als erledigt markiert.");
-                }}
+                onClick={() => handleToggleDone(selectedTask.id)}
               >
                 {selectedTask.progress >= 100 ? "Erledigt" : "Als erledigt markieren"}
               </Button>
@@ -472,4 +468,4 @@ function CalendarGrid() {
   );
 }
 
-export default CalendarGrid;
+export default CalendarPage;

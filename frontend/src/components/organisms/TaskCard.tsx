@@ -12,6 +12,7 @@ import ProgressIndicator from "@/components/atoms/ProgressIndicator";
 import useTaskCard from "@/hooks/useTaskCard";
 import { categoryLabels } from "@/lib/taskCategoryStyles";
 import { categoryDot } from "@/utils/calendarGrid";
+import { useTasksContext } from "@/contexts/TasksContext";
 
 type TaskCardProps = {
   task: Task;
@@ -44,6 +45,7 @@ function TaskCard({
   selected = false,
   onToggleSelect,
 }: TaskCardProps) {
+  const { isArchivedForCurrentUser } = useTasksContext();
   const {
     clampedProgress,
     handleDone,
@@ -125,7 +127,7 @@ function TaskCard({
             onDelete={handleDelete}
             onResetProgress={handleResetProgress}
             onTaskUpdated={onTaskUpdated}
-            isArchived={task.isArchived || false}
+            isArchived={isArchivedForCurrentUser(task)}
           />
         )}
       </CardHeader>
@@ -148,6 +150,23 @@ function TaskCard({
         <div className="mt-auto flex items-center gap-4 justify-between">
           <TaskTimeFrame start={task.startTime ?? null} end={task.dateUntil} />
           <div className="flex items-center gap-2">
+            {task.project && task.assignedMembers && task.assignedMembers.length > 0 && (
+              <div className="flex -space-x-2">
+                {task.assignedMembers.map((member) => (
+                  <Avatar
+                    key={member.id}
+                    size="sm"
+                    className="ring-2 ring-background"
+                    title={`Zugewiesen: ${member.firstName} ${member.lastName}`}
+                  >
+                    <AvatarImage src={member.avatarUrl ?? undefined} />
+                    <AvatarFallback>
+                      {`${member.firstName[0] ?? ""}${member.lastName[0] ?? ""}`.toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                ))}
+              </div>
+            )}
             {task.completedBy && (
               <Avatar
                 size="sm"

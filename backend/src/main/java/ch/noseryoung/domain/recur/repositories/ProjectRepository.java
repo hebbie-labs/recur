@@ -1,5 +1,6 @@
 package ch.noseryoung.domain.recur.repositories;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -14,6 +15,8 @@ import ch.noseryoung.domain.recur.models.TaskGroup;
 public interface ProjectRepository extends JpaRepository<Project, UUID> {
 
     List<Project> findByGroup(TaskGroup group);
+
+    List<Project> findByGroupIn(Collection<TaskGroup> groups);
 
     Optional<Project> findByIdAndGroup(UUID id, TaskGroup group);
 

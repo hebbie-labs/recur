@@ -16,6 +16,7 @@ import ch.noseryoung.domain.recur.security.CustomUserDetails;
 import ch.noseryoung.domain.recur.utils.TaskUtil;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,11 +29,14 @@ public class TaskService {
         private final TaskRepository taskRepository;
         private final ProjectRepository projectRepository;
         private final TaskUtil taskUtil;
+        private final GroupMemberVisibilityService visibilityService;
 
-        public TaskService(TaskRepository taskRepository, ProjectRepository projectRepository, TaskUtil taskUtil) {
+        public TaskService(TaskRepository taskRepository, ProjectRepository projectRepository, TaskUtil taskUtil,
+                        GroupMemberVisibilityService visibilityService) {
                 this.taskRepository = taskRepository;
                 this.projectRepository = projectRepository;
                 this.taskUtil = taskUtil;
+                this.visibilityService = visibilityService;
         }
 
         // Ein Task ist sichtbar/bearbeitbar für seinen persönlichen owner, oder -
@@ -59,6 +63,84 @@ public class TaskService {
                 }
 
                 return managedProject;
+        }
+
+        // Baut für die Response eine transiente Kopie mit maskierten Mitgliedern
+        // (siehe GroupMemberVisibilityService) - die verwaltete Entity bleibt
+        // unangetastet, damit nichts davon in die echten Zuweisungs-/Archiv-
+        // Tabellen zurückgeschrieben wird. Persönliche Tasks sind immer nur für
+        // ihren eigenen owner sichtbar, daher hier ein No-Op.
+        private Task maskMembers(Task task, User viewer) {
+                if (task.getProject() == null) {
+                        return task;
+                }
+
+                Set<User> relevantUsers = new HashSet<>(task.getAssignedMembers());
+                relevantUsers.addAll(task.getArchivedBy());
+                if (task.getCompletedBy() != null) {
+                        relevantUsers.add(task.getCompletedBy());
+                }
+
+                Map<UUID, User> maskedById = visibilityService.maskIfHidden(relevantUsers, viewer).stream()
+                                .collect(Collectors.toMap(User::getId, u -> u));
+
+                return task.toBuilder()
+                                .assignedMembers(task.getAssignedMembers().stream()
+                                                .map(u -> maskedById.get(u.getId()))
+                                                .collect(Collectors.toCollection(HashSet::new)))
+                                .archivedBy(task.getArchivedBy().stream()
+                                                .map(u -> maskedById.get(u.getId()))
+                                                .collect(Collectors.toCollection(HashSet::new)))
+                                .completedBy(task.getCompletedBy() != null
+                                                ? maskedById.get(task.getCompletedBy().getId())
+                                                : null)
+                                .build();
+        }
+
+        private Collection<Task> maskMembers(Collection<Task> tasks, User viewer) {
+                return tasks.stream().map(task -> maskMembers(task, viewer)).toList();
+        }
+
+        // Der Gruppen-Admin (TaskGroup.createdBy) eines Projekt-Tasks - bei
+        // persönlichen Tasks immer false.
+        private boolean isGroupAdmin(Task task, User user) {
+                return task.getProject() != null
+                                && task.getProject().getGroup() != null
+                                && task.getProject().getGroup().getCreatedBy() != null
+                                && task.getProject().getGroup().getCreatedBy().equals(user);
+        }
+
+        // Archivieren eines geteilten Projekt-Tasks ist pro Mitglied: wer fertig
+        // ist, archiviert nur für sich (archivedBy), der Task bleibt für die
+        // anderen zugewiesenen Mitglieder aktiv. Erst wenn alle zugewiesenen
+        // Mitglieder archiviert haben, wird der Task global archiviert. Tasks
+        // ohne Zuweisung kann nur der Admin direkt archivieren/wieder öffnen.
+        // Persönliche Tasks verhalten sich unverändert (einfacher globaler Flag).
+        private void applyArchivedChange(Task task, boolean desiredArchived, User actingUser) {
+                if (task.getProject() == null) {
+                        task.setIsArchived(desiredArchived);
+                        return;
+                }
+
+                if (!desiredArchived) {
+                        task.getArchivedBy().remove(actingUser);
+                        task.setIsArchived(false);
+                        return;
+                }
+
+                if (isGroupAdmin(task, actingUser) && task.getAssignedMembers().isEmpty()) {
+                        task.setIsArchived(true);
+                        return;
+                }
+
+                task.getArchivedBy().add(actingUser);
+
+                boolean allAssignedDone = !task.getAssignedMembers().isEmpty()
+                                && task.getArchivedBy().containsAll(task.getAssignedMembers());
+
+                if (allAssignedDone) {
+                        task.setIsArchived(true);
+                }
         }
 
         // Bestimmt nach einer Änderung, ob der Task (für geteilte Projekt-Tasks)
@@ -102,7 +184,7 @@ public class TaskService {
                 Collection<Task> tasks = taskRepository.findVisibleToUser(user);
                 recalculateAll(tasks);
 
-                return ResponseEntity.ok(tasks);
+                return ResponseEntity.ok(maskMembers(tasks, user));
         }
 
         public ResponseEntity<Collection<Task>> getFavoriteTasks() {
@@ -110,7 +192,7 @@ public class TaskService {
                 List<Task> favoriteTasks = taskRepository.findByOwnerAndIsFavorite(owner, true);
                 recalculateAll(favoriteTasks);
 
-                return ResponseEntity.ok(favoriteTasks);
+                return ResponseEntity.ok(maskMembers(favoriteTasks, owner));
         }
 
         public ResponseEntity<Collection<Task>> getArchivedTasks() {
@@ -118,7 +200,7 @@ public class TaskService {
                 List<Task> archivedTasks = taskRepository.findByOwnerAndIsArchived(owner, true);
                 recalculateAll(archivedTasks);
 
-                return ResponseEntity.ok(archivedTasks);
+                return ResponseEntity.ok(maskMembers(archivedTasks, owner));
         }
 
         private void recalculateAll(Collection<Task> tasks) {
@@ -134,7 +216,7 @@ public class TaskService {
                                 .filter(t -> hasAccess(t, user))
                                 .orElseThrow(() -> new TaskNotFoundException(id));
 
-                return ResponseEntity.ok(task);
+                return ResponseEntity.ok(maskMembers(task, user));
         }
 
         // POST METHODS
@@ -166,7 +248,7 @@ public class TaskService {
 
                 taskRepository.save(task);
 
-                return ResponseEntity.status(201).body(task);
+                return ResponseEntity.status(201).body(maskMembers(task, currentUser));
         }
 
         // PATCH METHODS
@@ -213,7 +295,7 @@ public class TaskService {
                 }
 
                 if (request.isArchived() != null) {
-                        existingTask.setIsArchived(request.isArchived());
+                        applyArchivedChange(existingTask, request.isArchived(), currentUser);
                 }
 
                 if (favorite != null) {
@@ -221,7 +303,7 @@ public class TaskService {
                 }
 
                 if (archived != null) {
-                        existingTask.setIsArchived(archived);
+                        applyArchivedChange(existingTask, archived, currentUser);
                 }
 
                 if (resetProgress != null && resetProgress) {
@@ -254,7 +336,37 @@ public class TaskService {
 
                 taskRepository.save(existingTask);
 
-                return ResponseEntity.ok(existingTask);
+                return ResponseEntity.ok(maskMembers(existingTask, currentUser));
+        }
+
+        // Self-Service: ein Gruppenmitglied weist sich selbst einem geteilten
+        // Projekt-Task zu bzw. meldet sich wieder ab. Bei persönlichen Tasks
+        // ohne Wirkung, da Zuweisung dort kein Konzept ist.
+        public ResponseEntity<Task> assignSelf(UUID id) {
+                User currentUser = getCurrentUser();
+                Task task = taskRepository.findById(id)
+                                .filter(t -> hasAccess(t, currentUser))
+                                .orElseThrow(() -> new TaskNotFoundException(id));
+
+                if (task.getProject() != null) {
+                        task.getAssignedMembers().add(currentUser);
+                        taskRepository.save(task);
+                }
+
+                return ResponseEntity.ok(maskMembers(task, currentUser));
+        }
+
+        public ResponseEntity<Task> unassignSelf(UUID id) {
+                User currentUser = getCurrentUser();
+                Task task = taskRepository.findById(id)
+                                .filter(t -> hasAccess(t, currentUser))
+                                .orElseThrow(() -> new TaskNotFoundException(id));
+
+                task.getAssignedMembers().remove(currentUser);
+                task.getArchivedBy().remove(currentUser);
+                taskRepository.save(task);
+
+                return ResponseEntity.ok(maskMembers(task, currentUser));
         }
 
         public ResponseEntity<Task> resetTask(UUID id) {

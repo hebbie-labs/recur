@@ -12,7 +12,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
-@Builder
+// toBuilder=true wird für die maskierte Response-Kopie gebraucht (siehe
+// GroupService#maskMembers) - die echte, verwaltete Entity bleibt unberührt.
+@Builder(toBuilder = true)
 @Getter
 @Setter
 @AllArgsConstructor
@@ -40,12 +42,13 @@ public class TaskGroup {
     @Column(name = "date_created", updatable = false)
     private Instant dateCreated;
 
+    // Zugleich der Gruppen-Admin: verwaltet Mitglieder/löscht die Gruppe.
+    // Übertragbar über GroupService#transferAdmin bzw. beim Verlassen der
+    // Gruppe (siehe GroupService#leaveGroup).
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private User createdBy;
 
-    // Alle Mitglieder sind gleichberechtigt - keine Rolle auf der
-    // Mitgliedschaft, jedes Mitglied kann die Gruppe verwalten/löschen.
     @Builder.Default
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "task_group_member", joinColumns = @JoinColumn(name = "group_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))

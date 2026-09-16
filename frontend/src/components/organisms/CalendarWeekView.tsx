@@ -30,6 +30,60 @@ function getTaskPosition(task: Task) {
   return { startRow, rowSpan };
 }
 
+type TaskLane = { lane: number; laneCount: number };
+
+// Ordnet Tasks, die sich zeitlich überlappen, nebeneinander liegende Lanes zu
+// (wie bei Google Calendar), statt sie deckungsgleich übereinander zu
+// stapeln. Greedy-Intervall-Zuordnung: Tasks werden nach Start sortiert, und
+// jeder Task bekommt die erste Lane, deren letzter Task schon fertig ist,
+// bevor er beginnt - sonst eine neue Lane.
+function assignLanes(dayTasks: Task[]): Map<string, TaskLane> {
+  const positioned = dayTasks
+    .map((task) => ({ task, ...getTaskPosition(task) }))
+    .sort((a, b) => a.startRow - b.startRow || a.rowSpan - b.rowSpan);
+
+  const lanesByTaskId = new Map<string, TaskLane>();
+  let cluster: typeof positioned = [];
+  let clusterEnd = -Infinity;
+
+  const resolveCluster = () => {
+    if (cluster.length === 0) return;
+
+    const laneEndRows: number[] = [];
+    cluster.forEach(({ task, startRow, rowSpan }) => {
+      let lane = laneEndRows.findIndex((endRow) => startRow >= endRow);
+      if (lane === -1) {
+        lane = laneEndRows.length;
+        laneEndRows.push(startRow + rowSpan);
+      } else {
+        laneEndRows[lane] = startRow + rowSpan;
+      }
+      lanesByTaskId.set(task.id, { lane, laneCount: 0 });
+    });
+
+    cluster.forEach(({ task }) => {
+      lanesByTaskId.set(task.id, {
+        lane: lanesByTaskId.get(task.id)!.lane,
+        laneCount: laneEndRows.length,
+      });
+    });
+
+    cluster = [];
+  };
+
+  positioned.forEach((item) => {
+    if (cluster.length > 0 && item.startRow >= clusterEnd) {
+      resolveCluster();
+      clusterEnd = -Infinity;
+    }
+    cluster.push(item);
+    clusterEnd = Math.max(clusterEnd, item.startRow + item.rowSpan);
+  });
+  resolveCluster();
+
+  return lanesByTaskId;
+}
+
 function getCurrentTimeRow(): number | null {
   const now = new Date();
   if (now.getHours() < START_HOUR || now.getHours() >= END_HOUR) return null;
@@ -126,9 +180,12 @@ function CalendarWeekView({
         {days.map((day, dayIdx) => {
           const dayTasks = tasks.filter((task) => occursOn(task, day.date));
           const colIndex = dayIdx + 2;
+          const lanesByTaskId = assignLanes(dayTasks);
 
           return dayTasks.map((task) => {
             const { startRow, rowSpan } = getTaskPosition(task);
+            const { lane, laneCount } = lanesByTaskId.get(task.id) ?? { lane: 0, laneCount: 1 };
+            const widthPercent = 100 / laneCount;
 
             return (
               <div
@@ -141,9 +198,11 @@ function CalendarWeekView({
                   gridColumn: colIndex,
                   gridRow: `${startRow} / span ${rowSpan}`,
                   zIndex: 10,
+                  marginLeft: `calc(${widthPercent * lane}% + 2px)`,
+                  width: `calc(${widthPercent}% - 4px)`,
                 }}
                 className={cn(
-                  "mx-0.5 cursor-pointer overflow-hidden truncate rounded-md border-l-[3px] bg-card px-1.5 py-0.5 text-[10px] font-medium text-foreground shadow-xs transition-shadow hover:shadow-sm",
+                  "cursor-pointer overflow-hidden truncate rounded-md border-l-[3px] bg-card px-1.5 py-0.5 text-[10px] font-medium text-foreground shadow-xs transition-shadow hover:shadow-sm",
                   categoryBorder[task.category]
                 )}
                 title={task.name}

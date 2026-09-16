@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { useErrorBoundary } from "react-error-boundary";
-import { deleteTask, getTasks, patchTask } from "@/services/taskService";
+import { assignSelf, deleteTask, getTasks, patchTask, unassignSelf } from "@/services/taskService";
 import type { Task } from "@/services/taskService";
 import { showErrorToast } from "@/lib/toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,10 +22,13 @@ type TasksContextValue = {
   addTask: (newTask: Task) => void;
   handleToggleFavorite: (taskId: string) => Promise<void>;
   handleToggleArchive: (taskId: string) => Promise<void>;
+  handleToggleAssign: (taskId: string) => Promise<void>;
   handleResetProgress: (taskId: string) => Promise<void>;
   handleDelete: (taskId: string) => Promise<void>;
   handleToggleDone: (taskId: string) => Promise<void>;
   handleUpdateTask: (updatedTask: Task) => void;
+  /** Berücksichtigt bei geteilten Projekt-Tasks den individuellen Archiv-Status (task.archivedBy). */
+  isArchivedForCurrentUser: (task: Task) => boolean;
   fetchTasks: () => Promise<void>;
   /** Für den Auto-Sync-Poll: merged statt zu überschreiben, wirft bei Fehler statt showBoundary. */
   syncTasks: () => Promise<void>;
@@ -37,7 +40,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const { showBoundary } = useErrorBoundary();
-  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   const tasksRef = useRef<Task[]>(tasks);
   useEffect(() => {
@@ -102,12 +105,31 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     setTasks((prev) => [...prev, newTask]);
   }, []);
 
-  const visibleTasks = useMemo(() => tasks.filter((t) => !t.isArchived), [tasks]);
-  const favoriteTasks = useMemo(
-    () => tasks.filter((t) => t.isFavorite && !t.isArchived),
-    [tasks]
+  // Bei geteilten Projekt-Tasks archiviert ein zugewiesenes Mitglied nur für
+  // sich (task.archivedBy), ohne den Task global (task.isArchived) für die
+  // anderen zu schliessen - siehe TaskService#applyArchivedChange im Backend.
+  // Für die eigene Sicht (aktiv vs. archiviert) zählt daher beides.
+  const isArchivedForCurrentUser = useCallback(
+    (task: Task) => {
+      if (task.isArchived) return true;
+      if (!task.project || !user) return false;
+      return task.archivedBy?.some((m) => m.id === user.id) ?? false;
+    },
+    [user]
   );
-  const archivedTasks = useMemo(() => tasks.filter((t) => t.isArchived), [tasks]);
+
+  const visibleTasks = useMemo(
+    () => tasks.filter((t) => !isArchivedForCurrentUser(t)),
+    [tasks, isArchivedForCurrentUser]
+  );
+  const favoriteTasks = useMemo(
+    () => tasks.filter((t) => t.isFavorite && !isArchivedForCurrentUser(t)),
+    [tasks, isArchivedForCurrentUser]
+  );
+  const archivedTasks = useMemo(
+    () => tasks.filter((t) => isArchivedForCurrentUser(t)),
+    [tasks, isArchivedForCurrentUser]
+  );
 
   const handleToggleFavorite = useCallback(async (taskId: string) => {
     const task = tasksRef.current.find((t) => t.id === taskId);
@@ -130,23 +152,54 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const handleToggleArchive = useCallback(async (taskId: string) => {
-    const task = tasksRef.current.find((t) => t.id === taskId);
-    if (!task) return;
-    const previousArchived = task.isArchived;
-    const newArchived = !previousArchived;
+  // "archived" im Request ist die Absicht der aktuellen Person, nicht
+  // zwingend der neue globale Zustand: bei einem geteilten Projekt-Task mit
+  // mehreren zugewiesenen Mitgliedern entscheidet das Backend, ob daraus ein
+  // globales isArchived wird (siehe TaskService#applyArchivedChange) - daher
+  // wird hier nach dem Request der tatsächliche Server-Stand übernommen statt
+  // blind der optimistische Wert.
+  const handleToggleArchive = useCallback(
+    async (taskId: string) => {
+      const task = tasksRef.current.find((t) => t.id === taskId);
+      if (!task) return;
+      const wasArchivedForMe = isArchivedForCurrentUser(task);
+      const newArchived = !wasArchivedForMe;
+      const previousTask = task;
 
-    setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, isArchived: newArchived } : t))
-    );
-
-    await patchTask(taskId, { archived: newArchived }).catch((err) => {
       setTasks((prev) =>
-        prev.map((t) => (t.id === taskId ? { ...t, isArchived: previousArchived } : t))
+        prev.map((t) => (t.id === taskId ? { ...t, isArchived: newArchived } : t))
       );
-      showErrorToast(err instanceof Error ? err.message : "Fehler beim Archivieren der Aufgabe");
-    });
-  }, []);
+
+      await patchTask(taskId, { archived: newArchived })
+        .then((updatedTask) => {
+          setTasks((prev) => prev.map((t) => (t.id === taskId ? updatedTask : t)));
+        })
+        .catch((err) => {
+          setTasks((prev) => prev.map((t) => (t.id === taskId ? previousTask : t)));
+          showErrorToast(err instanceof Error ? err.message : "Fehler beim Archivieren der Aufgabe");
+        });
+    },
+    [isArchivedForCurrentUser]
+  );
+
+  // Self-Service: nur bei geteilten Projekt-Tasks relevant. Kein optimistisches
+  // Update (kein Vorher-Zustand pro Mitglied lokal verfügbar), stattdessen wird
+  // die Server-Antwort direkt übernommen.
+  const handleToggleAssign = useCallback(
+    async (taskId: string) => {
+      const task = tasksRef.current.find((t) => t.id === taskId);
+      if (!task || !user) return;
+      const isAssigned = task.assignedMembers?.some((m) => m.id === user.id) ?? false;
+
+      try {
+        const updatedTask = isAssigned ? await unassignSelf(taskId) : await assignSelf(taskId);
+        setTasks((prev) => prev.map((t) => (t.id === taskId ? updatedTask : t)));
+      } catch (err) {
+        showErrorToast(err instanceof Error ? err.message : "Fehler beim Zuweisen der Aufgabe");
+      }
+    },
+    [user]
+  );
 
   const handleResetProgress = useCallback(async (taskId: string) => {
     const task = tasksRef.current.find((t) => t.id === taskId);
@@ -213,10 +266,12 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     addTask,
     handleToggleFavorite,
     handleToggleArchive,
+    handleToggleAssign,
     handleResetProgress,
     handleDelete,
     handleToggleDone,
     handleUpdateTask,
+    isArchivedForCurrentUser,
     fetchTasks,
     syncTasks,
   };

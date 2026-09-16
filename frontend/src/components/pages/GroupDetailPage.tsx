@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { LinkIcon, PlusIcon, TrashIcon, ArchiveIcon, ArchiveRestoreIcon } from "lucide-react";
+import { LinkIcon, PlusIcon, TrashIcon, ArchiveIcon, ArchiveRestoreIcon, ShieldIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import ConfirmDialog from "@/components/molecules/ConfirmDialog";
 import CreateProjectDialog from "@/components/organisms/CreateProjectDialog";
+import SelectSuccessorDialog from "@/components/organisms/SelectSuccessorDialog";
 import { useGroupsContext } from "@/contexts/GroupsContext";
 import { useTasksContext } from "@/contexts/TasksContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,13 +21,24 @@ function GroupDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { user } = useAuth();
-  const { groups, projectsByGroupId, loading, leaveGroup, removeMember, deleteGroup, patchProject, deleteProject } =
-    useGroupsContext();
+  const {
+    groups,
+    projectsByGroupId,
+    loading,
+    leaveGroup,
+    removeMember,
+    transferAdmin,
+    deleteGroup,
+    patchProject,
+    deleteProject,
+  } = useGroupsContext();
   const { tasks } = useTasksContext();
 
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [confirmDeleteGroupOpen, setConfirmDeleteGroupOpen] = useState(false);
   const [confirmDeleteProjectId, setConfirmDeleteProjectId] = useState<string | null>(null);
+  const [confirmTransferMemberId, setConfirmTransferMemberId] = useState<string | null>(null);
+  const [leaveSuccessorDialogOpen, setLeaveSuccessorDialogOpen] = useState(false);
 
   // window.location.origin doesn't exist during Next's server-render pass
   // for this route (it's server-rendered on demand, not statically
@@ -75,6 +87,8 @@ function GroupDetailPage() {
   }
 
   const inviteLink = `${origin}/groups/join/${group.inviteCode}`;
+  const isAdmin = group.createdBy?.id === user?.id;
+  const otherMembers = group.members.filter((m) => m.id !== user?.id);
 
   const handleCopyInviteLink = async () => {
     try {
@@ -85,19 +99,47 @@ function GroupDetailPage() {
     }
   };
 
-  const handleRemoveOrLeave = async (memberId: string) => {
+  const handleLeaveConfirmed = async (successorId?: string) => {
     try {
-      if (memberId === user?.id) {
-        selfInitiatedRemovalRef.current = true;
-        await leaveGroup(id);
-        router.push("/groups");
-        return;
-      }
+      selfInitiatedRemovalRef.current = true;
+      await leaveGroup(id, successorId);
+      router.push("/groups");
+    } catch (err) {
+      selfInitiatedRemovalRef.current = false;
+      showErrorToast(err instanceof Error ? err.message : "Fehler beim Verlassen der Gruppe.");
+    } finally {
+      setLeaveSuccessorDialogOpen(false);
+    }
+  };
+
+  const handleLeaveClick = () => {
+    // Admin mit anderen Mitgliedern muss zuerst einen Nachfolger bestimmen -
+    // ist er das letzte Mitglied, löscht das Verlassen direkt die ganze
+    // Gruppe (das übernimmt das Backend).
+    if (isAdmin && otherMembers.length > 0) {
+      setLeaveSuccessorDialogOpen(true);
+      return;
+    }
+    handleLeaveConfirmed();
+  };
+
+  const handleRemoveMember = async (memberId: string) => {
+    try {
       await removeMember(id, memberId);
       showSuccessToast("Mitglied entfernt.");
     } catch (err) {
-      selfInitiatedRemovalRef.current = false;
       showErrorToast(err instanceof Error ? err.message : "Fehler beim Entfernen des Mitglieds.");
+    }
+  };
+
+  const handleTransferAdmin = async (memberId: string) => {
+    try {
+      await transferAdmin(id, memberId);
+      showSuccessToast("Adminrolle übertragen.");
+    } catch (err) {
+      showErrorToast(err instanceof Error ? err.message : "Fehler beim Übertragen der Adminrolle.");
+    } finally {
+      setConfirmTransferMemberId(null);
     }
   };
 
@@ -156,26 +198,52 @@ function GroupDetailPage() {
           </span>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          {group.members.map((member) => (
-            <div key={member.id} className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <Avatar size="sm">
-                  <AvatarImage src={member.avatarUrl ?? undefined} />
-                  <AvatarFallback>{initials(member.firstName, member.lastName)}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="text-sm font-medium">
-                    {member.firstName} {member.lastName}
-                    {member.id === user?.id && " (du)"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{member.email}</p>
+          {group.members.map((member) => {
+            const isSelf = member.id === user?.id;
+            const isMemberAdmin = group.createdBy?.id === member.id;
+
+            return (
+              <div key={member.id} className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <Avatar size="sm">
+                    <AvatarImage src={member.avatarUrl ?? undefined} />
+                    <AvatarFallback>{initials(member.firstName, member.lastName)}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="flex items-center gap-1.5 text-sm font-medium">
+                      {member.firstName} {member.lastName}
+                      {isSelf && " (du)"}
+                      {isMemberAdmin && (
+                        <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-xs font-normal text-muted-foreground">
+                          <ShieldIcon className="h-3 w-3" />
+                          Admin
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{member.email}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  {isSelf ? (
+                    <Button variant="ghost" size="sm" onClick={handleLeaveClick}>
+                      Verlassen
+                    </Button>
+                  ) : (
+                    isAdmin && (
+                      <>
+                        <Button variant="ghost" size="sm" onClick={() => setConfirmTransferMemberId(member.id)}>
+                          Zum Admin machen
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleRemoveMember(member.id)}>
+                          Entfernen
+                        </Button>
+                      </>
+                    )
+                  )}
                 </div>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => handleRemoveOrLeave(member.id)}>
-                {member.id === user?.id ? "Verlassen" : "Entfernen"}
-              </Button>
-            </div>
-          ))}
+            );
+          })}
         </CardContent>
       </Card>
 
@@ -196,28 +264,30 @@ function GroupDetailPage() {
               <span className={project.isArchived ? "text-sm text-muted-foreground line-through" : "text-sm"}>
                 {project.name}
               </span>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleToggleArchiveProject(project.id, project.isArchived)}
-                >
-                  {project.isArchived ? (
-                    <ArchiveRestoreIcon className="h-4 w-4" />
-                  ) : (
-                    <ArchiveIcon className="h-4 w-4" />
-                  )}
-                </Button>
-                {project.isArchived && (
+              {isAdmin && (
+                <div className="flex items-center gap-1">
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setConfirmDeleteProjectId(project.id)}
+                    onClick={() => handleToggleArchiveProject(project.id, project.isArchived)}
                   >
-                    <TrashIcon className="h-4 w-4 text-destructive" />
+                    {project.isArchived ? (
+                      <ArchiveRestoreIcon className="h-4 w-4" />
+                    ) : (
+                      <ArchiveIcon className="h-4 w-4" />
+                    )}
                   </Button>
-                )}
-              </div>
+                  {project.isArchived && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setConfirmDeleteProjectId(project.id)}
+                    >
+                      <TrashIcon className="h-4 w-4 text-destructive" />
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </CardContent>
@@ -225,10 +295,12 @@ function GroupDetailPage() {
 
       <Separator />
 
-      <Button variant="destructive" onClick={() => setConfirmDeleteGroupOpen(true)}>
-        <TrashIcon className="h-4 w-4" />
-        Gruppe löschen
-      </Button>
+      {isAdmin && (
+        <Button variant="destructive" onClick={() => setConfirmDeleteGroupOpen(true)}>
+          <TrashIcon className="h-4 w-4" />
+          Gruppe löschen
+        </Button>
+      )}
 
       <ConfirmDialog
         severity="high"
@@ -261,6 +333,28 @@ function GroupDetailPage() {
       {showCreateProject && (
         <CreateProjectDialog groupId={id} onClose={() => setShowCreateProject(false)} />
       )}
+
+      <ConfirmDialog
+        open={confirmTransferMemberId !== null}
+        onOpenChange={(open) => !open && setConfirmTransferMemberId(null)}
+        question="Adminrolle übertragen?"
+        description={`${
+          group.members.find((m) => m.id === confirmTransferMemberId)?.firstName ?? "Dieses Mitglied"
+        } wird zum neuen Gruppen-Admin. Du verlierst dadurch deine Admin-Rechte in dieser Gruppe.`}
+        onConfirm={() => confirmTransferMemberId && handleTransferAdmin(confirmTransferMemberId)}
+        onCancel={() => setConfirmTransferMemberId(null)}
+        confirmText="Übertragen"
+      />
+
+      <SelectSuccessorDialog
+        open={leaveSuccessorDialogOpen}
+        onClose={() => setLeaveSuccessorDialogOpen(false)}
+        members={otherMembers}
+        title="Nachfolger bestimmen"
+        description="Als Admin musst du zuerst ein anderes Mitglied zum neuen Admin bestimmen, bevor du die Gruppe verlassen kannst."
+        submitLabel="Verlassen"
+        onConfirm={handleLeaveConfirmed}
+      />
     </div>
   );
 }

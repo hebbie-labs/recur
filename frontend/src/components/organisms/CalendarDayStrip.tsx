@@ -1,8 +1,7 @@
 import { format, isSameDay } from "date-fns";
+import { de } from "date-fns/locale";
 import type { CalendarDay } from "@/utils/calendarGrid";
 import { cn } from "@/lib/utils";
-
-const WEEKDAY_LETTERS = ["M", "D", "M", "D", "F", "S", "S"];
 
 type CalendarDayStripProps = {
   days: CalendarDay[];
@@ -15,7 +14,7 @@ type CalendarDayStripProps = {
 function CalendarDayStrip({ days, selectedDate, onSelectDay }: CalendarDayStripProps) {
   return (
     <div className="grid grid-cols-7 gap-1">
-      {days.map((day, index) => {
+      {days.map((day) => {
         const isSelected = isSameDay(day.date, selectedDate);
 
         return (
@@ -29,7 +28,7 @@ function CalendarDayStrip({ days, selectedDate, onSelectDay }: CalendarDayStripP
             )}
           >
             <span className="text-[10px] font-medium text-muted-foreground">
-              {WEEKDAY_LETTERS[index]}
+              {format(day.date, "EEEEE", { locale: de })}
             </span>
             <span
               className={cn(

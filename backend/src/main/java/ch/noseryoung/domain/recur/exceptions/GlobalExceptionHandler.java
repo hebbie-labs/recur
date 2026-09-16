@@ -144,6 +144,70 @@ public class GlobalExceptionHandler {
                                                 getPath(request)));
         }
 
+        @ExceptionHandler(NotGroupAdminException.class)
+        public ResponseEntity<ErrorResponse> handleNotGroupAdmin(
+                        NotGroupAdminException ex,
+                        WebRequest request) {
+
+                logger.info("Access denied, not group admin: {}", ex.getMessage());
+
+                return ResponseEntity
+                                .status(HttpStatus.FORBIDDEN)
+                                .body(ErrorResponse.of(
+                                                403,
+                                                "Forbidden",
+                                                ex.getMessage(),
+                                                getPath(request)));
+        }
+
+        @ExceptionHandler(AdminSuccessorRequiredException.class)
+        public ResponseEntity<ErrorResponse> handleAdminSuccessorRequired(
+                        AdminSuccessorRequiredException ex,
+                        WebRequest request) {
+
+                logger.info("Leave group rejected: {}", ex.getMessage());
+
+                return ResponseEntity
+                                .status(HttpStatus.CONFLICT)
+                                .body(ErrorResponse.of(
+                                                409,
+                                                "Conflict",
+                                                ex.getMessage(),
+                                                getPath(request)));
+        }
+
+        @ExceptionHandler(InvalidSuccessorException.class)
+        public ResponseEntity<ErrorResponse> handleInvalidSuccessor(
+                        InvalidSuccessorException ex,
+                        WebRequest request) {
+
+                logger.info("Invalid successor: {}", ex.getMessage());
+
+                return ResponseEntity
+                                .status(HttpStatus.BAD_REQUEST)
+                                .body(ErrorResponse.of(
+                                                400,
+                                                "Bad request",
+                                                ex.getMessage(),
+                                                getPath(request)));
+        }
+
+        @ExceptionHandler(CannotRemoveAdminException.class)
+        public ResponseEntity<ErrorResponse> handleCannotRemoveAdmin(
+                        CannotRemoveAdminException ex,
+                        WebRequest request) {
+
+                logger.info("Remove member rejected: {}", ex.getMessage());
+
+                return ResponseEntity
+                                .status(HttpStatus.CONFLICT)
+                                .body(ErrorResponse.of(
+                                                409,
+                                                "Conflict",
+                                                ex.getMessage(),
+                                                getPath(request)));
+        }
+
         @ExceptionHandler(EmailAlreadyExistsException.class)
         public ResponseEntity<ErrorResponse> handleEmailAlreadyExists(
                         EmailAlreadyExistsException ex,

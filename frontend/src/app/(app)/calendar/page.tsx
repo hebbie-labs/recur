@@ -1,7 +1,7 @@
 "use client";
 
 import ReactErrorBoundary from "@/components/error/ReactErrorBoundary";
-import CalendarGrid from "@/components/pages/CalendarPage";
+import CalendarPage from "@/components/pages/CalendarPage";
 
 export default function Page() {
   return (
@@ -9,7 +9,7 @@ export default function Page() {
       errorMessage="Dein Kalender konnte nicht angezeigt werden."
       fullScreen={false}
     >
-      <CalendarGrid />
+      <CalendarPage />
     </ReactErrorBoundary>
   );
 }

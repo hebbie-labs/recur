@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import ch.noseryoung.domain.recur.dto.CreateProjectRequest;
 import ch.noseryoung.domain.recur.exceptions.GroupNotFoundException;
+import ch.noseryoung.domain.recur.exceptions.NotGroupAdminException;
 import ch.noseryoung.domain.recur.exceptions.NotGroupMemberException;
 import ch.noseryoung.domain.recur.exceptions.ProjectNotArchivedException;
 import ch.noseryoung.domain.recur.exceptions.ProjectNotFoundException;
@@ -58,6 +59,12 @@ public class ProjectService {
         return group;
     }
 
+    private void requireAdmin(TaskGroup group, User user) {
+        if (group.getCreatedBy() == null || !group.getCreatedBy().equals(user)) {
+            throw new NotGroupAdminException();
+        }
+    }
+
     public ResponseEntity<Project> createProject(UUID groupId, CreateProjectRequest request) {
         TaskGroup group = requireMembership(groupId, getCurrentUser());
 
@@ -79,7 +86,9 @@ public class ProjectService {
     }
 
     public ResponseEntity<Project> patchProject(UUID groupId, UUID id, Boolean archived) {
-        TaskGroup group = requireMembership(groupId, getCurrentUser());
+        User currentUser = getCurrentUser();
+        TaskGroup group = requireMembership(groupId, currentUser);
+        requireAdmin(group, currentUser);
         Project project = projectRepository.findByIdAndGroup(id, group)
                 .orElseThrow(() -> new ProjectNotFoundException(id));
 
@@ -97,7 +106,9 @@ public class ProjectService {
     // unberührt.
     @Transactional
     public ResponseEntity<Void> deleteProject(UUID groupId, UUID id) {
-        TaskGroup group = requireMembership(groupId, getCurrentUser());
+        User currentUser = getCurrentUser();
+        TaskGroup group = requireMembership(groupId, currentUser);
+        requireAdmin(group, currentUser);
         Project project = projectRepository.findByIdAndGroup(id, group)
                 .orElseThrow(() -> new ProjectNotFoundException(id));
 

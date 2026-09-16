@@ -14,7 +14,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-@Builder
+// toBuilder=true wird gebraucht, um für die Response eine transiente Kopie
+// mit maskierten Mitgliedern (siehe TaskService#maskMembers) zu bauen, ohne
+// die verwaltete Entity selbst zu verändern (kein versehentliches Zurück-
+// schreiben anonymisierter Namen in die echten Zuweisungs-/Archiv-Tabellen).
+@Builder(toBuilder = true)
 @Getter
 @Setter
 @AllArgsConstructor
@@ -113,4 +117,22 @@ public class Task {
         @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "completed_by")
         private User completedBy;
+
+        // Self-Service: Gruppenmitglieder können sich selbst einem geteilten
+        // Projekt-Task zuweisen/abmelden (TaskService#assignSelf/unassignSelf).
+        // Nur für Projekt-Tasks relevant.
+        @Builder.Default
+        @ManyToMany(fetch = FetchType.LAZY)
+        @JoinTable(name = "task_assignee", joinColumns = @JoinColumn(name = "task_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
+        private Set<User> assignedMembers = new HashSet<>();
+
+        // Pro-Mitglied-Archiv-Status für geteilte Projekt-Tasks: ein zugewiesenes
+        // Mitglied kann den Task "für sich" archivieren, ohne ihn für die
+        // anderen zu schliessen. Sobald alle zugewiesenen Mitglieder enthalten
+        // sind, wird isArchived automatisch global gesetzt (siehe
+        // TaskService#applyArchivedChange).
+        @Builder.Default
+        @ManyToMany(fetch = FetchType.LAZY)
+        @JoinTable(name = "task_archived_by", joinColumns = @JoinColumn(name = "task_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
+        private Set<User> archivedBy = new HashSet<>();
 }

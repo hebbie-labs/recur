@@ -1,29 +1,55 @@
-# **RECUR**
+# Recur
 
 **your habits, your way**
 
-Track your habits and routines with ease. Recur is a simple, intuitive habit tracker that helps you build and maintain good habits while breaking bad ones.
+Recur is a full-stack habit/task tracker: a Java 25 / Spring Boot 4.0.6
+backend and a React + TypeScript + Next.js frontend, backed by Postgres.
 
-## Why Recur?
+- Track personal habits and one-off tasks with categories, frequencies and
+  due dates.
+- Share projects and tasks with a group via invite links.
+- Calendar (month/week) and list views, favorites, archiving.
 
-- **Local first**: Your data is stored locally on your device, ensuring privacy and security.
-- **Open source**: Recur is open source, allowing you to contribute and customize it to your needs.
-- **Your Data, Your Control**: You have complete ownership and control over your habit tracking data.
-- **No Ads**: Enjoy an ad-free experience while focusing on your habits.
-- **Free for Everyone**: Recur is completely free to use, with no hidden costs or subscriptions.
-- **User friendly**: Recur is designed to be easy to use, making it simple for anyone to start tracking their habits.
-- **Cross-platform**: Recur is available on multiple platforms, allowing you to track your habits wherever you are.
-- **Customizable**: Tailor your habit tracking experience to fit your unique needs and preferences.
+## Repository
 
-## How to Use Recur
+[github.com/lelelon225/recur](https://github.com/lelelon225/recur)
 
-1. **Download and Install**:
-   - Visit the [Recur GitHub repository](https://github.com/lelelon225/recur.git)
-   - Clone the repository or download the latest release for your platform.
-   - Follow the installation instructions provided for your specific operating system.
+## Stack
 
-2. **Set Up Your Habits**:
-   - Open the Recur application.
-   - Create a new habit by clicking on the "Add Habit" button.
-   - Enter the habit name, description, and set the frequency (daily, weekly, etc.).
-   - Customize the habit settings according to your preferences.
+- `backend/` — Java 25, Spring Boot 4.0.6, Gradle, Postgres via Spring Data
+  JPA, hybrid JWT + Google OAuth2/OIDC auth. See
+  [`backend/README.md`](backend/README.md).
+- `frontend/` — React + TypeScript, Next.js (App Router), Formik + Yup,
+  shadcn UI primitives. See [`frontend/README.md`](frontend/README.md).
+- `database/` — Postgres via Docker.
+
+## Getting started
+
+Prerequisites: Java 25, Node.js with `yarn`, Docker.
+
+1. **Database**: from the repo root,
+   ```bash
+   docker compose up -d db
+   ```
+   Postgres runs on host port **5436** (not 5432).
+
+2. **Backend**: in `backend/`, copy `.env.example` to `.env` and fill in
+   `JWT_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (see
+   [`backend/README.md`](backend/README.md) for the full list), then
+   ```bash
+   ./gradlew bootRun
+   ```
+   Runs on [http://localhost:8080](http://localhost:8080).
+
+3. **Frontend**: in `frontend/`, copy `.env.example` to `.env` and set
+   `NEXT_PUBLIC_API_URL`, then
+   ```bash
+   yarn install
+   yarn dev
+   ```
+   Runs on [http://localhost:3000](http://localhost:3000).
+
+On Windows, `./start-dev.ps1` starts Docker, the backend, and the frontend
+together — but it runs `docker start recur`, so the container/stack named
+`recur` must already exist (i.e. step 1 above must have been run at least
+once before).

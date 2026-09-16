@@ -56,6 +56,10 @@ export interface Task {
   project?: TaskProject | null;
   /** Wer den Task zuletzt als erledigt markiert hat (nur bei Projekt-Tasks relevant). */
   completedBy?: TaskPerson | null;
+  /** Self-Service zugewiesene Mitglieder (nur bei Projekt-Tasks relevant). */
+  assignedMembers?: TaskPerson[];
+  /** Wer den Task bereits individuell für sich archiviert hat (nur bei Projekt-Tasks relevant). */
+  archivedBy?: TaskPerson[];
 }
 
 /** Fields the server owns and the client must never send on create/patch. */
@@ -65,7 +69,9 @@ export type ServerOwnedFields =
   | "updatedAt"
   | "project"
   | "completedBy"
-  | "isArchived";
+  | "isArchived"
+  | "assignedMembers"
+  | "archivedBy";
 
 /** Payload shape for creating a new task (no id/dateCreated yet). */
 export type NewTask = Omit<Task, ServerOwnedFields> & { projectId?: string | null };
@@ -192,4 +198,30 @@ function deleteAllTasks(): Promise<void> {
     });
 }
 
-export { getTasks, createTask, patchTask, deleteTask, deleteAllTasks };
+function assignSelf(id: string): Promise<Task> {
+  return api
+    .post(`/task/${id}/assign`)
+    .then((response) => response.data as Task)
+    .catch((err: unknown) => {
+      throw new Error(extractErrorMessage(err, "Fehler beim Zuweisen der Aufgabe"));
+    });
+}
+
+function unassignSelf(id: string): Promise<Task> {
+  return api
+    .post(`/task/${id}/unassign`)
+    .then((response) => response.data as Task)
+    .catch((err: unknown) => {
+      throw new Error(extractErrorMessage(err, "Fehler beim Abmelden von der Aufgabe"));
+    });
+}
+
+export {
+  getTasks,
+  createTask,
+  patchTask,
+  deleteTask,
+  deleteAllTasks,
+  assignSelf,
+  unassignSelf,
+};

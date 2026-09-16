@@ -115,8 +115,11 @@ function DatenschutzPage() {
         <p>
           Wenn du Aufgaben über die Gruppen-Funktion mit anderen teilst, sind
           dein Vor- und Nachname sowie dein Profilbild für die anderen
-          Mitglieder dieser Gruppe sichtbar. Du kannst diese Sichtbarkeit in
-          deinen Privatsphäre-Einstellungen einschränken.
+          Mitglieder dieser Gruppe sichtbar. Schaltest du "Für
+          Gruppenmitglieder sichtbar" in den Privatsphäre-Einstellungen aus,
+          sehen andere Mitglieder stattdessen nur deine Initialen ohne
+          Profilbild - in der Mitgliederliste, bei der Aufgaben-Zuweisung und
+          überall sonst, wo deine Gruppenmitgliedschaft angezeigt wird.
         </p>
       </section>
 

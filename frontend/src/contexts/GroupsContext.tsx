@@ -13,7 +13,8 @@ import {
   deleteGroup as deleteGroupApi,
   leaveGroup as leaveGroupApi,
   removeMember as removeMemberApi,
-  getProjects,
+  transferAdmin as transferAdminApi,
+  getAllProjects,
   createProject as createProjectApi,
   patchProject as patchProjectApi,
   deleteProject as deleteProjectApi,
@@ -31,8 +32,9 @@ type GroupsContextValue = {
   syncGroups: () => Promise<void>;
   createGroup: (name: string) => Promise<Group>;
   deleteGroup: (groupId: string) => Promise<void>;
-  leaveGroup: (groupId: string) => Promise<void>;
+  leaveGroup: (groupId: string, successorId?: string) => Promise<void>;
   removeMember: (groupId: string, memberId: string) => Promise<void>;
+  transferAdmin: (groupId: string, newAdminId: string) => Promise<Group>;
   createProject: (groupId: string, name: string) => Promise<Project>;
   patchProject: (
     groupId: string,
@@ -54,17 +56,13 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   const loadGroupsAndProjects = useCallback(async () => {
-    const fetchedGroups = await getGroups();
-    const projectEntries = await Promise.all(
-      fetchedGroups.map(async (group) => {
-        const projects = await getProjects(group.id);
-        return [group.id, projects] as const;
-      })
-    );
-    return {
-      fetchedGroups,
-      fetchedProjectsByGroupId: Object.fromEntries(projectEntries),
-    };
+    // Zwei Requests statt einem pro Gruppe: getAllProjects() liefert die
+    // Projekte aller eigenen Gruppen gebündelt (siehe GroupController#getProjectsForMyGroups).
+    const [fetchedGroups, fetchedProjectsByGroupId] = await Promise.all([
+      getGroups(),
+      getAllProjects(),
+    ]);
+    return { fetchedGroups, fetchedProjectsByGroupId };
   }, []);
 
   const fetchGroups = useCallback(async () => {
@@ -141,8 +139,8 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
   );
 
   const leaveGroup = useCallback(
-    async (groupId: string) => {
-      await leaveGroupApi(groupId);
+    async (groupId: string, successorId?: string) => {
+      await leaveGroupApi(groupId, successorId);
       setGroups((prev) => prev.filter((g) => g.id !== groupId));
       setProjectsByGroupId((prev) => removeGroupFromProjectsMap(prev, groupId));
     },
@@ -158,6 +156,12 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
           : g
       )
     );
+  }, []);
+
+  const transferAdmin = useCallback(async (groupId: string, newAdminId: string) => {
+    const updated = await transferAdminApi(groupId, newAdminId);
+    setGroups((prev) => prev.map((g) => (g.id === groupId ? updated : g)));
+    return updated;
   }, []);
 
   const createProject = useCallback(async (groupId: string, name: string) => {
@@ -201,6 +205,7 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
     deleteGroup,
     leaveGroup,
     removeMember,
+    transferAdmin,
     createProject,
     patchProject,
     deleteProject,

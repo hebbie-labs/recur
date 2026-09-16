@@ -16,7 +16,10 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
-@Builder
+// toBuilder=true wird für maskierte Kopien in GroupMemberVisibilityService
+// gebraucht: eine transiente Kopie mit anonymisiertem Namen/Avatar, die nie
+// in einer Hibernate-Session landet und daher niemals zurückgeschrieben wird.
+@Builder(toBuilder = true)
 @Getter
 @Setter
 @AllArgsConstructor

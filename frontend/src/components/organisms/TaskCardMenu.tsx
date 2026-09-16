@@ -10,6 +10,8 @@ import EditTaskForm from "./EditTaskForm";
 import type { Task } from "@/services/taskService";
 import ConfirmDialog from "@/components/molecules/ConfirmDialog";
 import useTaskCardMenu from "@/hooks/useTaskCardMenu";
+import { useTasksContext } from "@/contexts/TasksContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 type TaskCardMenuProps = {
   task: Task;
@@ -32,6 +34,9 @@ function TaskCardMenu({
   onTaskUpdated,
   isArchived,
 }: TaskCardMenuProps) {
+  const { handleToggleAssign } = useTasksContext();
+  const { user } = useAuth();
+  const isAssignedToMe = task.assignedMembers?.some((m) => m.id === user?.id) ?? false;
   const {
     open,
     editOpen,
@@ -115,6 +120,11 @@ function TaskCardMenu({
           ) : (
             <>
               <DropdownMenuItem onClick={handleToggleEdit}>Bearbeiten</DropdownMenuItem>
+              {task.project && (
+                <DropdownMenuItem onClick={() => handleToggleAssign(task.id)}>
+                  {isAssignedToMe ? "Zuweisung entfernen" : "Mir zuweisen"}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={handleToggleArchive}>Archivieren</DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleRequestResetProgress}

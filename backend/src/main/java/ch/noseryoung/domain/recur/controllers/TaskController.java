@@ -53,6 +53,16 @@ public class TaskController {
                 return taskService.patchTask(id, request, resetProgress, favorite, archived, amountDid, unassignProject);
         }
 
+        @PostMapping({ "/{id}/assign", "/{id}/assign/" })
+        public ResponseEntity<Task> assignSelf(@PathVariable UUID id) {
+                return taskService.assignSelf(id);
+        }
+
+        @PostMapping({ "/{id}/unassign", "/{id}/unassign/" })
+        public ResponseEntity<Task> unassignSelf(@PathVariable UUID id) {
+                return taskService.unassignSelf(id);
+        }
+
         @DeleteMapping({ "/{id}", "/{id}/" })
         public ResponseEntity<Task> deleteTask(@PathVariable UUID id) {
                 return taskService.deleteTask(id);
