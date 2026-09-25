@@ -40,8 +40,11 @@ Swagger UI: [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/
 
 ## Structure
 
-Package convention:
-`ch.noseryoung.domain.recur.{controllers,services,repositories,models,enums,dto,security,exceptions,utils}`.
+Package convention is domain-first:
+`ch.noseryoung.domain.recur.<domain>.{controller,service,repository,model,dto,enums,exceptions}`
+(`user`, `auth`, `task`, `group`, `notification`), plus a `shared/` package
+for cross-cutting code. See [`docs/architecture.md`](../docs/architecture.md)
+for the full breakdown and the allowed dependency direction between domains.
 
 Auth is hybrid: stateless JWT (`jjwt`) for normal API calls via
 `JwtAuthenticationFilter`, plus Spring Security OAuth2/OIDC login for

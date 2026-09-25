@@ -1,4 +1,4 @@
-import { TaskFrequency, type TaskFrequency as TaskFrequencyType, type Task } from "@/services/taskService";
+import { TaskFrequency, type TaskFrequency as TaskFrequencyType, type Task } from "@/types/task";
 import { toDateOnlyString } from "@/utils/formatDate";
 
 // Wie viele Tage ein Frequenz-Intervall abdeckt (#152) - identisch zu

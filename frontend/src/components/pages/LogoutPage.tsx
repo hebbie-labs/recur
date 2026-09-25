@@ -1,4 +1,4 @@
-import AuthStatusCard from "@/components/molecules/AuthStatusCard";
+import AuthStatusCard from "@/components/molecules/auth/AuthStatusCard";
 import { useLogoutRedirect } from "@/hooks/useLogoutRedirect";
 
 function LogoutPage() {

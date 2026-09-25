@@ -3,8 +3,8 @@ import { OctagonXIcon } from "lucide-react";
 import { useTasksContext } from "@/contexts/TasksContext";
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import TaskCardGrid from "@/components/molecules/TaskCardGrid";
-import TaskCardGridSkeleton from "../molecules/TaskCardGridSkeleton";
+import TaskCardGrid from "@/components/molecules/task/TaskCardGrid";
+import TaskCardGridSkeleton from "../molecules/task/TaskCardGridSkeleton";
 
 function FavoritesPage() {
   const router = useRouter();

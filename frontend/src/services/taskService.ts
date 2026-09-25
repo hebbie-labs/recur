@@ -1,108 +1,7 @@
 import axios from "axios";
-import api from "./api";
+import api, { isUnauthorized } from "./api";
 import type { ReminderLeadTime } from "@/types/notifications";
-
-export const TaskFrequency = {
-  DAILY: "DAILY",
-  WEEKLY: "WEEKLY",
-  MONTHLY: "MONTHLY",
-  YEARLY: "YEARLY",
-  ONCE: "ONCE",
-} as const;
-
-export type TaskFrequency = (typeof TaskFrequency)[keyof typeof TaskFrequency];
-
-export const TaskCategory = {
-  WORK: "WORK",
-  PERSONAL: "PERSONAL",
-  SCHOOL: "SCHOOL",
-  OTHER: "OTHER",
-} as const;
-
-export type TaskCategory = (typeof TaskCategory)[keyof typeof TaskCategory];
-
-/** Wer ein geteiltes Projekt-Task erledigt/zugeordnet hat - Kurzform von User. */
-export interface TaskPerson {
-  id: string;
-  firstName: string;
-  lastName: string;
-  avatarUrl: string | null;
-}
-
-/** Projekt-Referenz auf einem geteilten Gruppen-Task. */
-export interface TaskProject {
-  id: string;
-  name: string;
-  isArchived: boolean;
-}
-
-export interface Task {
-  id: string;
-  name: string;
-  category: TaskCategory;
-  frequency: TaskFrequency;
-  description: string;
-  dateUntil: string;
-  progress: number;
-  dateCreated: string;
-  /** Vom Server bei jedem Save neu gesetzt - Basis für den Sync-Merge (Last-Write-Wins). */
-  updatedAt?: string | null;
-  daysInSpan?: number | null;
-  amountDid?: number | null;
-  /** Zeitpunkt des letzten Fortschritts-Increments - vom Server aus completions abgeleitet (#152). */
-  lastAmountDidAt?: string | null;
-  /** Completion-Historie als Datums-Strings (YYYY-MM-DD) - Source of Truth für amountDid/progress, Basis für die Verlaufs-Liste und den Abhaken-Toggle (#152). */
-  completions?: string[] | null;
-  isFavorite?: boolean | null;
-  isArchived: boolean;
-  durationMinutes?: number | null;
-  startTime?: string | null;
-  /**
-   * Erinnerungs-Vorlauf-Override des aktuellen Users für diesen Task
-   * (#102-Follow-up); null/undefined nutzt die Kontoeinstellung. Wird vom
-   * Server pro Betrachter befüllt (siehe TaskService#maskMembers) und über
-   * einen eigenen Endpoint gesetzt (setTaskReminderLeadTime), nicht über
-   * createTask/patchTask.
-   */
-  reminderLeadTime?: ReminderLeadTime | null;
-  /** Gesetzt <=> geteiltes Item eines Gruppen-Projekts statt persönlicher Task. */
-  project?: TaskProject | null;
-  /** Wer den Task zuletzt als erledigt markiert hat (nur bei Projekt-Tasks relevant). */
-  completedBy?: TaskPerson | null;
-  /** Self-Service zugewiesene Mitglieder (nur bei Projekt-Tasks relevant). */
-  assignedMembers?: TaskPerson[];
-  /** Wer den Task bereits individuell für sich archiviert hat (nur bei Projekt-Tasks relevant). */
-  archivedBy?: TaskPerson[];
-}
-
-/** Fields the server owns and the client must never send on create/patch. */
-export type ServerOwnedFields =
-  | "id"
-  | "dateCreated"
-  | "updatedAt"
-  | "lastAmountDidAt"
-  | "completions"
-  | "project"
-  | "completedBy"
-  | "isArchived"
-  | "assignedMembers"
-  | "archivedBy"
-  | "reminderLeadTime";
-
-/** Payload shape for creating a new task (no id/dateCreated yet). */
-export type NewTask = Omit<Task, ServerOwnedFields> & { projectId?: string | null };
-
-/** Options for patchTask: partial task fields plus query-param flags. */
-export type PatchTaskOptions = {
-  task?: Partial<Omit<Task, ServerOwnedFields>> & { projectId?: string | null };
-  resetProgress?: boolean;
-  favorite?: boolean;
-  archived?: boolean;
-  /** Nur noch für geteilte Projekt-Tasks (#152: persönliche Tasks laufen über addTaskCompletion/removeTaskCompletion). */
-  amountDid?: number;
-  /** Setzt den Task explizit zurück auf persönlich (kein Projekt mehr). */
-  unassignProject?: boolean;
-};
+import type { Task, NewTask, PatchTaskOptions } from "@/types/task";
 
 function extractErrorMessage(err: unknown, fallback: string): string {
   if (axios.isAxiosError(err)) {
@@ -114,11 +13,7 @@ function extractErrorMessage(err: unknown, fallback: string): string {
   return fallback;
 }
 
-/**
- * Normalizes a date-only string (e.g. "2222-02-21") or a full ISO string
- * into a full ISO-8601 instant string that java.time.Instant can parse.
- * Passes through null/undefined unchanged.
- */
+/** Normalizes a date-only string (e.g. "2222-02-21") or a full ISO string into a full ISO-8601 instant string that java.time.Instant can parse; passes through null/undefined unchanged. */
 function toInstantString(date: string | null | undefined): string | null {
   if (date === null || date === undefined || date === "") return null;
   const parsed = new Date(date);
@@ -135,11 +30,7 @@ function normalizeTaskDates<T extends { dateUntil?: string | null }>(
   return { ...task, dateUntil: toInstantString(task.dateUntil) };
 }
 
-/**
- * Wandelt das frontend-freundliche `projectId` in die verschachtelte
- * `project: { id }`-Referenz um, die das Backend (Task.project) erwartet.
- * `projectId` bleibt dabei nicht Teil des gesendeten Bodys.
- */
+/** Wandelt das frontend-freundliche `projectId` in die verschachtelte `project: { id }`-Referenz um, die das Backend (Task.project) erwartet; `projectId` bleibt dabei nicht Teil des gesendeten Bodys. */
 function withProjectReference<T extends { projectId?: string | null }>(
   payload: T
 ): Omit<T, "projectId"> & { project?: { id: string } } {
@@ -155,6 +46,10 @@ function getTasks(archived?: boolean, favorite?: boolean): Promise<Task[]> {
     .get("/task", { params: { archived, favorite } })
     .then((response) => response.data as Task[])
     .catch((err: unknown) => {
+      // Roh weiterwerfen statt in eine Message-Error zu verpacken - TasksContext
+      // muss einen 401 hier erkennen können (nicht (mehr) authentifiziert,
+      // z.B. Logout-Race), um das nicht wie einen echten Fehler zu behandeln.
+      if (isUnauthorized(err)) throw err;
       throw new Error(
         extractErrorMessage(err, "Fehler beim Abrufen der Aufgaben")
       );
@@ -180,10 +75,11 @@ function patchTask(id: string, options: PatchTaskOptions = {}): Promise<Task> {
     archived,
     amountDid,
     unassignProject,
+    hidden,
   } = options;
   return api
     .patch(`/task/${id}`, withProjectReference(normalizeTaskDates(task)), {
-      params: { resetProgress, favorite, archived, amountDid, unassignProject },
+      params: { resetProgress, favorite, archived, amountDid, unassignProject, hidden },
     })
     .then((response) => response.data as Task)
     .catch((err: unknown) => {
@@ -213,10 +109,11 @@ function removeTaskCompletion(id: string, date: string): Promise<Task> {
     });
 }
 
-function deleteTask(id: string): Promise<void> {
+/** Löscht einen persönlichen Task oder (als Ersteller) einen Projekt-Task endgültig für alle - Server antwortet mit leerem Body (null). Blendet ein Gruppenmitglied den Task nur für sich aus, liefert der Server stattdessen den aktualisierten Task für einen Undo-Toast (patchTask({ hidden: false })). */
+function deleteTask(id: string): Promise<Task | null> {
   return api
     .delete(`/task/${id}`)
-    .then(() => {})
+    .then((response) => (response.data as Task | "") || null)
     .catch((err: unknown) => {
       throw new Error(
         extractErrorMessage(err, "Fehler beim Löschen der Aufgabe")
@@ -235,12 +132,7 @@ function deleteAllTasks(): Promise<void> {
     });
 }
 
-/**
- * Setzt/löscht den Erinnerungs-Vorlauf-Override des aktuellen Users für
- * diesen Task (#102-Follow-up) - pro (task, user), daher ein eigener
- * Endpoint statt Teil von createTask/patchTask (siehe TaskController).
- * `null` löscht den Override wieder (zurück auf die Kontoeinstellung).
- */
+/** Setzt/löscht den Erinnerungs-Vorlauf-Override des aktuellen Users für diesen Task (#102-Follow-up) - pro (task, user), daher ein eigener Endpoint statt Teil von createTask/patchTask; `null` löscht den Override wieder (zurück auf die Kontoeinstellung). */
 function setTaskReminderLeadTime(
   id: string,
   reminderLeadTime: ReminderLeadTime | null

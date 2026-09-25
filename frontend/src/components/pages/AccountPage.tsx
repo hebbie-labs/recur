@@ -1,74 +1,83 @@
 import { Formik } from "formik";
+import type { FormikHelpers } from "formik";
 import { useState } from "react";
-import * as yup from "yup";
-import type { UserResponse as User } from "../../types/auth";
-import { patchUser } from "../../services/authService";
-import { Button } from "@/components/ui/button";
-import LoadingButton from "@/components/atoms/LoadingButton";
-import AccountForm from "../organisms/AccountForm";
 import { useRouter } from "next/navigation";
+import { LogOut, Settings } from "lucide-react";
+import * as yup from "yup";
+import type { UserResponse as User } from "@/types/auth";
+import { patchUser } from "@/services/authService";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import LoadingButton from "@/components/atoms/loading/LoadingButton";
+import AccountForm from "@/components/organisms/settings/AccountForm";
 import { useAuth } from "@/contexts/AuthContext";
-import { Spinner } from "../ui/spinner";
-
-
-type AccountPageProps = {
-  firstName: string;
-  lastName: string;
-  email: string;
-  avatarUrl?: string;
-  onClose: () => void;
-};
+import { useBreakpoint } from "@/hooks/useBreakpoint";
 
 const validationSchema = yup.object().shape({
   firstName: yup.string().required("Vorname ist erforderlich"),
   lastName: yup.string().required("Nachname ist erforderlich"),
-  email: yup
-    .string()
-    .email("Ungültige E-Mail-Adresse")
-    .required("E-Mail ist erforderlich"),
   avatarUrl: yup.string().url("Ungültige URL").nullable().notRequired(),
 });
 
-function AccountPage({
-  firstName,
-  lastName,
-  email,
-  avatarUrl,
-  onClose,
-}: AccountPageProps) {
-  const [loading, setLoading] = useState(false);
+function AccountPage() {
+  const { user, updateUser, logout } = useAuth();
+  const router = useRouter();
+  const isMobile = useBreakpoint() === "mobile";
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (values: Partial<User>) => {
-    setLoading(true);
+  if (!user) {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-6">
+        <Skeleton className="h-40 w-full" />
+      </div>
+    );
+  }
+
+  const handleSubmit = async (
+    values: Partial<User>,
+    { resetForm }: FormikHelpers<Partial<User>>
+  ) => {
     setError(null);
+    setSaving(true);
     try {
-      await patchUser({
+      const saved = await patchUser({
         firstName: values.firstName,
         lastName: values.lastName,
-        email: values.email,
         avatarUrl: values.avatarUrl,
       } as User);
-      window.location.reload();
-    } catch (error) {
+      updateUser(saved);
+      resetForm({ values: saved });
+    } catch (err) {
+      resetForm({ values: user });
       setError(
-        error instanceof Error
-          ? error.message
+        err instanceof Error
+          ? err.message
           : "Unbekannter Fehler beim Bearbeiten des Accounts"
       );
-      setLoading(false);
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6">
+      {/* Settings-Zugriff via Sidebar-Dropdown auf Desktop schon vorhanden - hier nur für Mobile, wo der Sidebar/Drawer weg ist. */}
+      {isMobile && (
+        <div className="mb-4 flex justify-end">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Einstellungen"
+            onClick={() => router.push("/settings")}
+          >
+            <Settings />
+          </Button>
+        </div>
+      )}
       <Formik<Partial<User>>
-        initialValues={{
-          firstName: firstName,
-          lastName: lastName,
-          email: email,
-          avatarUrl: avatarUrl,
-        }}
+        initialValues={user}
         onSubmit={handleSubmit}
         validationSchema={validationSchema}
       >
@@ -76,6 +85,7 @@ function AccountPage({
           values,
           errors,
           touched,
+          dirty,
           handleChange,
           handleBlur,
           handleSubmit,
@@ -88,49 +98,34 @@ function AccountPage({
               touched={touched}
               handleChange={handleChange}
               handleBlur={handleBlur}
+              disabled={saving}
               className="flex flex-col gap-2"
             />
             {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
-            <div className="mt-4 flex gap-2">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Zurück
-              </Button>
-              <LoadingButton
-                type="submit"
-                onClick={() => handleSubmit()}
-                loading={loading}
-              >
-                Speichern
-              </LoadingButton>
-            </div>
+            <LoadingButton
+              type="button"
+              onClick={() => handleSubmit()}
+              loading={saving}
+              disabled={!dirty}
+              className="mt-4"
+            >
+              Speichern
+            </LoadingButton>
           </>
         )}
       </Formik>
+
+      {isMobile && (
+        <>
+          <Separator className="my-6" />
+          <Button variant="outline" className="w-full" onClick={logout}>
+            <LogOut className="h-4 w-4" />
+            Abmelden
+          </Button>
+        </>
+      )}
     </div>
   );
 }
 
-function AccountPageWrapper() {
-  const { user } = useAuth();
-  const router = useRouter();
-
-  if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Spinner className="size-8 text-primary" />
-      </div>
-    );
-  }
-
-  return (
-    <AccountPage
-      firstName={user.firstName}
-      lastName={user.lastName}
-      email={user.email}
-      avatarUrl={user.avatarUrl}
-      onClose={() => router.back()}
-    />
-  );
-}
-
-export default AccountPageWrapper;
+export default AccountPage;

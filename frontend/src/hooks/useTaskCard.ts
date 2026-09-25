@@ -1,5 +1,5 @@
 import { useMemo, type MouseEvent } from "react";
-import type { Task } from "@/services/taskService";
+import type { Task } from "@/types/task";
 import { isDoneForCurrentPeriod } from "@/utils/taskCompletions";
 
 type UseTaskCardParams = {

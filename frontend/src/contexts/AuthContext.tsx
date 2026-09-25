@@ -23,6 +23,7 @@ type AuthContextValue = {
     register: (request: RegisterRequest) => Promise<void>;
     completeOAuthLogin: () => Promise<void>;
     logout: () => void;
+    updateUser: (user: UserResponse) => void;
 };
 
 
@@ -96,9 +97,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
+    // Kein setUser(null) hier: logoutService() macht sofort einen harten
+    // window.location.href-Reload zu /logout, der den gesamten React-Baum
+    // (inkl. dieses States) ohnehin neu aufbaut. Ein lokales setUser(null)
+    // würde stattdessen nur einen Render auf der AKTUELLEN Seite auslösen,
+    // bevor die Navigation greift - isAuthenticated kippt kurz auf false,
+    // ProtectedRoute zeigt dadurch kurz seinen eigenen Spinner, bevor /logout
+    // überhaupt geladen ist: sichtbar als zwei verschiedene Spinner
+    // hintereinander statt nur dem von /logout.
     const logout = useCallback(() => {
-        setUser(null);
         logoutService();
+    }, []);
+
+    const updateUser = useCallback((updated: UserResponse) => {
+        setUser(updated);
     }, []);
 
     const value: AuthContextValue = {
@@ -110,6 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         register,
         completeOAuthLogin,
         logout,
+        updateUser,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

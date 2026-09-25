@@ -17,7 +17,7 @@ export function useNavigationBar(destinations: NavigationDestination[]) {
   // (Reload, Lesezeichen, geteilter Link) erhalten, und der Tab zeigt auch
   // nach einem Reload den korrekten aktiven Zustand.
   // Kein Fallback auf destinations[0]: auf Routen ohne Match (z.B.
-  // /setting/*) soll kein Eintrag aktiv wirken.
+  // /settings) soll kein Eintrag aktiv wirken.
   const activeValue = useMemo(() => {
     const match = destinations.find((d) => d.path === pathname);
     return match?.path ?? "";

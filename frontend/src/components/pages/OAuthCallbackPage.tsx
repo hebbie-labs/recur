@@ -1,5 +1,5 @@
 import { useRouter } from "next/navigation";
-import AuthStatusCard from "@/components/molecules/AuthStatusCard";
+import AuthStatusCard from "@/components/molecules/auth/AuthStatusCard";
 import { useOAuthCallback } from "@/hooks/useOAuthCallback";
 
 function OAuthCallbackPage() {

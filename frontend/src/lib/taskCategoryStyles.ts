@@ -1,4 +1,4 @@
-import { TaskCategory } from "@/services/taskService";
+import { TaskCategory } from "@/types/task";
 
 export const categoryLabels: Record<TaskCategory, string> = {
   [TaskCategory.WORK]: "Arbeit",

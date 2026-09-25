@@ -23,6 +23,9 @@ backend and a React + TypeScript + Next.js frontend, backed by Postgres.
   shadcn UI primitives. See [`frontend/README.md`](frontend/README.md).
 - `database/` — Postgres via Docker.
 
+See [`docs/architecture.md`](docs/architecture.md) for module layout, the
+auth flow, and the frontend's atomic-design structure.
+
 ## Getting started
 
 Prerequisites: Java 25, Node.js with `yarn`, Docker.

@@ -1,19 +1,29 @@
 import type { ReactNode } from "react";
-import { useRouter } from "next/navigation";
-import { History, Heart, Archive, Calendar, Users } from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
+import { History, Home, Heart, Archive, Calendar, Users } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { AddTaskProvider } from "@/contexts/AddTaskContext";
 import { ImportQuartalsplanProvider } from "@/contexts/ImportQuartalsplanContext";
 import Fab from "@/components/atoms/FloatingActionButton";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "../ui/sidebar";
-import { Separator } from "../ui/separator";
-import AppSidebar from "../organisms/AppSidebar";
+import { useBreakpoint } from "@/hooks/useBreakpoint";
+import { useNavigationBar } from "@/hooks/useNavigationBar";
+import { cn } from "@/lib/utils";
+import { SidebarInset, SidebarProvider } from "../ui/sidebar";
+import AppSidebar from "../organisms/sidebar/AppSidebar";
+import BottomNavigation from "../organisms/BottomNavigation";
+import AppBar from "../molecules/AppBar";
+
+// Bottom-Nav sitzt fixed über bottom-[calc(env(safe-area-inset-bottom)+1rem)]
+// mit ~3.5rem Eigenhöhe - der Toaster braucht auf Mobile genug Abstand
+// darüber, damit nichts überlappt.
+const MOBILE_BOTTOM_CLEARANCE = "calc(env(safe-area-inset-bottom) + 6rem)";
 
 type DefaultLayoutProps = {
   children: ReactNode;
   pageTitle?: string;
 };
 
+// Desktop-Sidebar: alle 5 Ziele, unverändert.
 const NAV_ROUTES = [
   { path: "/", label: "Neuste", icon: History },
   { path: "/favorites", label: "Favoriten", icon: Heart },
@@ -22,8 +32,24 @@ const NAV_ROUTES = [
   { path: "/groups", label: "Gruppen", icon: Users },
 ] as const;
 
+// Mobile Bottom Nav: nur noch 3 Ziele - Favoriten/Archiv sind dort keine
+// eigenen Tabs mehr, sondern Vorschau-Sektionen auf der Start-Seite
+// (HomePage.tsx). "/" heisst hier "Start" statt "Neuste", weil die Seite
+// jetzt mehr als nur die neusten Aufgaben zeigt.
+const MOBILE_NAV_ROUTES = [
+  { path: "/", label: "Start", icon: Home },
+  { path: "/calendar", label: "Kalender", icon: Calendar },
+  { path: "/groups", label: "Gruppen", icon: Users },
+] as const;
+
+// "Task hinzufügen" ergibt nur hier Sinn - andere Routen haben ihren eigenen
+// Add-Flow (Kalender: Klick auf Slot, Gruppen/Projekte: eigener Header-Button).
+const FAB_ROUTES = new Set(["/", "/favorites"]);
+
 function DefaultLayout({ children, pageTitle }: DefaultLayoutProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const isMobile = useBreakpoint() === "mobile";
 
   const destinations = NAV_ROUTES.map(({ path, label, icon: Icon }) => ({
     path,
@@ -32,34 +58,53 @@ function DefaultLayout({ children, pageTitle }: DefaultLayoutProps) {
     icon: Icon,
   }));
 
+  const mobileDestinations = MOBILE_NAV_ROUTES.map(({ path, label, icon: Icon }) => ({
+    path,
+    navigate: () => router.push(path),
+    label,
+    icon: Icon,
+  }));
+
+  // isPrimaryRoute (Avatar vs. Zurück-Chevron in der AppBar) richtet sich auf
+  // Mobile nach den 3 Bottom-Nav-Zielen, nicht nach allen 5 Desktop-Routen -
+  // /favorites und /archive sind dort keine primären Ziele mehr.
+  const { activeValue } = useNavigationBar(mobileDestinations);
+
   return (
     <AddTaskProvider>
       <ImportQuartalsplanProvider>
         <SidebarProvider>
-          <AppSidebar destinations={destinations} />
+          {!isMobile && <AppSidebar destinations={destinations} />}
 
           <SidebarInset>
-            <div className="flex mx-auto w-full max-w-6xl px-4 py-6 pb-24">
-              <div className="mb-6 flex w-full flex-col gap-4">
-                <div className="flex items-center gap-2">
-                  <SidebarTrigger className="-ml-1" />
+            <AppBar
+              title={pageTitle}
+              isPrimaryRoute={activeValue !== ""}
+              showAddTaskButton={FAB_ROUTES.has(pathname)}
+            />
 
-                  <Separator
-                    orientation="vertical"
-                    className="mr-2 data-[orientation=vertical]:h-4"
-                  />
-
-                  <h1 className="text-xl font-semibold text-foreground">
-                    {pageTitle}
-                  </h1>
-                </div>
-
-                <main>{children}</main>
-              </div>
+            <div
+              className={cn(
+                "flex mx-auto w-full max-w-6xl px-4 py-6",
+                isMobile ? "pb-32" : "pb-24"
+              )}
+            >
+              <main className="w-full">{children}</main>
             </div>
 
-            <Toaster position="bottom-left" />
-            <Fab className="fixed bottom-4 right-4" />
+            <Toaster
+              position="bottom-left"
+              offset={isMobile ? { bottom: MOBILE_BOTTOM_CLEARANCE } : undefined}
+              mobileOffset={isMobile ? { bottom: MOBILE_BOTTOM_CLEARANCE } : undefined}
+            />
+            {/* Mobile: der "+"-Button sitzt jetzt in der AppBar statt hier (#208) - Desktop unverändert. */}
+            {!isMobile && FAB_ROUTES.has(pathname) && (
+              <Fab className="fixed right-4 bottom-4" />
+            )}
+
+            {isMobile && (
+              <BottomNavigation destinations={mobileDestinations} activeValue={activeValue} />
+            )}
           </SidebarInset>
         </SidebarProvider>
       </ImportQuartalsplanProvider>

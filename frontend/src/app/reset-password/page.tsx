@@ -2,17 +2,11 @@
 
 import { Suspense } from "react";
 import ResetPasswordPage from "@/components/pages/ResetPasswordPage";
-import { Spinner } from "@/components/ui/spinner";
+import AuthPageFallback from "@/components/molecules/auth/AuthPageFallback";
 
 export default function ResetPasswordRoute() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center">
-          <Spinner className="size-8 text-primary" />
-        </div>
-      }
-    >
+    <Suspense fallback={<AuthPageFallback />}>
       <ResetPasswordPage />
     </Suspense>
   );

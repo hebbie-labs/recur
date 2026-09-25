@@ -6,7 +6,7 @@ import { useAddTask } from "@/contexts/AddTaskContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGroupsContext } from "@/contexts/GroupsContext";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
-import { TaskCategory, type Task, type TaskCategory as TaskCategoryType } from "@/services/taskService";
+import { TaskCategory, type Task, type TaskCategory as TaskCategoryType } from "@/types/task";
 import { categoryLabels, ALL_CATEGORIES_LABEL } from "@/lib/taskCategoryStyles";
 import {
   getWeekDays,
@@ -19,13 +19,13 @@ import {
 import { toDateOnlyString } from "@/utils/formatDate";
 import { isDoneForCurrentPeriod } from "@/utils/taskCompletions";
 import { cn } from "@/lib/utils";
-import { Spinner } from "@/components/ui/spinner";
+import TaskCardGridSkeleton from "@/components/molecules/task/TaskCardGridSkeleton";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import TaskDetailDialog from "@/components/organisms/TaskDetailDialog";
-import CalendarWeekView from "@/components/organisms/CalendarWeekView";
-import CalendarMonthView from "@/components/organisms/CalendarMonthView";
-import CalendarDayStrip from "@/components/organisms/CalendarDayStrip";
+import TaskDetailDialog from "@/components/organisms/dialogs/TaskDetailDialog";
+import CalendarWeekView from "@/components/organisms/calendar/CalendarWeekView";
+import CalendarMonthView from "@/components/organisms/calendar/CalendarMonthView";
+import CalendarDayStrip from "@/components/organisms/calendar/CalendarDayStrip";
 
 type ViewMode = "month" | "week";
 
@@ -168,11 +168,7 @@ function CalendarPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Spinner className="size-8 text-primary" />
-      </div>
-    );
+    return <TaskCardGridSkeleton count={6} direction="row" />;
   }
 
   const weekDays = getWeekDays(anchorDate);

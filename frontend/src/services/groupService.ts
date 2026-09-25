@@ -1,5 +1,5 @@
 import axios from "axios";
-import api from "./api";
+import api, { isUnauthorized } from "./api";
 
 export interface GroupMember {
   id: string;
@@ -47,6 +47,11 @@ function getGroups(): Promise<Group[]> {
     .get("/group")
     .then((response) => response.data as Group[])
     .catch((err: unknown) => {
+      // Roh weiterwerfen statt in eine Message-Error zu verpacken -
+      // GroupsContext muss einen 401 hier erkennen können (nicht (mehr)
+      // authentifiziert, z.B. Logout-Race), um das nicht wie einen echten
+      // Fehler zu behandeln.
+      if (isUnauthorized(err)) throw err;
       throw new Error(extractErrorMessage(err, "Fehler beim Abrufen der Gruppen"));
     });
 }
@@ -140,6 +145,7 @@ function getAllProjects(): Promise<Record<string, Project[]>> {
     .get(`/group/projects`)
     .then((response) => response.data as Record<string, Project[]>)
     .catch((err: unknown) => {
+      if (isUnauthorized(err)) throw err;
       throw new Error(extractErrorMessage(err, "Fehler beim Abrufen der Projekte"));
     });
 }

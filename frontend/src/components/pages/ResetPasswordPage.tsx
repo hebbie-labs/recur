@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Field, FieldGroup } from "@/components/ui/field";
-import FormPasswordField from "@/components/molecules/FormPasswordField";
-import LoadingButton from "@/components/atoms/LoadingButton";
+import FormPasswordField from "@/components/molecules/form/FormPasswordField";
+import LoadingButton from "@/components/atoms/loading/LoadingButton";
 import { useResetPasswordForm, type ResetPasswordFormValues } from "@/hooks/useResetPasswordForm";
 
 const resetPasswordSchema = yup.object().shape({

@@ -148,6 +148,15 @@ function DatenschutzPage() {
           Profilbild - in der Mitgliederliste, bei der Aufgaben-Zuweisung und
           überall sonst, wo deine Gruppenmitgliedschaft angezeigt wird.
         </p>
+        <p>
+          Für einen geteilten Gruppen-Task speichern wir ausserdem, wer ihn
+          erstellt hat (nicht an andere Mitglieder sichtbar), sowie für
+          welche Mitglieder er nach dem Löschen weiterhin ausgeblendet
+          bleibt - er wird dabei nur für dich entfernt, die übrigen
+          Mitglieder behalten ihn, bis die erstellende Person ihn endgültig
+          löscht. Löschst du dein Konto, werden diese Zuordnungen entfernt;
+          der Task selbst bleibt für die übrigen Mitglieder bestehen.
+        </p>
       </section>
 
       <section className="flex flex-col gap-2">

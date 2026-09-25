@@ -1,4 +1,4 @@
-import type { TaskCategory, TaskFrequency } from "@/services/taskService";
+import type { TaskCategory, TaskFrequency } from "@/types/task";
 import type { ReminderLeadTime } from "@/types/notifications";
 
 export const CATEGORY_OPTIONS: { value: TaskCategory; label: string }[] = [

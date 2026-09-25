@@ -6,7 +6,6 @@ import { TasksProvider } from "@/contexts/TasksContext";
 import { GroupsProvider } from "@/contexts/GroupsContext";
 import ReactErrorBoundary from "@/components/error/ReactErrorBoundary";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { useAutoSync } from "@/hooks/useAutoSync";
 
 // Kein sichtbares Markup - startet nur den Hintergrund-Poll für geteilte
@@ -22,14 +21,12 @@ function Providers({ children }: { children: ReactNode }) {
     <ReactErrorBoundary>
       <AuthProvider>
         <TooltipProvider>
-          <SidebarProvider>
-            <TasksProvider>
-              <GroupsProvider>
-                <AutoSyncRunner />
-                {children}
-              </GroupsProvider>
-            </TasksProvider>
-          </SidebarProvider>
+          <TasksProvider>
+            <GroupsProvider>
+              <AutoSyncRunner />
+              {children}
+            </GroupsProvider>
+          </TasksProvider>
         </TooltipProvider>
       </AuthProvider>
     </ReactErrorBoundary>

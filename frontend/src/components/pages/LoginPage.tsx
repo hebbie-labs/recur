@@ -1,5 +1,5 @@
 import { useRouter } from "next/navigation";
-import LoginForm from "@/components/organisms/LoginForm";
+import LoginForm from "@/components/organisms/auth/LoginForm";
 import LegalFooterLinks from "@/components/molecules/LegalFooterLinks";
 import { Card, CardContent } from "../ui/card";
 import { useLoginForm } from "@/hooks/useLoginForm";

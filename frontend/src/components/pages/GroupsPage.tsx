@@ -4,7 +4,8 @@ import { UsersIcon, PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import Empty from "@/components/molecules/Empty";
-import CreateGroupDialog from "@/components/organisms/CreateGroupDialog";
+import CreateGroupDialog from "@/components/organisms/dialogs/CreateGroupDialog";
+import TaskCardGridSkeleton from "@/components/molecules/task/TaskCardGridSkeleton";
 import { useGroupsContext } from "@/contexts/GroupsContext";
 
 function GroupsPage() {
@@ -12,7 +13,7 @@ function GroupsPage() {
   const { groups, loading } = useGroupsContext();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
-  if (loading) return null;
+  if (loading) return <TaskCardGridSkeleton count={3} direction="row" />;
 
   return (
     <div className="w-full pb-20">

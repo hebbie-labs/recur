@@ -2,12 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { LinkIcon, PlusIcon, TrashIcon, ArchiveIcon, ArchiveRestoreIcon, ShieldIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import LoadingButton from "@/components/atoms/loading/LoadingButton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import ConfirmDialog from "@/components/molecules/ConfirmDialog";
-import CreateProjectDialog from "@/components/organisms/CreateProjectDialog";
-import SelectSuccessorDialog from "@/components/organisms/SelectSuccessorDialog";
+import ConfirmDialog from "@/components/molecules/dialog/ConfirmDialog";
+import CreateProjectDialog from "@/components/organisms/dialogs/CreateProjectDialog";
+import SelectSuccessorDialog from "@/components/organisms/dialogs/SelectSuccessorDialog";
 import { useGroupsContext } from "@/contexts/GroupsContext";
 import { useTasksContext } from "@/contexts/TasksContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -39,6 +40,12 @@ function GroupDetailPage() {
   const [confirmDeleteProjectId, setConfirmDeleteProjectId] = useState<string | null>(null);
   const [confirmTransferMemberId, setConfirmTransferMemberId] = useState<string | null>(null);
   const [leaveSuccessorDialogOpen, setLeaveSuccessorDialogOpen] = useState(false);
+  const [leavingGroup, setLeavingGroup] = useState(false);
+  const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
+  const [transferringAdmin, setTransferringAdmin] = useState(false);
+  const [deletingGroup, setDeletingGroup] = useState(false);
+  const [togglingProjectId, setTogglingProjectId] = useState<string | null>(null);
+  const [deletingProject, setDeletingProject] = useState(false);
 
   // window.location.origin doesn't exist during Next's server-render pass
   // for this route (it's server-rendered on demand, not statically
@@ -100,6 +107,7 @@ function GroupDetailPage() {
   };
 
   const handleLeaveConfirmed = async (successorId?: string) => {
+    setLeavingGroup(true);
     try {
       selfInitiatedRemovalRef.current = true;
       await leaveGroup(id, successorId);
@@ -109,6 +117,7 @@ function GroupDetailPage() {
       showErrorToast(err instanceof Error ? err.message : "Fehler beim Verlassen der Gruppe.");
     } finally {
       setLeaveSuccessorDialogOpen(false);
+      setLeavingGroup(false);
     }
   };
 
@@ -124,26 +133,32 @@ function GroupDetailPage() {
   };
 
   const handleRemoveMember = async (memberId: string) => {
+    setRemovingMemberId(memberId);
     try {
       await removeMember(id, memberId);
       showSuccessToast("Mitglied entfernt.");
     } catch (err) {
       showErrorToast(err instanceof Error ? err.message : "Fehler beim Entfernen des Mitglieds.");
+    } finally {
+      setRemovingMemberId(null);
     }
   };
 
   const handleTransferAdmin = async (memberId: string) => {
+    setTransferringAdmin(true);
     try {
       await transferAdmin(id, memberId);
       showSuccessToast("Adminrolle übertragen.");
     } catch (err) {
       showErrorToast(err instanceof Error ? err.message : "Fehler beim Übertragen der Adminrolle.");
     } finally {
+      setTransferringAdmin(false);
       setConfirmTransferMemberId(null);
     }
   };
 
   const handleDeleteGroup = async () => {
+    setDeletingGroup(true);
     try {
       selfInitiatedRemovalRef.current = true;
       await deleteGroup(id);
@@ -153,25 +168,31 @@ function GroupDetailPage() {
       selfInitiatedRemovalRef.current = false;
       showErrorToast(err instanceof Error ? err.message : "Fehler beim Löschen der Gruppe.");
     } finally {
+      setDeletingGroup(false);
       setConfirmDeleteGroupOpen(false);
     }
   };
 
   const handleToggleArchiveProject = async (projectId: string, currentlyArchived: boolean) => {
+    setTogglingProjectId(projectId);
     try {
       await patchProject(id, projectId, !currentlyArchived);
     } catch (err) {
       showErrorToast(err instanceof Error ? err.message : "Fehler beim Aktualisieren des Projekts.");
+    } finally {
+      setTogglingProjectId(null);
     }
   };
 
   const handleDeleteProject = async (projectId: string) => {
+    setDeletingProject(true);
     try {
       await deleteProject(id, projectId);
       showSuccessToast("Projekt gelöscht.");
     } catch (err) {
       showErrorToast(err instanceof Error ? err.message : "Fehler beim Löschen des Projekts.");
     } finally {
+      setDeletingProject(false);
       setConfirmDeleteProjectId(null);
     }
   };
@@ -225,18 +246,33 @@ function GroupDetailPage() {
                 </div>
                 <div className="flex items-center gap-1">
                   {isSelf ? (
-                    <Button variant="ghost" size="sm" onClick={handleLeaveClick}>
+                    <LoadingButton
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleLeaveClick}
+                      loading={leavingGroup}
+                    >
                       Verlassen
-                    </Button>
+                    </LoadingButton>
                   ) : (
                     isAdmin && (
                       <>
-                        <Button variant="ghost" size="sm" onClick={() => setConfirmTransferMemberId(member.id)}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setConfirmTransferMemberId(member.id)}
+                          disabled={removingMemberId === member.id}
+                        >
                           Zum Admin machen
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleRemoveMember(member.id)}>
+                        <LoadingButton
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveMember(member.id)}
+                          loading={removingMemberId === member.id}
+                        >
                           Entfernen
-                        </Button>
+                        </LoadingButton>
                       </>
                     )
                   )}
@@ -266,22 +302,24 @@ function GroupDetailPage() {
               </span>
               {isAdmin && (
                 <div className="flex items-center gap-1">
-                  <Button
+                  <LoadingButton
                     variant="ghost"
                     size="sm"
                     onClick={() => handleToggleArchiveProject(project.id, project.isArchived)}
+                    loading={togglingProjectId === project.id}
                   >
                     {project.isArchived ? (
                       <ArchiveRestoreIcon className="h-4 w-4" />
                     ) : (
                       <ArchiveIcon className="h-4 w-4" />
                     )}
-                  </Button>
+                  </LoadingButton>
                   {project.isArchived && (
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setConfirmDeleteProjectId(project.id)}
+                      disabled={togglingProjectId === project.id}
                     >
                       <TrashIcon className="h-4 w-4 text-destructive" />
                     </Button>
@@ -317,6 +355,7 @@ function GroupDetailPage() {
         onConfirm={handleDeleteGroup}
         onCancel={() => setConfirmDeleteGroupOpen(false)}
         confirmText="Gruppe löschen"
+        loading={deletingGroup}
       />
 
       <ConfirmDialog
@@ -328,6 +367,7 @@ function GroupDetailPage() {
         onConfirm={() => confirmDeleteProjectId && handleDeleteProject(confirmDeleteProjectId)}
         onCancel={() => setConfirmDeleteProjectId(null)}
         confirmText="Projekt löschen"
+        loading={deletingProject}
       />
 
       {showCreateProject && (
@@ -344,6 +384,7 @@ function GroupDetailPage() {
         onConfirm={() => confirmTransferMemberId && handleTransferAdmin(confirmTransferMemberId)}
         onCancel={() => setConfirmTransferMemberId(null)}
         confirmText="Übertragen"
+        loading={transferringAdmin}
       />
 
       <SelectSuccessorDialog

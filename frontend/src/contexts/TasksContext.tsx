@@ -18,8 +18,9 @@ import {
   removeTaskCompletion,
   unassignSelf,
 } from "@/services/taskService";
-import type { Task } from "@/services/taskService";
-import { showErrorToast } from "@/lib/toast";
+import { isUnauthorized } from "@/services/api";
+import type { Task } from "@/types/task";
+import { showErrorToast, showSuccessToast, showUndoToast } from "@/lib/toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { currentPeriodCompletion, today } from "@/utils/taskCompletions";
 
@@ -33,7 +34,8 @@ type TasksContextValue = {
   handleToggleArchive: (taskId: string) => Promise<void>;
   handleToggleAssign: (taskId: string) => Promise<void>;
   handleResetProgress: (taskId: string) => Promise<void>;
-  handleDelete: (taskId: string) => Promise<void>;
+  /** silent: Erfolgs-Toast unterdrücken, z.B. beim Bulk-Löschen mit eigenem Sammel-Toast. */
+  handleDelete: (taskId: string, silent?: boolean) => Promise<void>;
   handleToggleDone: (taskId: string) => Promise<void>;
   /** Nachträgliches Abhaken eines vergangenen Frequenz-Intervalls (#152), z.B. aus der Verlaufs-Liste in TaskDetailDialog. */
   handleAddCompletion: (taskId: string, date: string) => Promise<void>;
@@ -66,7 +68,15 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       const fetchedTasks = await getTasks();
       setTasks(fetchedTasks);
     } catch (err) {
-      showBoundary(err);
+      // Ein 401 heisst nur "nicht (mehr) authentifiziert" - z.B. eine
+      // Logout-Race (Token wird zwischen Auth-Check und diesem Request
+      // ungültig) - das behandelt der globale Auth-Flow bereits (Redirect/
+      // AuthContext-State), kein Fall für den Error-Boundary-Crash.
+      if (isUnauthorized(err)) {
+        setTasks([]);
+      } else {
+        showBoundary(err);
+      }
     } finally {
       setLoading(false);
     }
@@ -248,14 +258,36 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const handleDelete = useCallback(async (taskId: string) => {
+  // Bei einem Gruppen-Task, den nicht ich erstellt habe, "löscht" der Server
+  // ihn nur für mich (hiddenFor) und gibt den aktualisierten Task zurück -
+  // dafür gibt es einen Undo-Toast statt der sonstigen Fehler-Rollback-
+  // Logik. Beim endgültigen Löschen (eigener/persönlicher Task oder als
+  // Ersteller) kommt kein Body zurück, dann nur der Erfolgs-Toast - erst
+  // nach der Server-Antwort, damit er bei einem Fehler nicht trotzdem kommt.
+  const handleDelete = useCallback(async (taskId: string, silent = false) => {
     const previousTasks = tasksRef.current;
     setTasks((prev) => prev.filter((task) => task.id !== taskId));
 
-    await deleteTask(taskId).catch((err) => {
-      setTasks(previousTasks);
-      showErrorToast(err instanceof Error ? err.message : "Fehler beim Löschen der Aufgabe");
-    });
+    await deleteTask(taskId)
+      .then((hiddenTask) => {
+        if (!hiddenTask) {
+          if (!silent) showSuccessToast("Aufgabe erfolgreich gelöscht");
+          return;
+        }
+        showUndoToast("Aufgabe für dich entfernt", () => {
+          patchTask(taskId, { hidden: false })
+            .then((restoredTask) => {
+              setTasks((prev) => [...prev, restoredTask]);
+            })
+            .catch((err) => {
+              showErrorToast(err instanceof Error ? err.message : "Fehler beim Wiederherstellen der Aufgabe");
+            });
+        });
+      })
+      .catch((err) => {
+        setTasks(previousTasks);
+        showErrorToast(err instanceof Error ? err.message : "Fehler beim Löschen der Aufgabe");
+      });
   }, []);
 
   // Nachträgliches Abhaken/Rückgängig eines einzelnen Tages (#152), z.B. aus

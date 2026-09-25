@@ -21,6 +21,7 @@ import {
   type Group,
   type Project,
 } from "@/services/groupService";
+import { isUnauthorized } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 
 type GroupsContextValue = {
@@ -72,7 +73,15 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
       setGroups(fetchedGroups);
       setProjectsByGroupId(fetchedProjectsByGroupId);
     } catch (err) {
-      showBoundary(err);
+      // Ein 401 heisst nur "nicht (mehr) authentifiziert" - z.B. eine
+      // Logout-Race - das behandelt der globale Auth-Flow bereits, kein Fall
+      // für den Error-Boundary-Crash (siehe TasksContext.fetchTasks).
+      if (isUnauthorized(err)) {
+        setGroups([]);
+        setProjectsByGroupId({});
+      } else {
+        showBoundary(err);
+      }
     } finally {
       setLoading(false);
     }

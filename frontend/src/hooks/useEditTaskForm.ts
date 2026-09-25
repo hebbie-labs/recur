@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { patchTask, setTaskReminderLeadTime } from "@/services/taskService";
-import type { Task } from "@/services/taskService";
+import type { Task } from "@/types/task";
 import {
   showErrorToast,
   showSuccessToast,

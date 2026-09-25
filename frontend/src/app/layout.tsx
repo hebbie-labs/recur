@@ -28,6 +28,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#1a1a1a",
+  viewportFit: "cover",
 };
 
 // Runs before React hydrates, so the "dark" class on <html> is already

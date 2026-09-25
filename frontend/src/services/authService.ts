@@ -69,12 +69,7 @@ export async function resetPassword(
     });
 }
 
-/**
- * Tauscht das kurzlebige HttpOnly-Handoff-Cookie (gesetzt vom OAuth2-Redirect)
- * gegen den echten Access-Token ein, den der Server als HttpOnly-Cookie setzt
- * (#160), statt ihn aus der Redirect-URL zu lesen. `withCredentials`, damit
- * das Handoff-Cookie cross-origin mitgeschickt wird.
- */
+/** Tauscht das kurzlebige HttpOnly-Handoff-Cookie (gesetzt vom OAuth2-Redirect) gegen den echten Access-Token ein, den der Server als HttpOnly-Cookie setzt (#160), statt ihn aus der Redirect-URL zu lesen; `withCredentials`, damit das Handoff-Cookie cross-origin mitgeschickt wird. */
 export async function exchangeOAuth2Token(): Promise<AuthResponse> {
   return await api
     .get("/auth/oauth2/token", { withCredentials: true })
@@ -86,22 +81,14 @@ export async function exchangeOAuth2Token(): Promise<AuthResponse> {
     });
 }
 
-/**
- * Tauscht das HttpOnly refresh_token-Cookie gegen einen frischen Access-Token
- * ein und rotiert das Cookie mit (Server setzt ein neues via Set-Cookie).
- */
+/** Tauscht das HttpOnly refresh_token-Cookie gegen einen frischen Access-Token ein und rotiert das Cookie mit (Server setzt ein neues via Set-Cookie). */
 export async function refreshAccessToken(): Promise<AuthResponse> {
   return await api
     .post("/auth/refresh", {})
     .then((response) => response.data as AuthResponse);
 }
 
-/**
- * Best-effort: revoked die Server-Session zum aktuellen refresh_token-Cookie
- * und löscht dabei serverseitig auch das access_token-Cookie (#160). Schlägt
- * nie sichtbar fehl - ein bereits abgelaufenes/fehlendes Cookie ist kein
- * Fehlerfall.
- */
+/** Best-effort: revoked die Server-Session zum aktuellen refresh_token-Cookie und löscht dabei serverseitig auch das access_token-Cookie (#160); schlägt nie sichtbar fehl - ein bereits abgelaufenes/fehlendes Cookie ist kein Fehlerfall. */
 export async function revokeRefreshToken(): Promise<void> {
   await api.post("/auth/logout", {}).catch(() => undefined);
 }
@@ -143,13 +130,7 @@ export function deleteCurrentUser(): Promise<void> {
     });
 }
 
-/**
- * A 401 from any endpoint other than login/register means our token is
- * missing, expired, or invalid. Send the user through /logout, which clears
- * it and shows why before redirecting to /login - same transitional-page
- * pattern as OAuthCallbackPage, instead of leaving the app in a
- * half-authenticated state with no explanation (#145).
- */
+/** A 401 from any endpoint other than login/register means our token is missing, expired, or invalid - send the user through /logout (same transitional-page pattern as OAuthCallbackPage) instead of leaving the app half-authenticated with no explanation (#145). */
 const AUTH_ENDPOINTS = ["/auth/login", "/auth/register", "/auth/me"];
 
 // Endpunkte, für die ein 401 nie einen Silent-Refresh auslösen soll -
@@ -159,12 +140,27 @@ const REFRESH_EXEMPT_ENDPOINTS = ["/auth/login", "/auth/register", "/auth/refres
 
 let sessionExpiredHandled = false;
 let refreshPromise: Promise<AuthResponse> | null = null;
+let csrfRefreshPromise: Promise<unknown> | null = null;
+// War /auth/me (der Auth-Bootstrap-Check beim App-Start) der Auslöser des
+// laufenden Refresh-Versuchs? Schlägt der Refresh dann auch fehl, heisst das
+// nur "nie eingeloggt gewesen" (kein Cookie), keine echte Session, die
+// "abgelaufen" sein könnte - ProtectedRoute schickt in dem Fall ohnehin
+// schon still nach /login. Ohne dieses Flag griff unten fälschlich die
+// "Sitzung abgelaufen"-Meldung, weil der 401 des verschachtelten
+// /auth/refresh-Requests (nicht in AUTH_ENDPOINTS) die Prüfung durchlief.
+let refreshTriggeredByMeCheck = false;
+
+// GET-Requests sind von Springs CSRF-Prüfung ausgenommen - ein 403 auf einer
+// dieser Methoden kann also nur ein abgelehntes Double-Submit-Token sein, nie
+// eine echte 403-Geschäftslogik-Antwort.
+const CSRF_PROTECTED_METHODS = ["post", "put", "patch", "delete"];
 
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const status = error?.response?.status;
     const url: string | undefined = error?.config?.url;
+    const method: string | undefined = error?.config?.method;
     const originalRequest = error?.config;
     const isAuthEndpoint = url
       ? AUTH_ENDPOINTS.some((path) => url.includes(path))
@@ -184,6 +180,7 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       try {
         if (!refreshPromise) {
+          refreshTriggeredByMeCheck = url ? url.includes("/auth/me") : false;
           refreshPromise = refreshAccessToken().finally(() => {
             refreshPromise = null;
           });
@@ -196,7 +193,49 @@ api.interceptors.response.use(
       }
     }
 
-    if (status === 401 && !isAuthEndpoint && !sessionExpiredHandled) {
+    // Sicherheitsnetz für Springs CSRF-Double-Submit-Check (#160 hat CSRF
+    // eingeführt): api.ts liest den XSRF-TOKEN-Cookie zwar live bei jedem
+    // Request (kein Caching, siehe api.ts), aber falls im Browser noch gar
+    // kein Cookie existiert (z.B. allererster mutierender Request der
+    // Session), gibt es nichts zu lesen. Ein frisches GET stellt eins aus,
+    // bevor der Original-Request einmal wiederholt wird - der dann live das
+    // frisch gesetzte Cookie aufgreift.
+    if (
+      status === 403 &&
+      method &&
+      CSRF_PROTECTED_METHODS.includes(method) &&
+      !isRefreshExempt &&
+      originalRequest &&
+      !originalRequest._retry
+    ) {
+      originalRequest._retry = true;
+      try {
+        if (!csrfRefreshPromise) {
+          csrfRefreshPromise = api.get("/auth/me").finally(() => {
+            csrfRefreshPromise = null;
+          });
+        }
+        await csrfRefreshPromise;
+        return api(originalRequest);
+      } catch {
+        // Cookie liess sich nicht auffrischen -> fällt durch zur normalen
+        // Fehlerbehandlung, der Original-Fehler wird unten weitergereicht.
+      }
+    }
+
+    // Der 401 des verschachtelten /auth/refresh-Requests selbst landet auch
+    // hier (nicht in AUTH_ENDPOINTS) - war der Auslöser dafür der
+    // /auth/me-Bootstrap-Check, ist das kein "Sitzung abgelaufen"-Fall,
+    // sondern schlicht "nie eingeloggt gewesen" (siehe refreshTriggeredByMeCheck).
+    const isBootstrapRefreshFailure =
+      url?.includes("/auth/refresh") && refreshTriggeredByMeCheck;
+
+    if (
+      status === 401 &&
+      !isAuthEndpoint &&
+      !isBootstrapRefreshFailure &&
+      !sessionExpiredHandled
+    ) {
       sessionExpiredHandled = true;
       if (!["/login", "/logout"].includes(window.location.pathname)) {
         window.location.href = "/logout?reason=expired";

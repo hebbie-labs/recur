@@ -218,7 +218,6 @@ export function detectReferenceYear(rows: QuartalsplanRow[]): number {
   return new Date().getFullYear();
 }
 
-/** Friday of the given ISO calendar week/year, as a Date. */
 export function fridayOfIsoWeek(week: number, year: number): Date {
   const withYear = setISOWeekYear(new Date(), year);
   const withWeek = setISOWeek(withYear, week);
