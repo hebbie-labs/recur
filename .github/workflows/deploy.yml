@@ -27,7 +27,7 @@ jobs:
         id: tag
         run: |
           # deploy-prod/deploy-dev always pull a fixed tag (":latest"/":dev")
-          # from compose.yml, so every build also pushes that moving tag
+          # from compose.deployment.yml, so every build also pushes that moving tag
           # alongside the immutable one (the git tag for prod releases).
           if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             echo "env=prod" >> $GITHUB_OUTPUT
@@ -86,8 +86,8 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - run: docker compose -f /srv/recur/compose.yml pull frontend-dev backend-dev db-dev
-      - run: docker compose -f /srv/recur/compose.yml up -d frontend-dev backend-dev db-dev
+      - run: docker compose -f /srv/recur/compose.deployment.yml pull frontend-dev backend-dev db-dev
+      - run: docker compose -f /srv/recur/compose.deployment.yml up -d frontend-dev backend-dev db-dev
 
   deploy-prod:
     needs: build
@@ -100,8 +100,8 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - run: docker compose -f /srv/recur/compose.yml pull frontend-prod backend-prod db-prod
-      - run: docker compose -f /srv/recur/compose.yml up -d frontend-prod backend-prod db-prod
+      - run: docker compose -f /srv/recur/compose.deployment.yml pull frontend-prod backend-prod db-prod
+      - run: docker compose -f /srv/recur/compose.deployment.yml up -d frontend-prod backend-prod db-prod
 
   deploy-www:
     needs: build
@@ -116,5 +116,5 @@ jobs:
       # frontend-www is COMING_SOON_MODE-gated (no real user data behind it),
       # so unlike deploy-prod this doesn't need manual approval - and it
       # needs no backend/db, see compose.deployment.yml.
-      - run: docker compose -f /srv/recur/compose.yml pull frontend-www
-      - run: docker compose -f /srv/recur/compose.yml up -d frontend-www
+      - run: docker compose -f /srv/recur/compose.deployment.yml pull frontend-www
+      - run: docker compose -f /srv/recur/compose.deployment.yml up -d frontend-www
