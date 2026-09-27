@@ -1,4 +1,3 @@
-# .github/workflows/deploy.yml
 name: build-and-deploy
 on:
   push:
@@ -49,8 +48,8 @@ jobs:
           context: ./backend
           push: true
           tags: |
-            ghcr.io/lelelon225/recur-backend:${{ steps.tag.outputs.tag }}
-            ghcr.io/lelelon225/recur-backend:${{ steps.tag.outputs.moving_tag }}
+            ghcr.io/hebbie-labs/recur-backend:${{ steps.tag.outputs.tag }}
+            ghcr.io/hebbie-labs/recur-backend:${{ steps.tag.outputs.moving_tag }}
           cache-from: type=gha,scope=backend
           cache-to: type=gha,mode=max,scope=backend
 
@@ -59,8 +58,8 @@ jobs:
           context: ./frontend
           push: true
           tags: |
-            ghcr.io/lelelon225/recur-frontend:${{ steps.tag.outputs.tag }}
-            ghcr.io/lelelon225/recur-frontend:${{ steps.tag.outputs.moving_tag }}
+            ghcr.io/hebbie-labs/recur-frontend:${{ steps.tag.outputs.tag }}
+            ghcr.io/hebbie-labs/recur-frontend:${{ steps.tag.outputs.moving_tag }}
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
 
@@ -69,8 +68,8 @@ jobs:
           context: ./database
           push: true
           tags: |
-            ghcr.io/lelelon225/recur-db:${{ steps.tag.outputs.tag }}
-            ghcr.io/lelelon225/recur-db:${{ steps.tag.outputs.moving_tag }}
+            ghcr.io/hebbie-labs/recur-db:${{ steps.tag.outputs.tag }}
+            ghcr.io/hebbie-labs/recur-db:${{ steps.tag.outputs.moving_tag }}
           cache-from: type=gha,scope=database
           cache-to: type=gha,mode=max,scope=database
 
@@ -87,8 +86,8 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - run: docker compose -f /srv/recur/compose.yml pull backend-dev frontend-dev db-dev
-      - run: docker compose -f /srv/recur/compose.yml up -d backend-dev frontend-dev db-dev
+      - run: docker compose -f /srv/recur/compose.yml pull frontend-dev backend-dev db-dev
+      - run: docker compose -f /srv/recur/compose.yml up -d frontend-dev backend-dev db-dev
 
   deploy-prod:
     needs: build
@@ -101,8 +100,8 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - run: docker compose -f /srv/recur/compose.yml pull backend-prod frontend-prod db-prod
-      - run: docker compose -f /srv/recur/compose.yml up -d backend-prod frontend-prod db-prod
+      - run: docker compose -f /srv/recur/compose.yml pull frontend-prod backend-prod db-prod
+      - run: docker compose -f /srv/recur/compose.yml up -d frontend-prod backend-prod db-prod
 
   deploy-www:
     needs: build
