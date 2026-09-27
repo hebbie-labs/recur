@@ -77,13 +77,22 @@ function ImpressumPage() {
         </p>
       </section>
 
-      <button
-        type="button"
-        className="self-start text-sm text-primary hover:underline"
-        onClick={() => router.push("/datenschutz")}
-      >
-        Zur Datenschutzerklärung
-      </button>
+      <div className="flex flex-wrap gap-4">
+        <button
+          type="button"
+          className="self-start text-sm text-primary hover:underline"
+          onClick={() => router.push("/datenschutz")}
+        >
+          Zur Datenschutzerklärung
+        </button>
+        <button
+          type="button"
+          className="self-start text-sm text-primary hover:underline"
+          onClick={() => router.push("/agb")}
+        >
+          Zu den Nutzungsbedingungen
+        </button>
+      </div>
     </LegalPageLayout>
   );
 }

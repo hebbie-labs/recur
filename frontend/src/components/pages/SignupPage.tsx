@@ -1,5 +1,5 @@
 import { useRouter } from "next/navigation";
-import SignupForm from "../organisms/SignupForm"
+import SignupForm from "../organisms/auth/SignupForm"
 import LegalFooterLinks from "@/components/molecules/LegalFooterLinks";
 import { Card, CardContent } from "../ui/card"
 import { useSignUpForm, type SignupFormValues } from "@/hooks/useSignUpForm";
@@ -15,6 +15,10 @@ const signupSchema = yup.object().shape({
     .string()
     .oneOf([yup.ref("password")], "Passwörter stimmen nicht überein")
     .required("Bitte bestätige dein Passwort"),
+  acceptTerms: yup
+    .boolean()
+    .oneOf([true], "Bitte akzeptiere die Datenschutzerklärung und die Nutzungsbedingungen")
+    .required("Bitte akzeptiere die Datenschutzerklärung und die Nutzungsbedingungen"),
 });
 
 export default function SignupPage() {
@@ -24,28 +28,29 @@ export default function SignupPage() {
   return (
     <div className="flex min-h-svh flex-col items-center justify-center bg-background w-full h-full px-4 py-8">
         <Card className="w-full max-w-md border-none shadow-lg">
-        <CardContent className="p-6">
-            <Formik<SignupFormValues>
-                initialValues={{ firstName: "", lastName: "", email: "", password: "", confirmPassword: "" }}
-                validationSchema={signupSchema}
-                onSubmit={handleSubmit}
-            >
-                {({ values, handleChange, handleSubmit: formikHandleSubmit, handleBlur, errors, touched }) => (
-                    <SignupForm
-                        navigate={() => router.push("/login")}
-                        onSubmit={formikHandleSubmit}
-                        values={values}
-                        errors={errors}
-                        touched={touched}
-                        handleChange={handleChange}
-                        handleBlur={handleBlur}
-                        loading={loading}
-                        submitDisabled={submitDisabled}
-                        backendError={backendError}
-                    />
-                )}
-            </Formik>
-        </CardContent>
+          <CardContent className="p-6">
+              <Formik<SignupFormValues>
+                  initialValues={{ firstName: "", lastName: "", email: "", password: "", confirmPassword: "", acceptTerms: false }}
+                  validationSchema={signupSchema}
+                  onSubmit={handleSubmit}
+              >
+                  {({ values, handleChange, handleSubmit: formikHandleSubmit, handleBlur, errors, touched, setFieldValue }) => (
+                      <SignupForm
+                          navigate={() => router.push("/login")}
+                          onSubmit={formikHandleSubmit}
+                          values={values}
+                          errors={errors}
+                          touched={touched}
+                          handleChange={handleChange}
+                          handleBlur={handleBlur}
+                          setFieldValue={setFieldValue}
+                          loading={loading}
+                          submitDisabled={submitDisabled}
+                          backendError={backendError}
+                      />
+                  )}
+              </Formik>
+          </CardContent>
       </Card>
       <LegalFooterLinks />
     </div>

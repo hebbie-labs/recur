@@ -57,3 +57,18 @@ export function showWarningToast(message: string) {
     className: "!bg-warning !text-warning-foreground",
   });
 }
+
+const SYNC_ERROR_TOAST_ID = "auto-sync-error";
+
+/** Bleibt sichtbar bis dismissSyncErrorToast() (nächster erfolgreicher Poll). */
+export function showSyncErrorToast(message: string) {
+  toast.warning(message, {
+    id: SYNC_ERROR_TOAST_ID,
+    duration: Infinity,
+    className: "!bg-warning !text-warning-foreground",
+  });
+}
+
+export function dismissSyncErrorToast() {
+  toast.dismiss(SYNC_ERROR_TOAST_ID);
+}

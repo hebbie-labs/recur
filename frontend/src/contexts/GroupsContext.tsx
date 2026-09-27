@@ -13,13 +13,15 @@ import {
   deleteGroup as deleteGroupApi,
   leaveGroup as leaveGroupApi,
   removeMember as removeMemberApi,
-  getProjects,
+  transferAdmin as transferAdminApi,
+  getAllProjects,
   createProject as createProjectApi,
   patchProject as patchProjectApi,
   deleteProject as deleteProjectApi,
   type Group,
   type Project,
 } from "@/services/groupService";
+import { isUnauthorized } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 
 type GroupsContextValue = {
@@ -27,10 +29,13 @@ type GroupsContextValue = {
   projectsByGroupId: Record<string, Project[]>;
   loading: boolean;
   fetchGroups: () => Promise<void>;
+  /** Für den Auto-Sync-Poll: kein loading-Flicker, wirft bei Fehler statt showBoundary. */
+  syncGroups: () => Promise<void>;
   createGroup: (name: string) => Promise<Group>;
   deleteGroup: (groupId: string) => Promise<void>;
-  leaveGroup: (groupId: string) => Promise<void>;
+  leaveGroup: (groupId: string, successorId?: string) => Promise<void>;
   removeMember: (groupId: string, memberId: string) => Promise<void>;
+  transferAdmin: (groupId: string, newAdminId: string) => Promise<Group>;
   createProject: (groupId: string, name: string) => Promise<Project>;
   patchProject: (
     groupId: string,
@@ -51,25 +56,54 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
   const { showBoundary } = useErrorBoundary();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
+  const loadGroupsAndProjects = useCallback(async () => {
+    // Zwei Requests statt einem pro Gruppe: getAllProjects() liefert die
+    // Projekte aller eigenen Gruppen gebündelt (siehe GroupController#getProjectsForMyGroups).
+    const [fetchedGroups, fetchedProjectsByGroupId] = await Promise.all([
+      getGroups(),
+      getAllProjects(),
+    ]);
+    return { fetchedGroups, fetchedProjectsByGroupId };
+  }, []);
+
   const fetchGroups = useCallback(async () => {
     try {
       setLoading(true);
-      const fetchedGroups = await getGroups();
+      const { fetchedGroups, fetchedProjectsByGroupId } = await loadGroupsAndProjects();
       setGroups(fetchedGroups);
-
-      const projectEntries = await Promise.all(
-        fetchedGroups.map(async (group) => {
-          const projects = await getProjects(group.id);
-          return [group.id, projects] as const;
-        })
-      );
-      setProjectsByGroupId(Object.fromEntries(projectEntries));
+      setProjectsByGroupId(fetchedProjectsByGroupId);
     } catch (err) {
-      showBoundary(err);
+      // Ein 401 heisst nur "nicht (mehr) authentifiziert" - z.B. eine
+      // Logout-Race - das behandelt der globale Auth-Flow bereits, kein Fall
+      // für den Error-Boundary-Crash (siehe TasksContext.fetchTasks).
+      if (isUnauthorized(err)) {
+        setGroups([]);
+        setProjectsByGroupId({});
+      } else {
+        showBoundary(err);
+      }
     } finally {
       setLoading(false);
     }
-  }, [showBoundary]);
+  }, [showBoundary, loadGroupsAndProjects]);
+
+  // Auto-Sync-Poll: Gruppen/Projekte haben kein updatedAt, daher reicht ein
+  // simples Ersetzen statt Merge wie bei TasksContext.mergeTasks - aktuell setzt
+  // jede Mutation hier (createGroup, deleteGroup, leaveGroup, removeMember,
+  // createProject, patchProject, deleteProject) den State erst NACH dem await
+  // der Server-Antwort, es gibt also keine langlebige optimistische Änderung,
+  // die ein zwischenzeitlicher Poll überschreiben könnte.
+  // ACHTUNG: Wer hier eine optimistische Änderung VOR dem await einbaut (z.B.
+  // ein sofortiges Projekt-Rename in der UI), MUSS vorher entweder ein
+  // updatedAt auf Group/Project einführen und hier per Timestamp mergen
+  // (siehe mergeTasks in TasksContext.tsx), oder syncGroups so anpassen, dass
+  // es diese eine Änderung gezielt schont - sonst überschreibt der nächste
+  // 15s-Poll die optimistische Änderung wieder.
+  const syncGroups = useCallback(async () => {
+    const { fetchedGroups, fetchedProjectsByGroupId } = await loadGroupsAndProjects();
+    setGroups(fetchedGroups);
+    setProjectsByGroupId(fetchedProjectsByGroupId);
+  }, [loadGroupsAndProjects]);
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -114,8 +148,8 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
   );
 
   const leaveGroup = useCallback(
-    async (groupId: string) => {
-      await leaveGroupApi(groupId);
+    async (groupId: string, successorId?: string) => {
+      await leaveGroupApi(groupId, successorId);
       setGroups((prev) => prev.filter((g) => g.id !== groupId));
       setProjectsByGroupId((prev) => removeGroupFromProjectsMap(prev, groupId));
     },
@@ -131,6 +165,12 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
           : g
       )
     );
+  }, []);
+
+  const transferAdmin = useCallback(async (groupId: string, newAdminId: string) => {
+    const updated = await transferAdminApi(groupId, newAdminId);
+    setGroups((prev) => prev.map((g) => (g.id === groupId ? updated : g)));
+    return updated;
   }, []);
 
   const createProject = useCallback(async (groupId: string, name: string) => {
@@ -169,10 +209,12 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
     projectsByGroupId,
     loading,
     fetchGroups,
+    syncGroups,
     createGroup,
     deleteGroup,
     leaveGroup,
     removeMember,
+    transferAdmin,
     createProject,
     patchProject,
     deleteProject,

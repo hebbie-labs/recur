@@ -7,15 +7,12 @@ import {
   isSameDay,
   isSameMonth,
   format,
+  getISOWeek,
 } from "date-fns";
 import { de } from "date-fns/locale";
-import { TaskCategory, type Task, type TaskCategory as TaskCategoryType } from "@/services/taskService";
+import { TaskCategory, type Task, type TaskCategory as TaskCategoryType } from "@/types/task";
 
-/**
- * Canonical per-category accent colors, shared by the calendar's category
- * dots/filter chips and TaskCard's category badge - the single color source
- * for a task's category across the app.
- */
+/** Canonical per-category accent colors, shared by the calendar's category dots/filter chips and TaskCard's category badge - the single color source for a task's category across the app. */
 export const categoryDot: Record<TaskCategoryType, string> = {
   [TaskCategory.WORK]: "bg-rose-500",
   [TaskCategory.PERSONAL]: "bg-blue-500",
@@ -36,6 +33,13 @@ export type CalendarDay = {
   isCurrentMonth: boolean;
 };
 
+/** One Monday-Sunday row of the month grid, with its ISO-8601 week number. */
+export type CalendarWeek = {
+  weekNumber: number;
+  days: CalendarDay[];
+  isCurrentWeek: boolean;
+};
+
 export function getWeekDays(anchor: Date): CalendarDay[] {
   const weekStart = startOfWeek(anchor, { weekStartsOn: 1 });
   return Array.from({ length: 7 }, (_, i) => {
@@ -44,7 +48,7 @@ export function getWeekDays(anchor: Date): CalendarDay[] {
   });
 }
 
-export function getMonthGrid(anchor: Date): CalendarDay[][] {
+export function getMonthGrid(anchor: Date): CalendarWeek[] {
   const monthStart = startOfMonth(anchor);
   const monthEnd = endOfMonth(anchor);
   const gridStart = startOfWeek(monthStart, { weekStartsOn: 1 });
@@ -59,9 +63,16 @@ export function getMonthGrid(anchor: Date): CalendarDay[][] {
     });
   }
 
-  const weeks: CalendarDay[][] = [];
+  const weeks: CalendarWeek[] = [];
   for (let i = 0; i < days.length; i += 7) {
-    weeks.push(days.slice(i, i + 7));
+    const weekDays = days.slice(i, i + 7);
+    weeks.push({
+      // Alle 7 Tage einer Montag-Sonntag-Zeile liegen in derselben ISO-Woche,
+      // die Wochennummer lässt sich also an einem beliebigen Tag ablesen.
+      weekNumber: getISOWeek(weekDays[0].date),
+      days: weekDays,
+      isCurrentWeek: weekDays.some((day) => day.isToday),
+    });
   }
   return weeks;
 }

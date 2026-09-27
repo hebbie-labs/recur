@@ -46,6 +46,20 @@ dependencies {
 	
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3'
 
+	// Web Push (VAPID) für Push-Benachrichtigungen (#102). bcprov ist in
+	// web-push's POM als optional deklariert, Gradle zieht es daher nicht
+	// automatisch mit - explizit in derselben Version wie dort referenziert.
+	implementation 'nl.martijndwars:web-push:5.1.2'
+	implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
+	// web-push's PushService#send() returns org.apache.http.HttpResponse, but
+	// httpclient is only declared "runtime" scope in its POM - needed here too
+	// since our code reads the response status to prune expired subscriptions.
+	implementation 'org.apache.httpcomponents:httpclient:4.5.13'
+	// Same story as httpclient above: PushService#send() throws
+	// org.jose4j.lang.JoseException, which is also only "runtime" scoped
+	// in web-push's POM.
+	implementation 'org.bitbucket.b_c:jose4j:0.7.9'
+
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 

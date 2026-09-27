@@ -5,7 +5,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import ImportQuartalsplanDialog from "@/components/organisms/ImportQuartalsplanDialog";
+import ImportQuartalsplanDialog from "@/components/organisms/dialogs/ImportQuartalsplanDialog";
 
 type ImportQuartalsplanContextValue = {
   openImportQuartalsplan: () => void;

@@ -1,5 +1,5 @@
 import axios from "axios";
-import api from "./api";
+import api, { isUnauthorized } from "./api";
 
 export interface GroupMember {
   id: string;
@@ -47,6 +47,11 @@ function getGroups(): Promise<Group[]> {
     .get("/group")
     .then((response) => response.data as Group[])
     .catch((err: unknown) => {
+      // Roh weiterwerfen statt in eine Message-Error zu verpacken -
+      // GroupsContext muss einen 401 hier erkennen können (nicht (mehr)
+      // authentifiziert, z.B. Logout-Race), um das nicht wie einen echten
+      // Fehler zu behandeln.
+      if (isUnauthorized(err)) throw err;
       throw new Error(extractErrorMessage(err, "Fehler beim Abrufen der Gruppen"));
     });
 }
@@ -78,9 +83,11 @@ function deleteGroup(groupId: string): Promise<void> {
     });
 }
 
-function leaveGroup(groupId: string): Promise<void> {
+function leaveGroup(groupId: string, successorId?: string): Promise<void> {
   return api
-    .post(`/group/${groupId}/leave`)
+    .post(`/group/${groupId}/leave`, null, {
+      params: successorId ? { successorId } : undefined,
+    })
     .then(() => {})
     .catch((err: unknown) => {
       throw new Error(extractErrorMessage(err, "Fehler beim Verlassen der Gruppe"));
@@ -93,6 +100,15 @@ function removeMember(groupId: string, memberId: string): Promise<void> {
     .then(() => {})
     .catch((err: unknown) => {
       throw new Error(extractErrorMessage(err, "Fehler beim Entfernen des Mitglieds"));
+    });
+}
+
+function transferAdmin(groupId: string, newAdminId: string): Promise<Group> {
+  return api
+    .patch(`/group/${groupId}/admin`, null, { params: { newAdminId } })
+    .then((response) => response.data as Group)
+    .catch((err: unknown) => {
+      throw new Error(extractErrorMessage(err, "Fehler beim Übertragen der Adminrolle"));
     });
 }
 
@@ -119,6 +135,17 @@ function getProjects(groupId: string): Promise<Project[]> {
     .get(`/group/${groupId}/project`)
     .then((response) => response.data as Project[])
     .catch((err: unknown) => {
+      throw new Error(extractErrorMessage(err, "Fehler beim Abrufen der Projekte"));
+    });
+}
+
+/** Projekte aller eigenen Gruppen in einem Request (Map von groupId auf Projekte), statt einem Request pro Gruppe. */
+function getAllProjects(): Promise<Record<string, Project[]>> {
+  return api
+    .get(`/group/projects`)
+    .then((response) => response.data as Record<string, Project[]>)
+    .catch((err: unknown) => {
+      if (isUnauthorized(err)) throw err;
       throw new Error(extractErrorMessage(err, "Fehler beim Abrufen der Projekte"));
     });
 }
@@ -163,9 +190,11 @@ export {
   deleteGroup,
   leaveGroup,
   removeMember,
+  transferAdmin,
   previewInvite,
   joinGroup,
   getProjects,
+  getAllProjects,
   createProject,
   patchProject,
   deleteProject,

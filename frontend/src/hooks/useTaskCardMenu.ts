@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { showUndoToast, showSuccessToast } from "@/lib/toast";
+import { showUndoToast } from "@/lib/toast";
 
 type UseTaskCardMenuParams = {
   onToggleMenu: () => void;
@@ -55,7 +55,6 @@ function useTaskCardMenu({
   const handleConfirmDelete = () => {
     onDelete();
     setConfirmDeleteOpen(false);
-    showSuccessToast("Aufgabe erfolgreich gelöscht");
   };
 
   const handleCancelDelete = () => {

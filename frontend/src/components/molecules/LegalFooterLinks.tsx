@@ -20,6 +20,14 @@ function LegalFooterLinks() {
       >
         Datenschutzerklärung
       </button>
+      <span aria-hidden>•</span>
+      <button
+        type="button"
+        className="hover:text-foreground hover:underline"
+        onClick={() => router.push("/agb")}
+      >
+        AGB
+      </button>
     </div>
   );
 }

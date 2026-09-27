@@ -18,6 +18,10 @@ ENV NODE_ENV=production
 # node_modules + a server.js entrypoint - no separate `yarn install` needed.
 COPY --from=build-stage /app/.next/standalone ./
 COPY --from=build-stage /app/.next/static ./.next/static
+# `output: "standalone"` doesn't include public/ (manifest.json, PWA icons,
+# next-pwa's generated sw.js) - must be copied explicitly or none of it is
+# served in production.
+COPY --from=build-stage /app/public ./public
 EXPOSE 3000
 ENV PORT=3000
 # Which backend to proxy /api, /oauth2, /login/oauth2 to - overridden per

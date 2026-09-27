@@ -1,13 +1,13 @@
 import Empty from "@/components/molecules/Empty";
-import ConfirmDialog from "@/components/molecules/ConfirmDialog";
+import ConfirmDialog from "@/components/molecules/dialog/ConfirmDialog";
 import ArchiveSelectionToolbar from "@/components/molecules/ArchiveSelectionToolbar";
 import { OctagonXIcon } from "lucide-react";
 import { useTasksContext } from "@/contexts/TasksContext";
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import TaskCardGrid from "@/components/molecules/TaskCardGrid";
+import TaskCardGrid from "@/components/molecules/task/TaskCardGrid";
 import useArchiveSelection from "@/hooks/useArchiveSelection";
-import TaskCardGridSkeleton from "../molecules/TaskCardGridSkeleton";
+import TaskCardGridSkeleton from "../molecules/task/TaskCardGridSkeleton";
 
 function ArchivePage() {
   const router = useRouter();

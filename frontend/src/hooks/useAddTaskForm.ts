@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  createTask,
-  TaskFrequency,
-  TaskCategory,
-  type NewTask,
-  type Task,
-} from "@/services/taskService";
+import { createTask, setTaskReminderLeadTime } from "@/services/taskService";
+import { TaskCategory, TaskFrequency, type NewTask, type Task } from "@/types/task";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
-import type { FormValues } from "@/components/organisms/Form";
+import type { FormValues } from "@/components/organisms/task/Form";
+import {
+  resolveDateUntil,
+  resolveDescription,
+  resolveStartTime,
+} from "@/utils/taskFormDefaults";
 
 type UseAddTaskFormParams = {
   onClose: () => void;
@@ -33,30 +33,40 @@ function useAddTaskForm({ onClose, onTaskCreated }: UseAddTaskFormParams) {
     };
   }, []);
 
-  const handleSubmit = async (values: FormValues) => {
+  const handleSubmit = async (values: FormValues): Promise<boolean> => {
     setLoading(true);
     setSubmitDisabled(true);
 
-    const startTimeIso =
-      values.startDate && values.startTimeOfDay
-        ? new Date(`${values.startDate}T${values.startTimeOfDay}`).toISOString()
-        : null;
-
     const payload: NewTask = {
       name: values.name,
-      description: values.description,
-      category: values.category as TaskCategory,
-      frequency: values.frequency as TaskFrequency,
-      dateUntil: values.dateUntil,
+      description: resolveDescription(values.description),
+      category: (values.category || TaskCategory.OTHER) as TaskCategory,
+      frequency: (values.frequency || TaskFrequency.ONCE) as TaskFrequency,
+      dateUntil: resolveDateUntil(values.dateUntil, values.startDate),
       progress: 0,
       durationMinutes:
         values.durationMinutes !== null ? Number(values.durationMinutes) : null,
-      startTime: startTimeIso,
+      startTime: resolveStartTime(
+        values.startDate,
+        values.startTimeOfDay,
+        values.frequency
+      ),
       projectId: values.projectId || null,
     };
 
     try {
-      const createdTask = await createTask(payload);
+      let createdTask = await createTask(payload);
+
+      // Erinnerungs-Vorlauf ist ein Pro-User-Override (#102-Follow-up), kein
+      // Feld des Tasks selbst - kann daher erst gesetzt werden, sobald der
+      // Task existiert, über einen eigenen Endpoint statt im create-Payload.
+      if (values.reminderLeadTime) {
+        createdTask = await setTaskReminderLeadTime(
+          createdTask.id,
+          values.reminderLeadTime
+        );
+      }
+
       showSuccessToast("Aufgabe erfolgreich erstellt.");
       onTaskCreated?.(createdTask);
 
@@ -65,6 +75,8 @@ function useAddTaskForm({ onClose, onTaskCreated }: UseAddTaskFormParams) {
         setLoading(false);
         onClose();
       }, 1500);
+
+      return true;
     } catch (err) {
       showErrorToast(
         err instanceof Error
@@ -75,6 +87,8 @@ function useAddTaskForm({ onClose, onTaskCreated }: UseAddTaskFormParams) {
         setLoading(false);
         setSubmitDisabled(false);
       }
+
+      return false;
     }
   };
 

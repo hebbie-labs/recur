@@ -33,34 +33,3 @@ CREATE TABLE task (
     start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     user_id UUID REFERENCES data.app_user(id)
 );
-
--- COPY data.app_user(
---     id,
---     email,
---     password_hash,
---     first_name,
---     last_name,
---     avatar_url,
---     provider,
---     enabled,
---     date_created 
--- )
--- FROM '/docker-entrypoint-initdb.d/app_user.csv' DELIMITER ',' CSV HEADER;
-
--- COPY data.task (
---     id,
---     name,
---     category,
---     frequency,
---     description,
---     date_until,
---     progress,
---     date_created,
---     amount_did,
---     is_favorite,
---     is_archived,
---     duration_minutes,
---     start_time,
---     user_id
--- )
--- FROM '/docker-entrypoint-initdb.d/task.csv' DELIMITER ',' CSV HEADER;

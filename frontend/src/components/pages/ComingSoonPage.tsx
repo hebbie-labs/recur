@@ -1,11 +1,11 @@
 import { TerminalIcon } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import LegalFooterLinks from "@/components/molecules/LegalFooterLinks";
+import GithubIcon from "@/components/atoms/GithubIcon";
+import { GITHUB_REPO_URL } from "@/constants/links";
 
-/**
- * Öffentliche Platzhalterseite für www./main, solange die eigentliche App
- * nur unter dev./prod läuft - siehe proxy.ts (COMING_SOON_MODE gate).
- */
+/** Öffentliche Platzhalterseite für www./main, solange die eigentliche App nur unter dev./prod läuft - siehe proxy.ts (COMING_SOON_MODE gate). */
 function ComingSoonPage() {
     return (
         <div className="flex min-h-svh w-full flex-col items-center justify-center gap-6 bg-background px-4 py-8">
@@ -34,6 +34,18 @@ function ComingSoonPage() {
                 </CardHeader>
             </Card>
             <LegalFooterLinks />
+            <Button
+                variant="outline"
+                size="icon-lg"
+                className="rounded-full"
+                aria-label="Sourcecode auf GitHub ansehen"
+                nativeButton={false}
+                render={
+                    <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer" />
+                }
+            >
+                <GithubIcon className="size-5" />
+            </Button>
         </div>
     );
 }

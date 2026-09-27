@@ -3,7 +3,10 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import type { RegisterRequest } from "@/types/auth";
 
-export type SignupFormValues = RegisterRequest & { confirmPassword: string };
+export type SignupFormValues = RegisterRequest & {
+    confirmPassword: string;
+    acceptTerms: boolean;
+};
 
 function useSignUpForm() {
     const { register } = useAuth();
@@ -19,8 +22,9 @@ function useSignUpForm() {
         setBackendError(undefined);
 
         try {
-            const { confirmPassword, ...request } = values;
+            const { confirmPassword, acceptTerms, ...request } = values;
             void confirmPassword;
+            void acceptTerms;
             await register(request);
             router.replace("/");
         } catch (error) {
