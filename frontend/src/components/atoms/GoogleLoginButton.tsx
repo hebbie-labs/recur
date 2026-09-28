@@ -1,16 +1,22 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import googleLogo from "@/../../public/icons/google.svg";
+import type { OAuth2Mode } from "@/types/auth";
 
 const GOOGLE_AUTH_URL = "/oauth2/authorization/google";
 
-function GoogleLoginButton() {
+type GoogleLoginButtonProps = {
+  /** "register" lässt das Backend abbrechen statt einzuloggen, falls diese Google-Identität schon ein Konto hat (#236). */
+  mode?: OAuth2Mode;
+};
+
+function GoogleLoginButton({ mode = "login" }: GoogleLoginButtonProps) {
   return (
     <Button
       variant="outline"
       className="w-full"
       onClick={() => {
-        window.location.href = GOOGLE_AUTH_URL;
+        window.location.href = `${GOOGLE_AUTH_URL}?mode=${mode}`;
       }}
     >
       <Image
@@ -20,7 +26,7 @@ function GoogleLoginButton() {
         height={16}
         alt={"googleAlt"}
       />
-      Mit Google anmelden
+      {mode === "register" ? "Mit Google registrieren" : "Mit Google anmelden"}
     </Button>
   );
 }

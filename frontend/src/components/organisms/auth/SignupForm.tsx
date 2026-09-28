@@ -203,8 +203,8 @@ function SignupForm({
         <FieldSeparator>Oder weiter mit</FieldSeparator>
 
         <Field>
-          <GoogleLoginButton />
-          <GitHubLoginButton />
+          <GoogleLoginButton mode="register" />
+          <GitHubLoginButton mode="register" />
           <FieldDescription className="px-6 text-center">
             Bereits ein Konto?{" "}
             <Button variant="link" onClick={navigate} className="p-0">
