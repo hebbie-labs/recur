@@ -84,7 +84,7 @@ services:
     labels:
       - homepage.group=Recur
       - homepage.name=Backend (Dev)
-      - homepage.icon=spring.png
+      - homepage.icon=si-springboot
       - homepage.showStats=true
       - homepage.description=API, kein Web-UI
 
@@ -147,7 +147,7 @@ services:
     labels:
       - homepage.group=Recur
       - homepage.name=Backend (Prod)
-      - homepage.icon=spring.png
+      - homepage.icon=si-springboot
       - homepage.showStats=true
       - homepage.description=API, kein Web-UI
 
