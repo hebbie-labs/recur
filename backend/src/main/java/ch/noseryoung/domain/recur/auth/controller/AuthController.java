@@ -1,6 +1,7 @@
 package ch.noseryoung.domain.recur.auth.controller;
 
 import java.net.URI;
+import java.time.Duration;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -21,18 +22,26 @@ import ch.noseryoung.domain.recur.auth.dto.AuthResponse;
 import ch.noseryoung.domain.recur.auth.dto.ForgotPasswordRequest;
 import ch.noseryoung.domain.recur.auth.dto.LoginRequest;
 import ch.noseryoung.domain.recur.auth.dto.MessageResponse;
+import ch.noseryoung.domain.recur.auth.dto.OAuth2LinkConfirmRequest;
+import ch.noseryoung.domain.recur.auth.dto.OAuth2LinkInfoResponse;
 import ch.noseryoung.domain.recur.auth.dto.RegisterRequest;
 import ch.noseryoung.domain.recur.auth.dto.ResendVerificationRequest;
 import ch.noseryoung.domain.recur.auth.dto.ResetPasswordRequest;
 import ch.noseryoung.domain.recur.auth.enums.VerificationStatus;
 import ch.noseryoung.domain.recur.auth.exceptions.InvalidCredentialsException;
 import ch.noseryoung.domain.recur.auth.exceptions.InvalidRefreshTokenException;
+import ch.noseryoung.domain.recur.auth.exceptions.OAuth2LinkExpiredException;
 import ch.noseryoung.domain.recur.auth.security.jwt.JwtService;
 import ch.noseryoung.domain.recur.auth.security.oauth2.OAuth2AuthenticationSuccessHandler;
+import ch.noseryoung.domain.recur.auth.security.oauth2.PendingOAuth2Link;
 import ch.noseryoung.domain.recur.auth.security.jwt.RefreshTokenService;
 import ch.noseryoung.domain.recur.auth.service.AuthService;
 import ch.noseryoung.domain.recur.auth.service.AuthService.AuthResult;
 import ch.noseryoung.domain.recur.auth.service.AuthService.TokenExchangeResult;
+import ch.noseryoung.domain.recur.auth.service.OAuth2AccountLinkingService;
+import ch.noseryoung.domain.recur.auth.service.OAuth2AccountLinkingService.LinkInfo;
+import ch.noseryoung.domain.recur.user.model.User;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
@@ -53,14 +62,17 @@ public class AuthController {
     private final AuthService authService;
     private final RefreshTokenService refreshTokenService;
     private final JwtService jwtService;
+    private final OAuth2AccountLinkingService linkingService;
 
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
-    public AuthController(AuthService authService, RefreshTokenService refreshTokenService, JwtService jwtService) {
+    public AuthController(AuthService authService, RefreshTokenService refreshTokenService, JwtService jwtService,
+            OAuth2AccountLinkingService linkingService) {
         this.authService = authService;
         this.refreshTokenService = refreshTokenService;
         this.jwtService = jwtService;
+        this.linkingService = linkingService;
     }
 
     @PostMapping("/register")
@@ -179,5 +191,56 @@ public class AuthController {
                 .header(HttpHeaders.SET_COOKIE, jwtService.buildCookie(result.accessToken(), request).toString())
                 .header(HttpHeaders.SET_COOKIE, clearHandoffCookie.toString())
                 .body(result.authResponse());
+    }
+
+    // Verknüpfungs-Bestätigungsschritt (#236): der OAuth2AuthenticationSuccessHandler
+    // leitet auf /auth/link um, wenn es schon einen Account mit der E-Mail der
+    // Provider-Identität gibt. Die Seite liest hier, was sie anzeigen muss.
+    @GetMapping("/oauth2/link")
+    public ResponseEntity<OAuth2LinkInfoResponse> getOAuth2Link(
+            @CookieValue(name = OAuth2AuthenticationSuccessHandler.LINK_COOKIE_NAME, required = false) String linkToken) {
+        PendingOAuth2Link pendingLink = parseLinkToken(linkToken);
+        LinkInfo info = linkingService.describe(pendingLink);
+        return ResponseEntity.ok(new OAuth2LinkInfoResponse(
+                info.user().getEmail(), pendingLink.provider(), info.passwordRequired()));
+    }
+
+    @PostMapping("/oauth2/link/confirm")
+    public ResponseEntity<AuthResponse> confirmOAuth2Link(
+            @CookieValue(name = OAuth2AuthenticationSuccessHandler.LINK_COOKIE_NAME, required = false) String linkToken,
+            @RequestBody OAuth2LinkConfirmRequest request,
+            HttpServletRequest httpRequest) {
+        PendingOAuth2Link pendingLink = parseLinkToken(linkToken);
+        User user = linkingService.confirmLink(pendingLink, request.password());
+        AuthResult result = authService.startSession(user, httpRequest);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, jwtService.buildCookie(result.accessToken(), httpRequest).toString())
+                .header(HttpHeaders.SET_COOKIE, refreshTokenService.buildCookie(result.refreshToken(), httpRequest).toString())
+                .header(HttpHeaders.SET_COOKIE, clearLinkCookie(httpRequest).toString())
+                .body(result.authResponse());
+    }
+
+    // Das Frontend leitet danach selbst auf /auth/error?code=LINK_DECLINED weiter.
+    @PostMapping("/oauth2/link/decline")
+    public ResponseEntity<Void> declineOAuth2Link(HttpServletRequest httpRequest) {
+        return ResponseEntity.noContent()
+                .header(HttpHeaders.SET_COOKIE, clearLinkCookie(httpRequest).toString())
+                .build();
+    }
+
+    private PendingOAuth2Link parseLinkToken(String linkToken) {
+        if (linkToken == null) {
+            throw new OAuth2LinkExpiredException();
+        }
+        try {
+            return jwtService.parseOAuth2LinkToken(linkToken);
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new OAuth2LinkExpiredException();
+        }
+    }
+
+    private ResponseCookie clearLinkCookie(HttpServletRequest request) {
+        return OAuth2AuthenticationSuccessHandler.buildLinkCookie("", Duration.ZERO, request);
     }
 }

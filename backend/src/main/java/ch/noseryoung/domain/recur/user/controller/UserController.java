@@ -5,10 +5,12 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import ch.noseryoung.domain.recur.user.dto.SetPasswordRequest;
 import ch.noseryoung.domain.recur.user.dto.UserResponse;
 import ch.noseryoung.domain.recur.user.service.UserService;
 import jakarta.validation.Valid;
@@ -32,6 +34,13 @@ public class UserController {
     @PatchMapping
     public ResponseEntity<UserResponse> updateCurrentUser(@Valid @RequestBody UserResponse userResponse) {
         return ResponseEntity.ok(userService.updateCurrentUser(userResponse));
+    }
+
+    // Nur für Konten ohne Passwort (über Google/GitHub entstanden, #236) -
+    // Passwort ändern ist ein eigener Flow mit altem Passwort.
+    @PostMapping("/password")
+    public ResponseEntity<UserResponse> setPassword(@Valid @RequestBody SetPasswordRequest request) {
+        return ResponseEntity.ok(userService.setPassword(request.password()));
     }
 
     @DeleteMapping

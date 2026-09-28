@@ -1,14 +1,19 @@
 package ch.noseryoung.domain.recur.auth.security.jwt;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Duration;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import ch.noseryoung.domain.recur.auth.security.oauth2.PendingOAuth2Link;
+import ch.noseryoung.domain.recur.user.enums.AuthProvider;
 import ch.noseryoung.domain.recur.user.model.User;
+import io.jsonwebtoken.JwtException;
 
 /**
  * Deckt Token-Ausstellung und -Validierung ab - das Fundament der
@@ -70,5 +75,41 @@ class JwtServiceTest {
     @Test
     void isTokenValid_rejectsGarbageInput() {
         assertThat(jwtService.isTokenValid("not-a-jwt", "user@example.com")).isFalse();
+    }
+
+    @Test
+    void oauth2LinkToken_roundTripsPendingLink() {
+        PendingOAuth2Link link = new PendingOAuth2Link(UUID.randomUUID(), AuthProvider.GITHUB, "12345");
+
+        String token = jwtService.generateOAuth2LinkToken(link, Duration.ofMinutes(10));
+
+        assertThat(jwtService.parseOAuth2LinkToken(token)).isEqualTo(link);
+    }
+
+    // #236: wer das Verknüpfungs-Token hat, hat den Account-Besitz noch NICHT
+    // nachgewiesen - es darf nie als Access-Token durchgehen.
+    @Test
+    void oauth2LinkToken_isNeverAValidAccessToken() {
+        String token = jwtService.generateOAuth2LinkToken(
+                new PendingOAuth2Link(UUID.randomUUID(), AuthProvider.GOOGLE, "sub"), Duration.ofMinutes(10));
+
+        assertThat(jwtService.isTokenValid(token, jwtService.extractEmail(token))).isFalse();
+    }
+
+    @Test
+    void parseOAuth2LinkToken_rejectsAccessToken() {
+        String accessToken = jwtService.generateToken(testUser());
+
+        assertThatThrownBy(() -> jwtService.parseOAuth2LinkToken(accessToken))
+                .isInstanceOf(JwtException.class);
+    }
+
+    @Test
+    void parseOAuth2LinkToken_rejectsExpiredToken() {
+        String token = jwtService.generateOAuth2LinkToken(
+                new PendingOAuth2Link(UUID.randomUUID(), AuthProvider.GOOGLE, "sub"), Duration.ofSeconds(-1));
+
+        assertThatThrownBy(() -> jwtService.parseOAuth2LinkToken(token))
+                .isInstanceOf(JwtException.class);
     }
 }
