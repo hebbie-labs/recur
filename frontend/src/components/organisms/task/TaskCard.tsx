@@ -24,6 +24,9 @@ import { categoryDot } from "@/utils/calendarGrid";
 import { useTasksContext } from "@/contexts/TasksContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGroupsContext } from "@/contexts/GroupsContext";
+import useNow from "@/hooks/useNow";
+import { isOverdue } from "@/utils/taskCompletions";
+import OverdueBadge from "@/components/atoms/task/OverdueBadge";
 
 type TaskCardProps = {
   task: Task;
@@ -110,6 +113,9 @@ function TaskCard({
 
   const [detailOpen, setDetailOpen] = useState(false);
 
+  const now = useNow();
+  const overdue = !isArchivedForCurrentUser(task) && isOverdue(task, now);
+
   // Im Auswahlmodus wählt ein Klick auf die Card das Habit aus/ab. Sonst
   // öffnet die restliche Card-Fläche die Detailansicht - der Fortschritt
   // wird nur noch über den dedizierten Abhaken-Button geändert (#136).
@@ -125,6 +131,7 @@ function TaskCard({
     <Card
       className={cn(
         "flex h-full flex-col cursor-pointer transition-colors",
+        overdue && "border-destructive",
         selectMode && selected && "ring-2 ring-primary",
         className
       )}
@@ -245,7 +252,10 @@ function TaskCard({
           <TaskDescription description={task.description} />
         </div>
         <div className="mt-auto flex items-center gap-4 justify-between">
-          <TaskTimeFrame start={task.startTime ?? null} end={task.dateUntil} />
+          <div className="flex flex-wrap items-center gap-2">
+            <TaskTimeFrame start={task.startTime ?? null} end={task.dateUntil} />
+            {overdue && <OverdueBadge />}
+          </div>
           <div className="flex items-center gap-2">
             {task.project && task.assignedMembers && task.assignedMembers.length > 0 && (
               <div className="flex -space-x-2">

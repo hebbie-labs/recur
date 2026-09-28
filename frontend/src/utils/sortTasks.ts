@@ -1,4 +1,5 @@
 import type { Task } from "@/types/task";
+import { isOverdue } from "@/utils/taskCompletions";
 
 export type SortOptions =
   | "date ascending"
@@ -39,7 +40,16 @@ function sortTaskAlphabetically(tasks: Task[]): Task[] {
   return [...tasks].sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export function sortTasks(tasks: Task[], sortBy: SortOptions): Task[] {
+/** Überfällige Tasks immer zuerst (#153) - Array.sort ist stabil, die gewählte Sortierung bleibt innerhalb beider Gruppen erhalten. */
+function overdueFirst(tasks: Task[], now: Date): Task[] {
+  return [...tasks].sort((a, b) => Number(isOverdue(b, now)) - Number(isOverdue(a, now)));
+}
+
+export function sortTasks(tasks: Task[], sortBy: SortOptions, now: Date = new Date()): Task[] {
+  return overdueFirst(sortTasksBy(tasks, sortBy), now);
+}
+
+function sortTasksBy(tasks: Task[], sortBy: SortOptions): Task[] {
   switch (sortBy) {
     case "progress ascending":
       return sortTaskByProgressASC(tasks);

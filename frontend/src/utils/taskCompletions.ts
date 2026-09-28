@@ -122,3 +122,97 @@ export function pastIntervals(task: CompletionTask): PastInterval[] {
   }
   return intervals;
 }
+
+type OverdueTask = DoneCheckTask & Pick<Task, "dateUntil" | "startTime" | "isArchived">;
+
+function addLocalDays(date: Date, days: number): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+}
+
+// dateUntil ist ein reines Datum (als UTC-Mitternacht gespeichert) - über
+// slice(0, 10) wie in EditTaskForm auf den gewählten Kalendertag zurück, statt
+// über new Date() je nach Zeitzone einen Tag zu verschieben.
+function dateUntilDay(task: Pick<Task, "dateUntil">): string {
+  return task.dateUntil.slice(0, 10);
+}
+
+// ONCE: mit Uhrzeit überfällig, sobald die Uhrzeit am Fälligkeitstag erreicht
+// ist - ganztägig erst ab 0 Uhr des Folgetags.
+function onceDeadline(task: OverdueTask): Date {
+  const until = parseDateOnly(dateUntilDay(task));
+  if (!task.startTime) return addLocalDays(until, 1);
+
+  const start = new Date(task.startTime);
+  return new Date(
+    until.getFullYear(),
+    until.getMonth(),
+    until.getDate(),
+    start.getHours(),
+    start.getMinutes()
+  );
+}
+
+// Persönliche wiederkehrende Tasks: überfällig, wenn der vorherige Zeitraum
+// nicht abgehakt wurde und der aktuelle auch noch nicht. Nach Serienende
+// (dateUntil) gibt es keinen neuen Zeitraum mehr - der zuletzt verpasste
+// zählt dann noch genau einen Zeitraum lang.
+function recurringOverdueSince(task: OverdueTask, now: Date): Date | null {
+  const intervalDays = FREQUENCY_INTERVAL_DAYS[task.frequency];
+  const currentIndex = intervalIndexOf(task, toDateOnlyString(now));
+  const lastIndex = intervalIndexOf(task, dateUntilDay(task));
+  if (!intervalDays || currentIndex === null || lastIndex === null) return null;
+  if (currentIndex < 1 || currentIndex > lastIndex + 1) return null;
+
+  const completedIndexes = new Set(
+    (task.completions ?? []).map((date) => intervalIndexOf(task, date))
+  );
+  if (currentIndex <= lastIndex && completedIndexes.has(currentIndex)) return null;
+  if (completedIndexes.has(currentIndex - 1)) return null;
+
+  // Mehrere Zeiträume am Stück verpasst -> seit Ende des ersten davon.
+  let firstMissed = currentIndex - 1;
+  while (firstMissed > 0 && !completedIndexes.has(firstMissed - 1)) firstMissed--;
+
+  return addLocalDays(toLocalMidnight(task.dateCreated), (firstMissed + 1) * intervalDays);
+}
+
+// Geteilte Projekt-Tasks haben keine Completion-Historie, analog zur
+// Rolling-Window-Sperre (legacyDoneForCurrentPeriod): nach dem letzten Klick
+// ist der nächste Zeitraum fällig, verpasst ist er ein Intervall später.
+function legacyRecurringOverdueSince(task: OverdueTask, now: Date): Date | null {
+  const intervalDays = FREQUENCY_INTERVAL_DAYS[task.frequency];
+  if (!intervalDays) return null;
+
+  const intervalMs = intervalDays * ONE_DAY_MS;
+  const since = task.lastAmountDidAt
+    ? new Date(new Date(task.lastAmountDidAt).getTime() + 2 * intervalMs)
+    : addLocalDays(toLocalMidnight(task.dateCreated), intervalDays);
+  const seriesEnd = addLocalDays(parseDateOnly(dateUntilDay(task)), 1);
+
+  if (now < since || since >= seriesEnd) return null;
+  if (now.getTime() >= seriesEnd.getTime() + intervalMs) return null;
+  return since;
+}
+
+/** Seit wann ein Task überfällig ist (#153) - null, wenn nicht. DAILY ist nie überfällig. Ein nur für den aktuellen User archivierter Projekt-Task (isArchivedForCurrentUser) muss der Aufrufer selbst ausschliessen. */
+export function overdueSince(task: OverdueTask, now: Date = new Date()): Date | null {
+  if (task.isArchived || !task.dateUntil || !task.dateCreated) return null;
+
+  switch (task.frequency) {
+    case TaskFrequency.DAILY:
+      return null;
+    case TaskFrequency.ONCE: {
+      if (isDoneForCurrentPeriod(task)) return null;
+      const deadline = onceDeadline(task);
+      return now >= deadline ? deadline : null;
+    }
+    default:
+      return task.project
+        ? legacyRecurringOverdueSince(task, now)
+        : recurringOverdueSince(task, now);
+  }
+}
+
+export function isOverdue(task: OverdueTask, now: Date = new Date()): boolean {
+  return overdueSince(task, now) !== null;
+}

@@ -9,6 +9,7 @@ import Sorter from "@/components/atoms/Sorter";
 import { useAddTask } from "@/contexts/AddTaskContext";
 import { useTasksContext } from "@/contexts/TasksContext";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
+import useNow from "@/hooks/useNow";
 import TaskCardGridSkeleton from "../molecules/task/TaskCardGridSkeleton";
 
 // Wie viele Karten die Favoriten-/Archiv-Vorschau auf der Start-Seite zeigt,
@@ -169,7 +170,8 @@ function HomePage() {
   const [sortBy, setSortBy] = useState<SortOptions>("date descending");
   const { openAddTaskForm } = useAddTask();
 
-  const sortedTasks = useMemo(() => sortTasks(tasks, sortBy), [tasks, sortBy]);
+  const now = useNow();
+  const sortedTasks = useMemo(() => sortTasks(tasks, sortBy, now), [tasks, sortBy, now]);
 
   if (loading) {
     return <TaskCardGridSkeleton count={6} direction="row" />;
