@@ -8,7 +8,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import ProgressIndicator from "@/components/atoms/ProgressIndicator";
 import DetailDialog from "@/components/molecules/dialog/DetailDialog";
 import TaskCardMenu from "@/components/organisms/task/TaskCardMenu";
-import { pastIntervals, parseDateOnly } from "@/utils/taskCompletions";
+import { overdueSince, pastIntervals, parseDateOnly } from "@/utils/taskCompletions";
+import OverdueBadge from "@/components/atoms/task/OverdueBadge";
+import useNow from "@/hooks/useNow";
 import { useTasksContext } from "@/contexts/TasksContext";
 
 type TaskDetailDialogProps = {
@@ -74,6 +76,9 @@ function TaskDetailDialog({
   doneForCurrentPeriod,
   canEdit = true,
 }: TaskDetailDialogProps) {
+  const now = useNow();
+  const overdueSinceDate = task && !isArchived ? overdueSince(task, now) : null;
+
   return (
     <DetailDialog open={open} onClose={onClose} title={task?.name}>
       {task && (
@@ -129,6 +134,14 @@ function TaskDetailDialog({
               <div className="flex flex-col gap-0.5">
                 <span className="text-xs text-muted-foreground">Fällig bis</span>
                 <span>{format(new Date(task.dateUntil), "dd.MM.yyyy", { locale: de })}</span>
+              </div>
+            )}
+            {overdueSinceDate && (
+              <div className="flex flex-wrap items-center gap-2">
+                <OverdueBadge />
+                <span className="text-xs text-destructive">
+                  überfällig seit {format(overdueSinceDate, "dd.MM.yyyy", { locale: de })}
+                </span>
               </div>
             )}
           </div>
