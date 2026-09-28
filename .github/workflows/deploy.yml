@@ -101,6 +101,8 @@ jobs:
           done
           git pull
       - run: docker compose -f /srv/recur/compose.deployment.yml pull frontend-dev backend-dev db-dev
+      # external network shared with cloudflared, see compose.deployment.yml
+      - run: docker network inspect tunnel >/dev/null 2>&1 || docker network create tunnel
       - run: docker compose -f /srv/recur/compose.deployment.yml up -d frontend-dev backend-dev db-dev
 
   deploy-prod:
@@ -125,6 +127,8 @@ jobs:
           done
           git pull
       - run: docker compose -f /srv/recur/compose.deployment.yml pull frontend-prod backend-prod db-prod
+      # external network shared with cloudflared, see compose.deployment.yml
+      - run: docker network inspect tunnel >/dev/null 2>&1 || docker network create tunnel
       - run: docker compose -f /srv/recur/compose.deployment.yml up -d frontend-prod backend-prod db-prod
 
   deploy-www:
@@ -151,4 +155,6 @@ jobs:
           done
           git pull
       - run: docker compose -f /srv/recur/compose.deployment.yml pull frontend-www
+      # external network shared with cloudflared, see compose.deployment.yml
+      - run: docker network inspect tunnel >/dev/null 2>&1 || docker network create tunnel
       - run: docker compose -f /srv/recur/compose.deployment.yml up -d frontend-www
