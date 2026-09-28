@@ -8,9 +8,7 @@ import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import ch.noseryoung.domain.recur.user.model.User;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -21,7 +19,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final GithubEmailService githubEmailService;
 
     @Override
-    @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest)
             throws OAuth2AuthenticationException {
 
@@ -40,16 +37,20 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     userRequest.getAccessToken().getTokenValue());
         }
 
-        Map<String, Object> githubAttributes = Map.of(
-                "email", email,
-                "verifiedEmail", verifiedEmail);
+        // HashMap statt Map.of, da email null sein kann (Map.of wirft dann eine
+        // NPE statt der sprechenden Fehlermeldung aus dem Resolver).
+        Map<String, Object> githubAttributes = new HashMap<>();
+        githubAttributes.put("email", email);
+        githubAttributes.put("verifiedEmail", verifiedEmail);
+
+        // Validiert vor dem Bau des Principals - DefaultOAuth2User verlangt ein
+        // nicht-leeres "email"-Attribut als Namen.
+        OAuth2Identity identity = attributeResolver.resolve(oauthUser.getAttributes(), provider, githubAttributes);
 
         Map<String, Object> attributes = new HashMap<>(oauthUser.getAttributes());
         attributes.put("email", email);
         attributes.put("verifiedEmail", verifiedEmail);
 
-        User user = attributeResolver.resolve(attributes, provider, githubAttributes);
-
-        return new CustomOAuth2User(user, attributes);
+        return new CustomOAuth2User(identity, attributes);
     }
 }

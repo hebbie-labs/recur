@@ -5,9 +5,7 @@ import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import ch.noseryoung.domain.recur.user.model.User;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -17,7 +15,6 @@ public class CustomOidcUserService extends OidcUserService {
         private final OAuth2UserAttributeResolver attributeResolver;
 
         @Override
-        @Transactional
         public OidcUser loadUser(OidcUserRequest userRequest)
                         throws OAuth2AuthenticationException {
 
@@ -27,12 +24,12 @@ public class CustomOidcUserService extends OidcUserService {
                                 .getClientRegistration()
                                 .getRegistrationId();
 
-                User user = attributeResolver.resolve(oidcUser.getAttributes(), provider, null);
+                OAuth2Identity identity = attributeResolver.resolve(oidcUser.getAttributes(), provider, null);
 
                 return new CustomOidcUser(
                                 oidcUser.getAuthorities(),
                                 oidcUser.getIdToken(),
                                 oidcUser.getUserInfo(),
-                                user);
+                                identity);
         }
 }

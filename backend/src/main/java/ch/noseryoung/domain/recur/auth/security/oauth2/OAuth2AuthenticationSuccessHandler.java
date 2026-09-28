@@ -8,14 +8,18 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import ch.noseryoung.domain.recur.user.model.User;
+import ch.noseryoung.domain.recur.auth.enums.OAuth2ErrorCode;
 import ch.noseryoung.domain.recur.auth.security.jwt.JwtService;
 import ch.noseryoung.domain.recur.auth.security.jwt.RefreshTokenService;
+import ch.noseryoung.domain.recur.auth.service.OAuth2AccountLinkingService;
+import ch.noseryoung.domain.recur.auth.service.OAuth2AccountLinkingService.Aborted;
+import ch.noseryoung.domain.recur.auth.service.OAuth2AccountLinkingService.LinkRequired;
+import ch.noseryoung.domain.recur.auth.service.OAuth2AccountLinkingService.LoggedIn;
+import ch.noseryoung.domain.recur.user.model.User;
 import lombok.RequiredArgsConstructor;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -30,8 +34,16 @@ public class OAuth2AuthenticationSuccessHandler
         public static final String HANDOFF_COOKIE_NAME = "oauth_handoff";
         private static final Duration HANDOFF_COOKIE_TTL = Duration.ofSeconds(60);
 
+        // Trägt die ausstehende Verknüpfung (#236) bis zur Bestätigung auf
+        // /auth/link (siehe AuthController#confirmOAuth2Link). Nur auf die
+        // Link-Endpunkte beschränkt, damit es nirgends sonst mitgeschickt wird.
+        public static final String LINK_COOKIE_NAME = "oauth_link_pending";
+        public static final String LINK_COOKIE_PATH = "/api/auth/oauth2/link";
+        public static final Duration LINK_COOKIE_TTL = Duration.ofMinutes(10);
+
         private final JwtService jwtService;
         private final RefreshTokenService refreshTokenService;
+        private final OAuth2AccountLinkingService linkingService;
 
         @Value("${app.oauth2.redirect-path}")
         private String redirectPath;
@@ -47,12 +59,26 @@ public class OAuth2AuthenticationSuccessHandler
 
                 OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
 
-                OAuth2User principal = oauthToken.getPrincipal();
+                RecurOAuth2User principal = (RecurOAuth2User) oauthToken.getPrincipal();
 
-                RecurOAuth2User customUser = (RecurOAuth2User) principal;
+                var outcome = linkingService.resolve(
+                                principal.getIdentity(),
+                                OAuth2ModeAuthorizationRequestRepository.modeOf(request));
 
-                User user = customUser.getUser();
+                switch (outcome) {
+                        case LoggedIn(User user) -> completeLogin(user, request, response);
+                        case LinkRequired(PendingOAuth2Link pendingLink) -> startLink(pendingLink, request, response);
+                        case Aborted(OAuth2ErrorCode code) -> response.sendRedirect(
+                                        UriComponentsBuilder.fromUriString(frontendUrl)
+                                                        .path("/auth/error")
+                                                        .queryParam("code", code.name())
+                                                        .build()
+                                                        .toUriString());
+                }
+        }
 
+        private void completeLogin(User user, HttpServletRequest request, HttpServletResponse response)
+                        throws IOException {
                 String token = jwtService.generateToken(user);
 
                 // JWT landet bewusst NICHT in der Redirect-URL (Browser-Historie, Referer-
@@ -81,5 +107,30 @@ public class OAuth2AuthenticationSuccessHandler
                                 .toUriString();
 
                 response.sendRedirect(redirectUrl);
+        }
+
+        // Noch KEIN Login: es gibt bereits einen Account mit dieser E-Mail, und
+        // der Nutzer muss die Verknüpfung erst auf /auth/link bestätigen.
+        private void startLink(PendingOAuth2Link pendingLink, HttpServletRequest request,
+                        HttpServletResponse response) throws IOException {
+                String linkToken = jwtService.generateOAuth2LinkToken(pendingLink, LINK_COOKIE_TTL);
+
+                response.addHeader(HttpHeaders.SET_COOKIE,
+                                buildLinkCookie(linkToken, LINK_COOKIE_TTL, request).toString());
+
+                response.sendRedirect(UriComponentsBuilder.fromUriString(frontendUrl)
+                                .path("/auth/link")
+                                .build()
+                                .toUriString());
+        }
+
+        public static ResponseCookie buildLinkCookie(String value, Duration maxAge, HttpServletRequest request) {
+                return ResponseCookie.from(LINK_COOKIE_NAME, value)
+                                .httpOnly(true)
+                                .secure(request.isSecure())
+                                .path(LINK_COOKIE_PATH)
+                                .maxAge(maxAge)
+                                .sameSite("Lax")
+                                .build();
         }
 }

@@ -188,7 +188,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void forgotPassword_noOpsForGoogleAccount() {
+    void forgotPassword_noOpsForAccountWithoutPassword() {
         User googleUser = User.builder()
                 .email("google@example.com")
                 .provider(AuthProvider.GOOGLE)
@@ -202,10 +202,31 @@ class AuthServiceTest {
         verify(emailService, never()).send(anyString(), anyString(), anyString());
     }
 
+    // #236: ein über Google entstandenes Konto, das inzwischen ein Passwort
+    // gesetzt hat, muss es auch zurücksetzen können.
+    @Test
+    void forgotPassword_issuesTokenForOAuthOriginAccountWithPassword() {
+        User googleUser = User.builder()
+                .email("google@example.com")
+                .passwordHash("hash")
+                .provider(AuthProvider.GOOGLE)
+                .emailVerified(true)
+                .build();
+        when(userRepository.findByEmail("google@example.com")).thenReturn(java.util.Optional.of(googleUser));
+        when(passwordResetTokenRepository.findFirstByUserIdOrderByDateCreatedDesc(googleUser.getId()))
+                .thenReturn(java.util.Optional.empty());
+
+        authService.forgotPassword("google@example.com");
+
+        verify(passwordResetTokenRepository).save(any());
+        verify(emailService).send(eq("google@example.com"), anyString(), anyString());
+    }
+
     @Test
     void forgotPassword_noOpsForUnverifiedAccount() {
         User unverifiedUser = User.builder()
                 .email("unverified@example.com")
+                .passwordHash("hash")
                 .provider(AuthProvider.LOCAL)
                 .emailVerified(false)
                 .build();
@@ -231,6 +252,7 @@ class AuthServiceTest {
     void forgotPassword_issuesTokenAndSendsEmailForEligibleAccount() {
         User user = User.builder()
                 .email("user@example.com")
+                .passwordHash("hash")
                 .provider(AuthProvider.LOCAL)
                 .emailVerified(true)
                 .build();

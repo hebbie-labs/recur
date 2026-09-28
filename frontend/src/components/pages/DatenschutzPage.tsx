@@ -7,7 +7,7 @@ function DatenschutzPage() {
   return (
     <LegalPageLayout
       title="Datenschutzerklärung"
-      lastUpdated="22. September 2026"
+      lastUpdated="28. September 2026"
     >
       <p className="text-muted-foreground">
         Diese Datenschutzerklärung informiert dich darüber, welche
@@ -41,10 +41,16 @@ function DatenschutzPage() {
           </li>
           <li>
             <span className="font-medium text-foreground">
-              Google-Login (OAuth2):
+              Google-/GitHub-Login (OAuth2):
             </span>{" "}
-            Falls du dich über Google anmeldest, erhalten wir von Google
-            deinen Namen, deine E-Mail-Adresse und ggf. dein Profilbild.
+            Falls du dich über Google oder GitHub anmeldest, erhalten wir
+            vom jeweiligen Anbieter deinen Namen, deine E-Mail-Adresse und
+            ggf. dein Profilbild. Name und Profilbild übernehmen wir nur
+            beim Erstellen deines Kontos. Zusätzlich speichern wir die
+            eindeutige Konto-ID, die der Anbieter für dich vergibt, damit
+            wir dein Google-/GitHub-Konto deinem Recur-Konto zuordnen können
+            (auch wenn sich deine E-Mail-Adresse beim Anbieter ändert). Diese
+            Verknüpfung wird zusammen mit deinem Konto gelöscht.
           </li>
           <li>
             <span className="font-medium text-foreground">
@@ -185,14 +191,15 @@ function DatenschutzPage() {
 
       <section className="flex flex-col gap-2">
         <h2 className="text-base font-semibold text-foreground">
-          Google OAuth2 / Drittanbieter
+          Google / GitHub OAuth2 / Drittanbieter
         </h2>
         <p>
-          Wenn du dich mit Google anmeldest, gelten zusätzlich die
-          Datenschutzbestimmungen von Google. Wir erhalten von Google nur
-          die für die Anmeldung notwendigen Profildaten und geben keine
-          eigenen Daten an Google weiter, ausser den für den Login-Flow
-          technisch erforderlichen Informationen.
+          Wenn du dich mit Google oder GitHub anmeldest, gelten zusätzlich
+          die Datenschutzbestimmungen des jeweiligen Anbieters. Wir erhalten
+          vom Anbieter nur die für die Anmeldung notwendigen Profildaten
+          (inkl. der Konto-ID, siehe oben) und geben keine eigenen Daten an
+          den Anbieter weiter, ausser den für den Login-Flow technisch
+          erforderlichen Informationen.
         </p>
       </section>
 
@@ -260,6 +267,17 @@ function DatenschutzPage() {
             anmelden musst (siehe "Technische Daten" oben). Für JavaScript
             nicht auslesbar (HttpOnly) und nur an unseren Server, nicht an
             Dritte, übermittelt.
+          </li>
+          <li>
+            <span className="font-medium text-foreground">
+              oauth_link_pending:
+            </span>{" "}
+            wird nur gesetzt, wenn du dich über Google oder GitHub anmeldest
+            und bereits ein Recur-Konto mit derselben E-Mail-Adresse
+            existiert. Es merkt sich für höchstens 10 Minuten, welches
+            Anbieter-Konto mit deinem Recur-Konto verknüpft werden soll, bis
+            du die Verknüpfung bestätigst oder ablehnst. Für JavaScript nicht
+            auslesbar (HttpOnly) und nur an unseren Server übermittelt.
           </li>
           <li>
             <span className="font-medium text-foreground">

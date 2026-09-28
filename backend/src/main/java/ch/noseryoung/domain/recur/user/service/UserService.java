@@ -1,10 +1,12 @@
 package ch.noseryoung.domain.recur.user.service;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import ch.noseryoung.domain.recur.user.dto.UserResponse;
 import ch.noseryoung.domain.recur.user.event.UserDeletedEvent;
+import ch.noseryoung.domain.recur.user.exceptions.PasswordAlreadySetException;
 import ch.noseryoung.domain.recur.user.model.User;
 import ch.noseryoung.domain.recur.user.repository.UserPrivacySettingsRepository;
 import ch.noseryoung.domain.recur.user.repository.UserRepository;
@@ -16,13 +18,16 @@ public class UserService {
     private final UserPrivacySettingsRepository privacySettingsRepository;
     private final CurrentUserService currentUserService;
     private final ApplicationEventPublisher eventPublisher;
+    private final PasswordEncoder passwordEncoder;
 
     public UserService(UserRepository userRepository, UserPrivacySettingsRepository privacySettingsRepository,
-            CurrentUserService currentUserService, ApplicationEventPublisher eventPublisher) {
+            CurrentUserService currentUserService, ApplicationEventPublisher eventPublisher,
+            PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.privacySettingsRepository = privacySettingsRepository;
         this.currentUserService = currentUserService;
         this.eventPublisher = eventPublisher;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public UserResponse getCurrentUser() {
@@ -36,6 +41,19 @@ public class UserService {
         user.setLastName(userResponse.lastName());
         user.setAvatarUrl(userResponse.avatarUrl());
 
+        userRepository.save(user);
+
+        return UserResponse.from(user);
+    }
+
+    public UserResponse setPassword(String password) {
+        User user = currentUserService.get();
+
+        if (user.getPasswordHash() != null) {
+            throw new PasswordAlreadySetException();
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(password));
         userRepository.save(user);
 
         return UserResponse.from(user);
