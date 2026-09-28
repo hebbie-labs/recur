@@ -8,6 +8,8 @@ import {
   type ResendVerificationRequest,
   type ForgotPasswordRequest,
   type ResetPasswordRequest,
+  type OAuth2LinkInfo,
+  type SetPasswordRequest,
 } from "../types/auth";
 
 export async function register(
@@ -81,6 +83,47 @@ export async function exchangeOAuth2Token(): Promise<AuthResponse> {
     });
 }
 
+/** Liest die ausstehende Verknüpfung aus dem HttpOnly oauth_link_pending-Cookie (gesetzt vom OAuth2-Redirect, wenn schon ein Account mit dieser E-Mail existiert, #236). */
+export async function getOAuth2Link(): Promise<OAuth2LinkInfo> {
+  return await api
+    .get("/auth/oauth2/link")
+    .then((response) => response.data as OAuth2LinkInfo)
+    .catch((error) => {
+      throw new Error(
+        error?.response?.data?.message ?? "Verknüpfungsanfrage konnte nicht geladen werden"
+      );
+    });
+}
+
+/** Verknüpft die Provider-Identität mit dem bestehenden Account und startet die Session (Cookies setzt der Server). password nur, wenn der Account eins hat. */
+export async function confirmOAuth2Link(password?: string): Promise<AuthResponse> {
+  return await api
+    .post("/auth/oauth2/link/confirm", { password: password ?? null })
+    .then((response) => response.data as AuthResponse)
+    .catch((error) => {
+      throw new Error(
+        error?.response?.data?.message ?? "Verknüpfung fehlgeschlagen"
+      );
+    });
+}
+
+/** Best-effort: verwirft die ausstehende Verknüpfung serverseitig (löscht das Cookie). */
+export async function declineOAuth2Link(): Promise<void> {
+  await api.post("/auth/oauth2/link/decline", {}).catch(() => undefined);
+}
+
+/** Setzt erstmals ein Passwort für einen Account, der bisher nur über Google/GitHub angemeldet war (#236). */
+export async function setPassword(request: SetPasswordRequest): Promise<UserResponse> {
+  return await api
+    .post("/auth/me/password", request)
+    .then((response) => response.data as UserResponse)
+    .catch((error) => {
+      throw new Error(
+        error?.response?.data?.message ?? "Passwort konnte nicht gesetzt werden"
+      );
+    });
+}
+
 /** Tauscht das HttpOnly refresh_token-Cookie gegen einen frischen Access-Token ein und rotiert das Cookie mit (Server setzt ein neues via Set-Cookie). */
 export async function refreshAccessToken(): Promise<AuthResponse> {
   return await api
@@ -131,12 +174,19 @@ export function deleteCurrentUser(): Promise<void> {
 }
 
 /** A 401 from any endpoint other than login/register means our token is missing, expired, or invalid - send the user through /logout (same transitional-page pattern as OAuthCallbackPage) instead of leaving the app half-authenticated with no explanation (#145). */
-const AUTH_ENDPOINTS = ["/auth/login", "/auth/register", "/auth/me"];
+const AUTH_ENDPOINTS = ["/auth/login", "/auth/register", "/auth/me", "/auth/oauth2/link"];
 
 // Endpunkte, für die ein 401 nie einen Silent-Refresh auslösen soll -
-// login/register haben naturgemäss noch keinen Access-Token, refresh/logout
-// dürfen sich nicht selbst retriggern (Endlosschleife).
-const REFRESH_EXEMPT_ENDPOINTS = ["/auth/login", "/auth/register", "/auth/refresh", "/auth/logout"];
+// login/register/oauth2/link haben naturgemäss noch keinen Access-Token (ein
+// 401 dort heisst "falsches Passwort", nicht "Session abgelaufen"),
+// refresh/logout dürfen sich nicht selbst retriggern (Endlosschleife).
+const REFRESH_EXEMPT_ENDPOINTS = [
+  "/auth/login",
+  "/auth/register",
+  "/auth/oauth2/link",
+  "/auth/refresh",
+  "/auth/logout",
+];
 
 let sessionExpiredHandled = false;
 let refreshPromise: Promise<AuthResponse> | null = null;
