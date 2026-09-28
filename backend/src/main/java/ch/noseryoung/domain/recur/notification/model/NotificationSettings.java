@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import ch.noseryoung.domain.recur.task.enums.ReminderLeadTime;
 import jakarta.persistence.*;
+import org.hibernate.annotations.ColumnDefault;
 import lombok.*;
 
 @Builder
@@ -43,6 +44,7 @@ public class NotificationSettings {
     // verschickt wird - siehe ReminderLeadTime.
     @Builder.Default
     @Enumerated(EnumType.STRING)
-    @Column(name = "reminder_lead_time", nullable = false, columnDefinition = "varchar(32) default 'TWENTY_FOUR_HOURS'")
+    @Column(name = "reminder_lead_time", nullable = false, length = 32)
+    @ColumnDefault("'TWENTY_FOUR_HOURS'")
     private ReminderLeadTime reminderLeadTime = ReminderLeadTime.TWENTY_FOUR_HOURS;
 }
