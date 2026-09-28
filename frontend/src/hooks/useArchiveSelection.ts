@@ -3,7 +3,7 @@ import { showSuccessToast } from "@/lib/toast";
 
 type UseArchiveSelectionParams = {
   taskIds: string[];
-  onDelete: (id: string) => Promise<void> | void;
+  onDelete: (id: string, silent?: boolean) => Promise<void> | void;
 };
 
 function useArchiveSelection({ taskIds, onDelete }: UseArchiveSelectionParams) {
@@ -59,7 +59,7 @@ function useArchiveSelection({ taskIds, onDelete }: UseArchiveSelectionParams) {
   }, [selectedIds]);
 
   const confirmBulkDelete = useCallback(async () => {
-    await Promise.all(Array.from(selectedIds).map((id) => onDelete(id)));
+    await Promise.all(Array.from(selectedIds).map((id) => onDelete(id, true)));
     setConfirmBulkDeleteOpen(false);
     showSuccessToast(`${selectedCount} ${selectedCount === 1 ? "Aufgabe wurde" : "Aufgaben wurden"} gelöscht.`);
     exitSelectMode();

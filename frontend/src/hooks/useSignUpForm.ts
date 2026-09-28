@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import type { RegisterRequest } from "@/types/auth";
 
@@ -9,11 +10,11 @@ export type SignupFormValues = RegisterRequest & {
 
 function useSignUpForm() {
     const { register } = useAuth();
+    const router = useRouter();
 
     const [backendError, setBackendError] = useState<string | undefined>(undefined);
     const [loading, setLoading] = useState(false);
     const [submitDisabled, setSubmitDisabled] = useState(false);
-    const [submittedEmail, setSubmittedEmail] = useState<string | undefined>(undefined);
 
     const handleSubmit = async (values: SignupFormValues) => {
         setLoading(true);
@@ -25,10 +26,7 @@ function useSignUpForm() {
             void confirmPassword;
             void acceptTerms;
             await register(request);
-            // Kein Login mehr nach der Registrierung - das Konto muss erst per
-            // E-Mail bestätigt werden. Statt einer Weiterleitung zeigt die Seite
-            // jetzt einen "Bestätige deine E-Mail"-Hinweis an.
-            setSubmittedEmail(request.email);
+            router.replace("/");
         } catch (error) {
             setBackendError(
                 error instanceof Error ? error.message : "Ein unbekannter Fehler ist aufgetreten"
@@ -39,7 +37,7 @@ function useSignUpForm() {
         }
     };
 
-    return { handleSubmit, backendError, loading, submitDisabled, submittedEmail };
+    return { handleSubmit, backendError, loading, submitDisabled };
 }
 
 export { useSignUpForm };

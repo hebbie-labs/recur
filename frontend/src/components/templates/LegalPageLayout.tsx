@@ -10,12 +10,7 @@ type LegalPageLayoutProps = {
   children: ReactNode;
 };
 
-/**
- * Gemeinsames Layout für öffentliche Rechtstexte (Impressum,
- * Datenschutzerklärung): breiterer Lesefluss statt der schmalen
- * zentrierten Card-Layouts von Login/Error, da diese Seiten aus
- * mehreren Abschnitten mit Überschriften bestehen.
- */
+/** Gemeinsames Layout für öffentliche Rechtstexte (Impressum, Datenschutzerklärung): breiterer Lesefluss statt der schmalen zentrierten Card-Layouts von Login/Error, da diese Seiten aus mehreren Abschnitten mit Überschriften bestehen. */
 function LegalPageLayout({ title, lastUpdated, children }: LegalPageLayoutProps) {
   const router = useRouter();
 

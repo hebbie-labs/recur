@@ -20,9 +20,11 @@ export function useOAuthCallback() {
 
         // Der Handoff-Token kommt nicht mehr aus der URL, sondern aus einem
         // HttpOnly-Cookie, das der OAuth2-Redirect gesetzt hat - siehe
-        // authService.exchangeOAuth2Token.
+        // authService.exchangeOAuth2Token. Der Access-Token landet dabei
+        // direkt als HttpOnly-Cookie (#160), die Response enthält ihn nicht
+        // mehr.
         exchangeOAuth2Token()
-            .then((response) => completeOAuthLogin(response.token))
+            .then(() => completeOAuthLogin())
             .then(() => router.replace("/"))
             .catch((err) => {
                 setStatus("error");

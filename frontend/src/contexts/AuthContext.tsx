@@ -10,9 +10,6 @@ import {
     register as registerService,
     login as loginService,
     getCurrentUser,
-    setToken,
-    clearToken,
-    isLoggedIn,
     logout as logoutService,
 } from "../services/authService";
 import type { UserResponse, RegisterRequest, LoginRequest } from "../types/auth";
@@ -24,8 +21,9 @@ type AuthContextValue = {
     error: string | null;
     login: (request: LoginRequest) => Promise<void>;
     register: (request: RegisterRequest) => Promise<void>;
-    completeOAuthLogin: (token: string) => Promise<void>;
+    completeOAuthLogin: () => Promise<void>;
     logout: () => void;
+    updateUser: (user: UserResponse) => void;
 };
 
 
@@ -39,16 +37,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         let cancelled = false;
 
+        // Der Access-Token liegt in einem HttpOnly-Cookie (#160) und ist per JS
+        // nicht lesbar - ob eine Session besteht, kann nur der Server sagen.
         async function bootstrap() {
-            if (!isLoggedIn()) {
-                setIsLoading(false);
-                return;
-            }
             try {
                 const currentUser = await getCurrentUser();
                 if (!cancelled) setUser(currentUser);
             } catch {
-                clearToken();
                 if (!cancelled) setUser(null);
             } finally {
                 if (!cancelled) setIsLoading(false);
@@ -65,7 +60,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setError(null);
         try {
             const response = await loginService(request);
-            setToken(response.token);
             setUser(response.user);
         } catch (err) {
             const message = err instanceof Error ? err.message : "Login failed";
@@ -74,13 +68,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
-    // Registrierung startet keine Session mehr - das Konto muss erst per
-    // E-Mail-Link bestätigt werden, bevor ein Login möglich ist (siehe
-    // AuthService#register im Backend).
+    // E-Mail-Verifizierung ist temporär umgangen (#128) - Registrierung
+    // startet direkt eine Session wie vor #110 (siehe AuthService#register
+    // im Backend).
     const register = useCallback(async (request: RegisterRequest) => {
         setError(null);
         try {
-            await registerService(request);
+            const response = await registerService(request);
+            setUser(response.user);
         } catch (err) {
             const message = err instanceof Error ? err.message : "Registration failed";
             setError(message);
@@ -88,23 +83,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
-    const completeOAuthLogin = useCallback(async (token: string) => {
+    // Access-Token wurde bereits von exchangeOAuth2Token als HttpOnly-Cookie
+    // gesetzt (#160) - hier nur noch den User nachladen.
+    const completeOAuthLogin = useCallback(async () => {
         setError(null);
         try {
-            setToken(token);
             const currentUser = await getCurrentUser();
             setUser(currentUser);
         } catch (err) {
-            clearToken();
             const message = err instanceof Error ? err.message : "Google-Login fehlgeschlagen";
             setError(message);
             throw err;
         }
     }, []);
 
+    // Kein setUser(null) hier: logoutService() macht sofort einen harten
+    // window.location.href-Reload zu /logout, der den gesamten React-Baum
+    // (inkl. dieses States) ohnehin neu aufbaut. Ein lokales setUser(null)
+    // würde stattdessen nur einen Render auf der AKTUELLEN Seite auslösen,
+    // bevor die Navigation greift - isAuthenticated kippt kurz auf false,
+    // ProtectedRoute zeigt dadurch kurz seinen eigenen Spinner, bevor /logout
+    // überhaupt geladen ist: sichtbar als zwei verschiedene Spinner
+    // hintereinander statt nur dem von /logout.
     const logout = useCallback(() => {
-        setUser(null);
         logoutService();
+    }, []);
+
+    const updateUser = useCallback((updated: UserResponse) => {
+        setUser(updated);
     }, []);
 
     const value: AuthContextValue = {
@@ -116,6 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         register,
         completeOAuthLogin,
         logout,
+        updateUser,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

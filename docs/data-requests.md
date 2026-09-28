@@ -17,7 +17,7 @@ Requests come in by email to the contact address listed in the Datenschutzerklä
 
 ## 2. Deletion requests
 
-A user's data lives across these tables (see `backend/src/main/java/ch/noseryoung/domain/recur/models/`):
+A user's data lives across these tables (see the `model/` folder of each domain under `backend/src/main/java/ch/noseryoung/domain/recur/`):
 
 - `User` — the account itself (email, name, password hash, OAuth provider info).
 - `Task` — owned by the user; also referenced by `TaskGroup`/`Project` if shared.

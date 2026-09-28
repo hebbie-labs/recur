@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Geist } from "next/font/google";
 import "@/globals.css";
@@ -15,6 +15,20 @@ const geistSans = Geist({
 
 export const metadata: Metadata = {
   title: "Recur",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Recur",
+  },
+  icons: {
+    apple: "/icons/apple-touch-icon.png",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#1a1a1a",
+  viewportFit: "cover",
 };
 
 // Runs before React hydrates, so the "dark" class on <html> is already

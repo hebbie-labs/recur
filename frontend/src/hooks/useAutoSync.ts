@@ -8,12 +8,7 @@ const SYNC_INTERVAL_MS = 15_000;
 const MAX_BACKOFF_MS = 60_000;
 const FAILURES_BEFORE_WARNING = 3;
 
-/**
- * Pollt Tasks/Gruppen im Hintergrund, solange der User eingeloggt ist und in
- * mindestens einer Gruppe ist (kein Bedarf für Solo-User ohne geteilte Tasks).
- * Pausiert, während der Tab nicht sichtbar ist, und holt bei Rückkehr sofort
- * einmal nach statt auf den nächsten Tick zu warten.
- */
+/** Pollt Tasks/Gruppen im Hintergrund, solange der User eingeloggt und in mindestens einer Gruppe ist (kein Bedarf für Solo-User ohne geteilte Tasks); pausiert bei unsichtbarem Tab und holt bei Rückkehr sofort einmal nach statt auf den nächsten Tick zu warten. */
 export function useAutoSync() {
   const { isAuthenticated } = useAuth();
   const { syncTasks } = useTasksContext();

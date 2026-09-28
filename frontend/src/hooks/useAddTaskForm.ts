@@ -1,13 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  createTask,
-  TaskCategory,
-  TaskFrequency,
-  type NewTask,
-  type Task,
-} from "@/services/taskService";
+import { createTask, setTaskReminderLeadTime } from "@/services/taskService";
+import { TaskCategory, TaskFrequency, type NewTask, type Task } from "@/types/task";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
-import type { FormValues } from "@/components/organisms/Form";
+import type { FormValues } from "@/components/organisms/task/Form";
 import {
   resolveDateUntil,
   resolveDescription,
@@ -60,7 +55,18 @@ function useAddTaskForm({ onClose, onTaskCreated }: UseAddTaskFormParams) {
     };
 
     try {
-      const createdTask = await createTask(payload);
+      let createdTask = await createTask(payload);
+
+      // Erinnerungs-Vorlauf ist ein Pro-User-Override (#102-Follow-up), kein
+      // Feld des Tasks selbst - kann daher erst gesetzt werden, sobald der
+      // Task existiert, über einen eigenen Endpoint statt im create-Payload.
+      if (values.reminderLeadTime) {
+        createdTask = await setTaskReminderLeadTime(
+          createdTask.id,
+          values.reminderLeadTime
+        );
+      }
+
       showSuccessToast("Aufgabe erfolgreich erstellt.");
       onTaskCreated?.(createdTask);
 

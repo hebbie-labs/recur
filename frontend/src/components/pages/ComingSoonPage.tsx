@@ -5,10 +5,7 @@ import LegalFooterLinks from "@/components/molecules/LegalFooterLinks";
 import GithubIcon from "@/components/atoms/GithubIcon";
 import { GITHUB_REPO_URL } from "@/constants/links";
 
-/**
- * Öffentliche Platzhalterseite für www./main, solange die eigentliche App
- * nur unter dev./prod läuft - siehe proxy.ts (COMING_SOON_MODE gate).
- */
+/** Öffentliche Platzhalterseite für www./main, solange die eigentliche App nur unter dev./prod läuft - siehe proxy.ts (COMING_SOON_MODE gate). */
 function ComingSoonPage() {
     return (
         <div className="flex min-h-svh w-full flex-col items-center justify-center gap-6 bg-background px-4 py-8">

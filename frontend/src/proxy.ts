@@ -5,6 +5,10 @@ const COMING_SOON_PATH = "/coming-soon";
 // The coming-soon page itself links to these - without this they'd redirect
 // straight back to /coming-soon, making the links dead.
 const COMING_SOON_ALLOWED_PATHS = new Set([COMING_SOON_PATH, "/impressum", "/datenschutz", "/agb"]);
+// next-pwa's generated service worker + manifest - must reach the browser
+// as-is even in coming-soon mode, otherwise the SW registration fetches the
+// coming-soon HTML instead of sw.js and gets stuck in a broken state.
+const PWA_ASSET_PATTERN = /^\/(manifest\.json|sw\.js|workbox-.*\.js|fallback-.*\.js|icons\/.*)$/;
 
 // next.config.ts's rewrites() is resolved once at `next build` time and its
 // destination gets frozen into .next/routes-manifest.json - reading
@@ -21,7 +25,8 @@ export default function proxy(request: NextRequest) {
   // separate codebase for it.
   if (
     process.env.COMING_SOON_MODE === "true" &&
-    !COMING_SOON_ALLOWED_PATHS.has(pathname)
+    !COMING_SOON_ALLOWED_PATHS.has(pathname) &&
+    !PWA_ASSET_PATTERN.test(pathname)
   ) {
     return NextResponse.redirect(new URL(COMING_SOON_PATH, request.url));
   }

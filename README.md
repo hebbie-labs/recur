@@ -23,6 +23,9 @@ backend and a React + TypeScript + Next.js frontend, backed by Postgres.
   shadcn UI primitives. See [`frontend/README.md`](frontend/README.md).
 - `database/` — Postgres via Docker.
 
+See [`docs/architecture.md`](docs/architecture.md) for module layout, the
+auth flow, and the frontend's atomic-design structure.
+
 ## Getting started
 
 Prerequisites: Java 25, Node.js with `yarn`, Docker.
@@ -53,3 +56,15 @@ On Windows, `./start-dev.ps1` starts Docker, the backend, and the frontend
 together — but it runs `docker start recur`, so the container/stack named
 `recur` must already exist (i.e. step 1 above must have been run at least
 once before).
+
+## Installing as an app (PWA)
+
+Recur is installable as a Progressive Web App — after installing, it opens
+full-screen from a home screen icon, no browser chrome, no app store.
+
+**Android (Chrome)**: open the site, tap the **⋮** menu, then **Add to Home
+screen** / **Install app**.
+
+**iOS (Safari)**: open the site directly in Safari (not from a link
+preview inside another app — Safari won't offer the install option
+otherwise), tap the **Share** icon, then **Add to Home Screen**.

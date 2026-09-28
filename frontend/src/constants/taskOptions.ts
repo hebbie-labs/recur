@@ -1,4 +1,5 @@
-import type { TaskCategory, TaskFrequency } from "@/services/taskService";
+import type { TaskCategory, TaskFrequency } from "@/types/task";
+import type { ReminderLeadTime } from "@/types/notifications";
 
 export const CATEGORY_OPTIONS: { value: TaskCategory; label: string }[] = [
   { value: "WORK", label: "Arbeit" },
@@ -13,6 +14,14 @@ export const FREQUENCY_OPTIONS: { value: TaskFrequency; label: string }[] = [
   { value: "MONTHLY", label: "Monatlich" },
   { value: "YEARLY", label: "Jährlich" },
   { value: "ONCE", label: "Einmalig" },
+];
+
+export const LEAD_TIME_OPTIONS: { value: ReminderLeadTime; label: string }[] = [
+  { value: "AT_DUE_TIME", label: "Zum Fälligkeitszeitpunkt" },
+  { value: "ONE_HOUR", label: "1 Stunde vorher" },
+  { value: "SIX_HOURS", label: "6 Stunden vorher" },
+  { value: "TWENTY_FOUR_HOURS", label: "24 Stunden vorher" },
+  { value: "THREE_DAYS", label: "3 Tage vorher" },
 ];
 
 export const DURATION_OPTIONS: { value: number; label: string }[] = [

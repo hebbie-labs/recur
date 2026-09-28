@@ -1,5 +1,5 @@
 import { useRouter } from "next/navigation";
-import LoginForm from "@/components/organisms/LoginForm";
+import LoginForm from "@/components/organisms/auth/LoginForm";
 import LegalFooterLinks from "@/components/molecules/LegalFooterLinks";
 import { Card, CardContent } from "../ui/card";
 import { useLoginForm } from "@/hooks/useLoginForm";
@@ -17,8 +17,7 @@ const loginSchema = yup.object().shape({
 
 function LoginPage() {
   const router = useRouter();
-  const { handleSubmit, submitDisabled, loading, backendError, unverifiedEmail } =
-    useLoginForm();
+  const { handleSubmit, submitDisabled, loading, backendError } = useLoginForm();
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center bg-background w-full h-full px-4 py-8">
@@ -48,7 +47,6 @@ function LoginPage() {
                 loading={loading}
                 submitDisabled={submitDisabled}
                 backendError={backendError}
-                unverifiedEmail={unverifiedEmail}
               />
             )}
           </Formik>

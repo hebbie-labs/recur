@@ -16,12 +16,16 @@ type SorterProps = {
 
 function Sorter({ sortBy, setSortBy }: SorterProps) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex shrink-0 flex-col gap-1.5">
       <Label htmlFor="sortBy" className="sr-only">
         Sortieren nach
       </Label>
       <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOptions)}>
-        <SelectTrigger id="sortBy" className="w-[200px] gap-2">
+        {/* shrink-0: an explicit width alone doesn't stop a flex ancestor from
+            squeezing this trigger down to icon-only (#139, regressed from #54
+            after an unrelated layout change). Opt out of shrinking entirely so
+            it can't happen again regardless of what changes around it. */}
+        <SelectTrigger id="sortBy" className="w-[200px] shrink-0 gap-2">
           <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
           <SelectValue>
             {(value: SortOptions) =>

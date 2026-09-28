@@ -1,7 +1,7 @@
 import { CheckCircle2, AlertCircle } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import ResendVerificationForm from "@/components/molecules/ResendVerificationForm";
+import ResendVerificationForm from "@/components/molecules/auth/ResendVerificationForm";
 import { useVerifyEmail } from "@/hooks/useVerifyEmail";
 import { useRouter } from "next/navigation";
 

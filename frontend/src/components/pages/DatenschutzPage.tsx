@@ -7,7 +7,7 @@ function DatenschutzPage() {
   return (
     <LegalPageLayout
       title="Datenschutzerklärung"
-      lastUpdated="16. September 2026"
+      lastUpdated="22. September 2026"
     >
       <p className="text-muted-foreground">
         Diese Datenschutzerklärung informiert dich darüber, welche
@@ -58,8 +58,16 @@ function DatenschutzPage() {
             <span className="font-medium text-foreground">
               Technische Daten:
             </span>{" "}
-            ein Anmelde-Token (JWT), das lokal in deinem Browser
-            (localStorage) gespeichert wird, um dich eingeloggt zu halten.
+            ein Anmelde-Token (JWT) und ein Sitzungs-Token (Refresh-Token),
+            die beide in für JavaScript nicht zugänglichen Cookies liegen;
+            das Sitzungs-Token stellt automatisch ein neues Anmelde-Token
+            aus, sobald das alte abläuft - so bleibst du bis zu 30 Tage
+            eingeloggt, ohne dich erneut anmelden zu müssen. Zu jeder
+            solchen Sitzung speichern wir zudem die
+            IP-Adresse und den User-Agent (Browser/Gerät) des jeweiligen
+            Geräts; das ermöglicht künftig eine Übersicht deiner aktiven
+            Sitzungen. Meldest du dich ab, wird die zugehörige Sitzung
+            serverseitig ungültig gemacht.
           </li>
           <li>
             <span className="font-medium text-foreground">
@@ -74,37 +82,56 @@ function DatenschutzPage() {
           </li>
           <li>
             <span className="font-medium text-foreground">
-              Benachrichtigungseinstellungen (optional, aktuell nicht aktiv):
+              Benachrichtigungseinstellungen:
             </span>{" "}
             In deinen Benachrichtigungseinstellungen kannst du E-Mail- und
-            Push-Benachrichtigungen aktivieren oder deaktivieren. Aktuell
-            versenden wir noch keine inhaltlichen Benachrichtigungen (z.B.
-            Erinnerungen); die Einstellung reserviert deine Präferenz für den
-            Fall, dass wir eine solche Funktion künftig einführen. Davon
-            unberührt sind technisch notwendige E-Mails wie die
-            E-Mail-Bestätigung bei der Registrierung (siehe unten). Wird eine
-            inhaltliche Benachrichtigungsfunktion eingeführt, aktualisieren
-            wir diese Datenschutzerklärung entsprechend.
+            Push-Benachrichtigungen für Aufgaben-Erinnerungen aktivieren oder
+            deaktivieren sowie festlegen, wie lange vor dem Fälligkeitsdatum
+            einer Aufgabe du erinnert werden möchtest. Ist E-Mail aktiviert,
+            versenden wir Erinnerungs- und Überfällig-E-Mails über unseren
+            E-Mail-Dienstleister Brevo (siehe unten); die Zustellung ist
+            aktuell nicht garantiert (siehe Abschnitt
+            "E-Mail-Verifizierung und Kontowiederherstellung"). Ist Push
+            aktiviert, speichern wir die vom Browser bereitgestellte
+            Push-Subscription (Endpoint-URL und Verschlüsselungsschlüssel
+            deines Geräts), um dir Erinnerungen als Browser-Benachrichtigung
+            zuzustellen; diese Daten werden gelöscht, sobald du Push wieder
+            deaktivierst oder die Subscription ungültig wird. In geteilten
+            Projekten wird zudem allen Gruppenmitgliedern (ausser der
+            erstellenden Person) eine Benachrichtigung geschickt, wenn ein
+            neuer Task für das Projekt erstellt wird.
           </li>
         </ul>
       </section>
 
       <section className="flex flex-col gap-2">
         <h2 className="text-base font-semibold text-foreground">
-          E-Mail-Verifizierung
+          E-Mail-Verifizierung und Kontowiederherstellung
         </h2>
         <p>
-          Wenn du dich per E-Mail/Passwort registrierst, senden wir dir eine
-          Bestätigungs-E-Mail mit einem Verifizierungslink, um sicherzustellen,
-          dass die angegebene E-Mail-Adresse dir gehört. Der zugehörige Token
-          wird serverseitig gespeichert, ist 24 Stunden gültig und wird nach
-          Bestätigung bzw. Ablauf gelöscht. Eine Anmeldung ist erst nach
-          Bestätigung der E-Mail-Adresse möglich.
+          <span className="font-medium text-foreground">
+            Vorübergehend deaktiviert:
+          </span>{" "}
+          unser E-Mail-Versand wird derzeit von den Mail-Servern der meisten
+          Empfänger:innen blockiert, daher können wir aktuell keine
+          Bestätigungs- oder Passwort-Reset-Mails zustellen. Solange dies der
+          Fall ist, wird deine E-Mail-Adresse bei der Registrierung per
+          E-Mail/Passwort ohne Bestätigungslink als verifiziert markiert und
+          eine Anmeldung ist direkt nach der Registrierung möglich; die
+          Funktion "Passwort vergessen?" ist im Login-Formular ausgeblendet.
+        </p>
+        <p>
+          Sobald der Mail-Versand wieder funktioniert, senden wir dir bei
+          Registrierung per E-Mail/Passwort wieder eine Bestätigungs-E-Mail
+          mit einem Verifizierungslink und aktivieren "Passwort vergessen?"
+          erneut. Der zugehörige Token wird serverseitig gespeichert, ist bei
+          der E-Mail-Bestätigung 24 Stunden und beim Passwort-Reset 1 Stunde
+          gültig und wird nach Bestätigung/Verwendung bzw. Ablauf gelöscht.
         </p>
         <p>
           Der Versand erfolgt über unseren E-Mail-Dienstleister Brevo als
           Auftragsverarbeiter; dabei wird ausschliesslich deine E-Mail-Adresse
-          (nebst Vorname und Bestätigungslink) an Brevo übermittelt.
+          (nebst Vorname und Bestätigungs- bzw. Reset-Link) an Brevo übermittelt.
         </p>
       </section>
 
@@ -120,6 +147,15 @@ function DatenschutzPage() {
           sehen andere Mitglieder stattdessen nur deine Initialen ohne
           Profilbild - in der Mitgliederliste, bei der Aufgaben-Zuweisung und
           überall sonst, wo deine Gruppenmitgliedschaft angezeigt wird.
+        </p>
+        <p>
+          Für einen geteilten Gruppen-Task speichern wir ausserdem, wer ihn
+          erstellt hat (nicht an andere Mitglieder sichtbar), sowie für
+          welche Mitglieder er nach dem Löschen weiterhin ausgeblendet
+          bleibt - er wird dabei nur für dich entfernt, die übrigen
+          Mitglieder behalten ihn, bis die erstellende Person ihn endgültig
+          löscht. Löschst du dein Konto, werden diese Zuordnungen entfernt;
+          der Task selbst bleibt für die übrigen Mitglieder bestehen.
         </p>
       </section>
 
@@ -183,17 +219,6 @@ function DatenschutzPage() {
 
       <section className="flex flex-col gap-2">
         <h2 className="text-base font-semibold text-foreground">
-          Lokale Speicherung (localStorage)
-        </h2>
-        <p>
-          Recur verwendet den localStorage deines Browsers, um dein
-          Anmelde-Token zu speichern. Dies ist technisch notwendig, damit
-          du zwischen Seitenaufrufen eingeloggt bleibst.
-        </p>
-      </section>
-
-      <section className="flex flex-col gap-2">
-        <h2 className="text-base font-semibold text-foreground">
           Cookies
         </h2>
         <p>
@@ -217,6 +242,33 @@ function DatenschutzPage() {
             Abschluss des Logins nicht mehr für die eigentliche Nutzung
             der App benötigt (diese läuft über das Anmelde-Token) und
             verfällt mit dem Ende der Browser-Sitzung.
+          </li>
+          <li>
+            <span className="font-medium text-foreground">
+              access_token:
+            </span>{" "}
+            hält dein Anmelde-Token für die Dauer deiner Sitzung (30 Minuten,
+            wird bei Aktivität automatisch erneuert, siehe "Technische Daten"
+            oben). Für JavaScript nicht auslesbar (HttpOnly) und nur an
+            unseren Server, nicht an Dritte, übermittelt.
+          </li>
+          <li>
+            <span className="font-medium text-foreground">
+              refresh_token:
+            </span>{" "}
+            hält dich bis zu 30 Tage eingeloggt, ohne dass du dich erneut
+            anmelden musst (siehe "Technische Daten" oben). Für JavaScript
+            nicht auslesbar (HttpOnly) und nur an unseren Server, nicht an
+            Dritte, übermittelt.
+          </li>
+          <li>
+            <span className="font-medium text-foreground">
+              XSRF-TOKEN:
+            </span>{" "}
+            ein zufälliger Sicherheits-Wert, der Angriffe verhindert, bei
+            denen eine andere Website in deinem Namen Aktionen in Recur
+            auslösen würde (CSRF-Schutz). Enthält keine personenbezogenen
+            Daten und wird nur an unseren Server übermittelt.
           </li>
         </ul>
       </section>

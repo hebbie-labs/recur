@@ -1,5 +1,5 @@
 import * as yup from "yup";
-import { TaskCategory, TaskFrequency } from "@/services/taskService";
+import { TaskCategory, TaskFrequency } from "@/types/task";
 import { toDateOnlyString } from "@/utils/formatDate";
 
 const RECURRING_FREQUENCIES: string[] = [

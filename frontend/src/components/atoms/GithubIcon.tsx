@@ -1,9 +1,6 @@
 import type { SVGProps } from "react";
 
-/**
- * Lucide-react bündelt kein GitHub-Logo (Markenzeichen wurden entfernt),
- * daher hier als eigenständiges Inline-SVG im gleichen Stil (24x24, currentColor).
- */
+/** Lucide-react bündelt kein GitHub-Logo (Markenzeichen entfernt) - eigenständiges Inline-SVG im gleichen Stil (24x24, currentColor). */
 function GithubIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
