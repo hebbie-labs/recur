@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import ProtectedRoute from "@/components/organisms/ProtectedRoute";
 import DefaultLayout from "@/components/templates/DefaultLayout";
+import SetPasswordReminderDialog from "@/components/organisms/dialogs/SetPasswordReminderDialog";
 import { SETTINGS_SECTIONS } from "@/components/organisms/settings/settingsSections";
 
 function getPageTitle(pathname: string): string {
@@ -31,6 +32,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <DefaultLayout pageTitle={getPageTitle(pathname)}>
         {children}
       </DefaultLayout>
+      <SetPasswordReminderDialog />
     </ProtectedRoute>
   );
 }
