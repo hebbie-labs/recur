@@ -14,21 +14,25 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CustomOidcUserService extends OidcUserService {
 
-    private final OAuth2UserAttributeResolver attributeResolver;
+        private final OAuth2UserAttributeResolver attributeResolver;
 
-    @Override
-    @Transactional
-    public OidcUser loadUser(OidcUserRequest userRequest)
-            throws OAuth2AuthenticationException {
+        @Override
+        @Transactional
+        public OidcUser loadUser(OidcUserRequest userRequest)
+                        throws OAuth2AuthenticationException {
 
-        OidcUser oidcUser = super.loadUser(userRequest);
+                OidcUser oidcUser = super.loadUser(userRequest);
 
-        User user = attributeResolver.resolve(oidcUser.getAttributes());
+                String provider = userRequest
+                                .getClientRegistration()
+                                .getRegistrationId();
 
-        return new CustomOidcUser(
-                oidcUser.getAuthorities(),
-                oidcUser.getIdToken(),
-                oidcUser.getUserInfo(),
-                user);
-    }
+                User user = attributeResolver.resolve(oidcUser.getAttributes(), provider, null);
+
+                return new CustomOidcUser(
+                                oidcUser.getAuthorities(),
+                                oidcUser.getIdToken(),
+                                oidcUser.getUserInfo(),
+                                user);
+        }
 }

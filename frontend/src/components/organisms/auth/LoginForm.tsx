@@ -14,6 +14,7 @@ import GoogleLoginButton from "../../atoms/GoogleLoginButton";
 import type { LoginRequest } from "@/types/auth";
 import type { FormEvent, ChangeEvent, FocusEvent } from "react";
 import FormPasswordField from "../../molecules/form/FormPasswordField";
+import GitHubLoginButton from "../../atoms/GitHubLoginButton";
 
 type LoginFormProps = {
   navigate: () => void;
@@ -23,10 +24,10 @@ type LoginFormProps = {
   touched: FormikTouched<LoginRequest>;
   className?: string;
   handleChange: (
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => void;
   handleBlur: (
-    event: FocusEvent<HTMLInputElement | HTMLTextAreaElement>
+    event: FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => void;
   loading?: boolean;
   submitDisabled?: boolean;
@@ -110,6 +111,7 @@ function LoginForm({
 
         <Field>
           <GoogleLoginButton />
+          <GitHubLoginButton />
           <FieldDescription className="px-6 text-center">
             Noch kein Konto?{" "}
             <Button variant="link" onClick={navigate} className="p-0">

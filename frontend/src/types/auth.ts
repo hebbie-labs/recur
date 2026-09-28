@@ -1,48 +1,50 @@
 export const AuthProviderType = {
-    LOCAL: "LOCAL",
-    GOOGLE: "GOOGLE",
+  LOCAL: "LOCAL",
+  GOOGLE: "GOOGLE",
+  GITHUB: "GITHUB",
 } as const;
 
-export type AuthProviderType = (typeof AuthProviderType)[keyof typeof AuthProviderType];
+export type AuthProviderType =
+  (typeof AuthProviderType)[keyof typeof AuthProviderType];
 
 export type UserResponse = {
-    id: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    avatarUrl: string;
-    provider: AuthProviderType;
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl: string;
+  provider: AuthProviderType;
 };
 
 export type AuthResponse = {
-    user: UserResponse;
+  user: UserResponse;
 };
 
 export type MessageResponse = {
-    message: string;
+  message: string;
 };
 
 export type RegisterRequest = {
-    email: string;
-    password: string;
-    firstName: string;
-    lastName: string;
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
 };
 
 export type LoginRequest = {
-    email: string;
-    password: string;
+  email: string;
+  password: string;
 };
 
 export type ResendVerificationRequest = {
-    email: string;
+  email: string;
 };
 
 export type ForgotPasswordRequest = {
-    email: string;
+  email: string;
 };
 
 export type ResetPasswordRequest = {
-    token: string;
-    newPassword: string;
+  token: string;
+  newPassword: string;
 };

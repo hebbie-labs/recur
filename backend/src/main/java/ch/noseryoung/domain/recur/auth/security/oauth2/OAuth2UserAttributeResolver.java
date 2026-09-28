@@ -18,70 +18,116 @@ public class OAuth2UserAttributeResolver {
     private final UserRepository userRepository;
     private final EmailService emailService;
 
-    public User resolve(Map<String, Object> attributes) {
-        String email = (String) attributes.get("email");
-        String firstName = (String) attributes.get("given_name");
-        String lastName = (String) attributes.get("family_name");
-        String avatarUrl = (String) attributes.get("picture");
-        String fullName = (String) attributes.get("name");
+    // Google needs ASAP aa "sub" attribute
 
-        if (email == null || email.isBlank()) {
-            throw new OAuth2AuthenticationException(
-                    "Google Account besitzt keine Email-Adresse");
-        }
+    public User resolve(Map<String, Object> attributes,
+            String providerName, Map<String, Object> providerSpecificAttributes) {
 
-        if (firstName == null || firstName.isBlank()) {
-            if (fullName != null && !fullName.isBlank()) {
-                firstName = fullName.split(" ")[0];
-            } else {
-                firstName = "Google";
+        String email;
+        String fullName;
+        String firstName;
+        String lastName;
+        String avatarUrl;
+
+        if ("google".equals(providerName)) {
+
+            email = (String) attributes.get("email");
+            fullName = (String) attributes.get("name");
+            firstName = (String) attributes.get("given_name");
+            lastName = (String) attributes.get("family_name");
+            avatarUrl = (String) attributes.get("picture");
+
+            Boolean emailVerified = (Boolean) attributes.get("email_verified");
+
+            if (email == null || email.isBlank()) {
+                throw new OAuth2AuthenticationException(
+                        "Google Account besitzt keine E-Mail Adresse.");
             }
-        }
 
-        if (lastName == null || lastName.isBlank()) {
-            if (fullName != null && fullName.contains(" ")) {
-                String[] parts = fullName.split(" ");
-                if (parts.length > 1) {
-                    lastName = parts[parts.length - 1];
+            /*
+             * Google verifiziert die Adresse bereits über OIDC - auch wenn dieses
+             * Konto ursprünglich lokal registriert und nie bestätigt wurde, gilt es
+             * ab jetzt als verifiziert.
+             */
+            if (!Boolean.TRUE.equals(emailVerified)) {
+                throw new OAuth2AuthenticationException(
+                        "Google E-Mail Adresse ist nicht verifiziert.");
+            }
+
+            if (firstName == null || firstName.isBlank()) {
+                if (fullName != null && !fullName.isBlank()) {
+                    firstName = fullName.trim().split("\\s+")[0];
+                } else {
+                    firstName = "Google";
                 }
             }
-            if (lastName == null || lastName.isBlank()) {
-                lastName = "User";
+
+            User user = userRepository.findByEmail(email).orElseGet(() -> User.builder().email(email)
+                    .provider(AuthProvider.GOOGLE).enabled(true).emailVerified(true)
+                    .build());
+
+            boolean isNewUser = user.getId() == null;
+
+            user.setFirstName(firstName);
+            user.setLastName(lastName);
+            user.setAvatarUrl(avatarUrl);
+
+            User savedUser = userRepository.save(user);
+
+            if (isNewUser) {
+                emailService.send(savedUser.getEmail(), "Willkommen bei Recur",
+                        "Hallo " + savedUser.getFirstName() + ",\n\n"
+                                + "willkommen bei Recur! Dein Konto wurde erfolgreich über Google erstellt.");
             }
-        }
 
-        User user = userRepository.findByEmail(email)
-                .orElseGet(() -> User.builder()
-                        .email(email)
-                        .provider(AuthProvider.GOOGLE)
-                        .enabled(true)
-                        .emailVerified(true)
-                        .build());
+            return savedUser;
 
-        // Vor dem Speichern gemerkt, da user.getId() danach in jedem Fall gesetzt
-        // ist - nur so lässt sich unterscheiden, ob dieser Google-Login gerade
-        // erst das Konto angelegt hat (Willkommens-Mail) oder nur ein
-        // bestehendes aktualisiert (kein erneuter Mailversand bei jedem Login).
-        boolean isNewUser = user.getId() == null;
+        } else if ("github".equals(providerName)) {
 
-        user.setFirstName(firstName);
-        user.setLastName(lastName);
-        user.setAvatarUrl(avatarUrl);
-        user.setProvider(AuthProvider.GOOGLE);
-        user.setEnabled(true);
-        // Google verifiziert die Adresse bereits über OIDC - auch wenn dieses
-        // Konto ursprünglich lokal registriert und nie bestätigt wurde, gilt es
-        // ab jetzt als verifiziert.
-        user.setEmailVerified(true);
+            email = (String) providerSpecificAttributes.get("email");
 
-        User savedUser = userRepository.save(user);
+            firstName = (String) attributes.get("name");
+            lastName = null;
+            avatarUrl = (String) attributes.get("avatar_url");
 
-        if (isNewUser) {
-            emailService.send(savedUser.getEmail(), "Willkommen bei Recur",
-                    "Hallo " + savedUser.getFirstName() + ",\n\n"
-                            + "willkommen bei Recur! Dein Konto wurde erfolgreich über Google erstellt.");
-        }
+            Boolean verifiedEmail = (Boolean) providerSpecificAttributes.get("verifiedEmail");
 
-        return savedUser;
+            if (email == null || email.isBlank()) {
+                throw new OAuth2AuthenticationException(
+                        "GitHub Account besitzt keine E-Mail Adresse.");
+            }
+
+            if (!Boolean.TRUE.equals(verifiedEmail)) {
+                throw new OAuth2AuthenticationException(
+                        "GitHub E-Mail Adresse ist nicht verifiziert.");
+            }
+
+            if (firstName == null || firstName.isBlank()) {
+                firstName = "GitHub User";
+            }
+
+            User user = userRepository.findByEmail(email).orElseGet(() -> User.builder().email(email)
+                    .provider(AuthProvider.GITHUB).enabled(true).emailVerified(true)
+                    .build());
+
+            boolean isNewUser = user.getId() == null;
+
+            user.setFirstName(firstName);
+            user.setLastName(lastName);
+            user.setAvatarUrl(avatarUrl);
+
+            User savedUser = userRepository.save(user);
+
+            if (isNewUser) {
+                emailService.send(savedUser.getEmail(), "Willkommen bei Recur",
+                        "Hallo " + savedUser.getFirstName() + ",\n\n"
+                                + "willkommen bei Recur! Dein Konto wurde erfolgreich über GitHub erstellt.");
+            }
+
+            return savedUser;
+
+        } else
+            throw new IllegalArgumentException(
+                    "Unsupported OAuth provider: " + providerName);
     }
 }

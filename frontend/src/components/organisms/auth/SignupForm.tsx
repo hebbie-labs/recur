@@ -21,6 +21,7 @@ import {
 } from "formik";
 import type { FormEvent, ChangeEvent, FocusEvent } from "react";
 import type { SignupFormValues } from "@/hooks/useSignUpForm";
+import GitHubLoginButton from "../../atoms/GitHubLoginButton";
 
 type SignupFormProps = {
   navigate: () => void;
@@ -29,10 +30,10 @@ type SignupFormProps = {
   errors: FormikErrors<SignupFormValues>;
   touched: FormikTouched<SignupFormValues>;
   handleChange: (
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => void;
   handleBlur: (
-    event: FocusEvent<HTMLInputElement | HTMLTextAreaElement>
+    event: FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => void;
   setFieldValue: (field: string, value: unknown) => void;
   loading?: boolean;
@@ -161,7 +162,10 @@ function SignupForm({
             }
             aria-invalid={touched.acceptTerms && !!errors.acceptTerms}
           />
-          <label htmlFor="acceptTerms" className="text-sm text-muted-foreground">
+          <label
+            htmlFor="acceptTerms"
+            className="text-sm text-muted-foreground"
+          >
             Ich akzeptiere die{" "}
             <button
               type="button"
@@ -200,6 +204,7 @@ function SignupForm({
 
         <Field>
           <GoogleLoginButton />
+          <GitHubLoginButton />
           <FieldDescription className="px-6 text-center">
             Bereits ein Konto?{" "}
             <Button variant="link" onClick={navigate} className="p-0">

@@ -1,28 +1,28 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import googleLogo from "@/../../public/icons/google.svg";
+import githubLogo from "@/../../public/icons/github.svg";
 
-const GOOGLE_AUTH_URL = "/oauth2/authorization/google";
+const GITHUB_AUTH_URL = "/oauth2/authorization/github";
 
-function GoogleLoginButton() {
+function GitHubLoginButton() {
   return (
     <Button
       variant="outline"
       className="w-full"
       onClick={() => {
-        window.location.href = GOOGLE_AUTH_URL;
+        window.location.href = GITHUB_AUTH_URL;
       }}
     >
       <Image
-        src={googleLogo}
+        src={githubLogo}
         className="flex relative mr-2"
         width={16}
         height={16}
-        alt={"googleAlt"}
+        alt={"githubAlt"}
       />
-      Mit Google anmelden
+      Mit GitHub anmelden
     </Button>
   );
 }
 
-export default GoogleLoginButton;
+export default GitHubLoginButton;
