@@ -124,9 +124,7 @@ function AccountPage() {
             <div>
               <h2 className="text-base font-semibold">Passwort setzen</h2>
               <p className="text-sm text-muted-foreground">
-                Du meldest dich bisher nur über Google oder GitHub an. Mit
-                einem Passwort kannst du dich auch direkt mit deiner
-                E-Mail-Adresse anmelden.
+                Damit du dich auch mit deiner E-Mail anmelden kannst.
               </p>
             </div>
             <SetPasswordForm />

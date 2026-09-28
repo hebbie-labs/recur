@@ -53,10 +53,7 @@ function SetPasswordReminderDialog() {
         <DialogHeader>
           <DialogTitle>Passwort setzen</DialogTitle>
           <DialogDescription>
-            Du meldest dich bisher nur über Google oder GitHub an. Setze ein
-            Passwort, damit du dich auch direkt mit deiner E-Mail-Adresse
-            anmelden kannst. Du kannst das auch später auf deiner
-            Account-Seite erledigen.
+            Damit du dich auch mit deiner E-Mail anmelden kannst.
           </DialogDescription>
         </DialogHeader>
         <SetPasswordForm onSuccess={() => setDismissed(true)} onCancel={dismiss} />
