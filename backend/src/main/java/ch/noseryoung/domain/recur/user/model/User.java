@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.proxy.HibernateProxy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -82,4 +83,39 @@ public class User {
     @CreationTimestamp
     @Column(name = "date_created", updatable = false)
     private Instant dateCreated;
+
+    // Ohne diese Überschreibung vergleicht Set.contains() (z.B. bei
+    // Gruppen-Mitgliedschaftsprüfungen) per Objekt-Identität. Das schlägt fast
+    // immer fehl, da ein aus dem SecurityContext geladener User und ein über
+    // eine Assoziation (z.B. TaskGroup.members) geladener User bzw. Hibernate-
+    // Proxy zwei verschiedene Java-Objekte für dieselbe DB-Zeile sein können.
+    @Override
+    public final boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        Class<?> thisClass = this instanceof HibernateProxy thisProxy
+                ? thisProxy.getHibernateLazyInitializer().getPersistentClass()
+                : getClass();
+        Class<?> otherClass = o instanceof HibernateProxy otherProxy
+                ? otherProxy.getHibernateLazyInitializer().getPersistentClass()
+                : o.getClass();
+        if (thisClass != otherClass) {
+            return false;
+        }
+        User other = (User) o;
+        // getId() statt direktem Feldzugriff: bei einem HibernateProxy ist das
+        // Feld selbst nicht befüllt, nur der Getter delegiert ans Ziel-Objekt.
+        return getId() != null && getId().equals(other.getId());
+    }
+
+    @Override
+    public final int hashCode() {
+        return this instanceof HibernateProxy proxy
+                ? proxy.getHibernateLazyInitializer().getPersistentClass().hashCode()
+                : getClass().hashCode();
+    }
 }
