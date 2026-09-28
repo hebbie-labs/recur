@@ -103,7 +103,7 @@ services:
       - homepage.group=Recur
       - homepage.name=Frontend (Dev)
       - homepage.icon=nextjs.png
-      - homepage.href=http://homeserver:3080/
+      - homepage.href=https://dev.recur.dpdns.org
       - homepage.description=Recur Dev-Frontend
 
   db-dev:
@@ -166,7 +166,7 @@ services:
       - homepage.group=Recur
       - homepage.name=Frontend (Prod)
       - homepage.icon=nextjs.png
-      - homepage.href=http://homeserver:3081/
+      - homepage.href=https://www.recur.dpdns.org
       - homepage.description=Recur Prod-Frontend
 
   db-prod:
@@ -204,7 +204,7 @@ services:
       - homepage.group=Recur
       - homepage.name=Coming Soon
       - homepage.icon=nextjs.png
-      - homepage.href=http://homeserver:3082/
+      - homepage.href=https://www.recur.dpdns.org
       - homepage.description=Public Coming-Soon-Seite
 
 volumes:
