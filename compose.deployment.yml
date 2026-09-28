@@ -53,7 +53,7 @@
 # which lives outside this repo) if they clash with something else already
 # running on the host.
 #
-# frontend-www is the public www./main placeholder: a frontend image with
+# frontend-www is the public [www./main](https://www./main) placeholder: a frontend image with
 # COMING_SOON_MODE=true - proxy.ts then redirects every request (API/OAuth2
 # paths included, except /impressum and /datenschutz) to /coming-soon, so it
 # needs no backend or db of its own. deploy.yml's deploy-www job builds and
@@ -81,6 +81,12 @@ services:
       VAPID_PRIVATE_KEY: ${DEV_VAPID_PRIVATE_KEY:-}
     depends_on:
       - db-dev
+    labels:
+      - homepage.group=Recur
+      - homepage.name=Backend (Dev)
+      - homepage.icon=spring.png
+      - homepage.showStats=true
+      - homepage.description=API, kein Web-UI
 
   frontend-dev:
     image: ghcr.io/hebbie-labs/recur-frontend:dev
@@ -93,6 +99,12 @@ services:
       - "3080:3000"
     depends_on:
       - backend-dev
+    labels:
+      - homepage.group=Recur
+      - homepage.name=Frontend (Dev)
+      - homepage.icon=nextjs.png
+      - homepage.href=http://homeserver:3080/
+      - homepage.description=Recur Dev-Frontend
 
   db-dev:
     image: ghcr.io/hebbie-labs/recur-db:dev
@@ -106,6 +118,12 @@ services:
       - "127.0.0.1:5480:5432"
     volumes:
       - recur-db-dev-data:/var/lib/postgresql/data
+    labels:
+      - homepage.group=Recur
+      - homepage.name=DB (Dev)
+      - homepage.icon=postgresql.png
+      - homepage.showStats=true
+      - homepage.description=Postgres, kein Web-UI
 
   backend-prod:
     image: ghcr.io/hebbie-labs/recur-backend:latest
@@ -126,6 +144,12 @@ services:
       VAPID_PRIVATE_KEY: ${PROD_VAPID_PRIVATE_KEY:-}
     depends_on:
       - db-prod
+    labels:
+      - homepage.group=Recur
+      - homepage.name=Backend (Prod)
+      - homepage.icon=spring.png
+      - homepage.showStats=true
+      - homepage.description=API, kein Web-UI
 
   frontend-prod:
     image: ghcr.io/hebbie-labs/recur-frontend:latest
@@ -138,6 +162,12 @@ services:
       - "3081:3000"
     depends_on:
       - backend-prod
+    labels:
+      - homepage.group=Recur
+      - homepage.name=Frontend (Prod)
+      - homepage.icon=nextjs.png
+      - homepage.href=http://homeserver:3081/
+      - homepage.description=Recur Prod-Frontend
 
   db-prod:
     image: ghcr.io/hebbie-labs/recur-db:latest
@@ -151,6 +181,12 @@ services:
       - "127.0.0.1:5481:5432"
     volumes:
       - recur-db-prod-data:/var/lib/postgresql/data
+    labels:
+      - homepage.group=Recur
+      - homepage.name=DB (Prod)
+      - homepage.icon=postgresql.png
+      - homepage.showStats=true
+      - homepage.description=Postgres, kein Web-UI
 
   frontend-www:
     # :coming-soon - the moving tag deploy.yml's build job pushes on every
@@ -164,6 +200,12 @@ services:
       COMING_SOON_MODE: "true"
     ports:
       - "3082:3000"
+    labels:
+      - homepage.group=Recur
+      - homepage.name=Coming Soon
+      - homepage.icon=nextjs.png
+      - homepage.href=http://homeserver:3082/
+      - homepage.description=Public Coming-Soon-Seite
 
 volumes:
   recur-db-dev-data:
