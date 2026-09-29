@@ -3,6 +3,8 @@ package ch.noseryoung.domain.recur.auth.security.oauth2;
 import java.io.IOException;
 import java.time.Duration;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -41,6 +43,8 @@ public class OAuth2AuthenticationSuccessHandler
         public static final String LINK_COOKIE_PATH = "/api/auth/oauth2/link";
         public static final Duration LINK_COOKIE_TTL = Duration.ofMinutes(10);
 
+        private static final Logger log = LoggerFactory.getLogger(OAuth2AuthenticationSuccessHandler.class);
+
         private final JwtService jwtService;
         private final RefreshTokenService refreshTokenService;
         private final OAuth2AccountLinkingService linkingService;
@@ -57,21 +61,36 @@ public class OAuth2AuthenticationSuccessHandler
                         HttpServletResponse response,
                         Authentication authentication) throws IOException {
 
-                OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
+                // Alles hier unten fängt bewusst jede Exception ab: anders als beim
+                // AuthenticationFailureHandler (nur AuthenticationException) landet eine
+                // unerwartete RuntimeException hier sonst nicht im Frontend-Fehlerflow,
+                // sondern reißt bis zur Spring-Whitelabel-Error-Page durch.
+                try {
+                        OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
 
-                RecurOAuth2User principal = (RecurOAuth2User) oauthToken.getPrincipal();
+                        RecurOAuth2User principal = (RecurOAuth2User) oauthToken.getPrincipal();
 
-                var outcome = linkingService.resolve(
-                                principal.getIdentity(),
-                                OAuth2ModeAuthorizationRequestRepository.modeOf(request));
+                        var outcome = linkingService.resolve(
+                                        principal.getIdentity(),
+                                        OAuth2ModeAuthorizationRequestRepository.modeOf(request));
 
-                switch (outcome) {
-                        case LoggedIn(User user) -> completeLogin(user, request, response);
-                        case LinkRequired(PendingOAuth2Link pendingLink) -> startLink(pendingLink, request, response);
-                        case Aborted(OAuth2ErrorCode code) -> response.sendRedirect(
+                        switch (outcome) {
+                                case LoggedIn(User user) -> completeLogin(user, request, response);
+                                case LinkRequired(PendingOAuth2Link pendingLink) ->
+                                                startLink(pendingLink, request, response);
+                                case Aborted(OAuth2ErrorCode code) -> response.sendRedirect(
+                                                UriComponentsBuilder.fromUriString(frontendUrl)
+                                                                .path("/auth/error")
+                                                                .queryParam("code", code.name())
+                                                                .build()
+                                                                .toUriString());
+                        }
+                } catch (Exception e) {
+                        log.error("OAuth2 login succeeded at the provider but failed while completing it in Recur", e);
+                        response.sendRedirect(
                                         UriComponentsBuilder.fromUriString(frontendUrl)
                                                         .path("/auth/error")
-                                                        .queryParam("code", code.name())
+                                                        .queryParam("message", "Google-Login fehlgeschlagen.")
                                                         .build()
                                                         .toUriString());
                 }
