@@ -7,44 +7,22 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 
-import ch.noseryoung.domain.recur.user.model.User;
-
 public class CustomOidcUser extends DefaultOidcUser implements RecurOAuth2User {
 
-    private final User user;
+    private final OAuth2Identity identity;
 
     public CustomOidcUser(
             Collection<? extends GrantedAuthority> authorities,
             OidcIdToken idToken,
             OidcUserInfo userInfo,
-            User user) {
+            OAuth2Identity identity) {
         super(authorities, idToken, userInfo, "email");
 
-        this.user = user;
+        this.identity = identity;
     }
 
     @Override
-    public User getUser() {
-        return user;
-    }
-
-    public String getId() {
-        return user.getId().toString();
-    }
-
-    public String getEmail() {
-        return user.getEmail();
-    }
-
-    public String getFirstName() {
-        return user.getFirstName();
-    }
-
-    public String getLastName() {
-        return user.getLastName();
-    }
-
-    public String getAvatarUrl() {
-        return user.getAvatarUrl();
+    public OAuth2Identity getIdentity() {
+        return identity;
     }
 }

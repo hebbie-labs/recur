@@ -9,6 +9,7 @@ Recur — a full-stack habit/task tracker. Backend: Java 25 / Spring Boot 4.0.6 
 ## Commands
 
 Frontend (`frontend/`, package manager is **yarn**):
+
 - `yarn dev` — start dev server (port 3000)
 - `yarn build` — `next build --webpack` (forced off Turbopack, Next 16's default — `@ducanh2912/next-pwa` injects a webpack config that Turbopack rejects)
 - `yarn typecheck` — `tsc --noEmit`
@@ -16,6 +17,7 @@ Frontend (`frontend/`, package manager is **yarn**):
 - No test script or test framework exists in the frontend.
 
 Backend (`backend/`, Gradle wrapper):
+
 - `./gradlew bootRun` — run (Windows: `gradlew.bat bootRun`)
 - `./gradlew build`
 - `./gradlew test` — needs Postgres reachable (`docker compose up -d` in `database/`), since `RecurApplicationTests` boots the full Spring context; without it, only `contextLoads()` fails on a `JDBCConnectionException`, not a code issue.
@@ -48,6 +50,7 @@ Postgres runs on host port **5436** (not 5432) — see `docker-compose.yml` and 
 
 ## Conventions
 
+- DONT CO-AUTHORE COMMITS!
 - Git: feature branches `feat/<Area>-<thing>` (or `feat/<Area>/<thing>`), merged into `dev`, which merges into `main`. Commits use a loose bracketed tag prefix, e.g. `[Added] ...`, `[Updated] ...`.
 <<<<<<< HEAD
 =======

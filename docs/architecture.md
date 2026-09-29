@@ -162,11 +162,25 @@ stays flat at the folder root instead of getting a single-file subfolder.
 1. **Password login**: client posts credentials, backend verifies and
    returns a signed JWT. The client sends it as `Authorization: Bearer
    <token>` on subsequent requests; `JwtAuthenticationFilter` validates it.
-2. **Google login**: client hits `/oauth2/authorization/google`, Spring
-   Security's OAuth2 client handles the redirect dance with Google, and on
-   success the backend's success handler issues the same kind of JWT the
-   password flow does — from that point on both paths are indistinguishable
-   to the rest of the app.
+2. **Google/GitHub login**: client hits `/oauth2/authorization/{google,github}`
+   (`?mode=register` from the signup page), Spring Security's OAuth2 client
+   handles the redirect dance, and `OAuth2UserAttributeResolver` only extracts
+   the provider identity (provider + stable subject ID). The success handler
+   then asks `OAuth2AccountLinkingService` which Recur account it belongs to
+   (target flow: [`AccountFlowChart.drawio`](AccountFlowChart.drawio), #236):
+   - identity already in `linked_identity` → log in (or abort with
+     `ACCOUNT_ALREADY_EXISTS` if it came from the register button);
+   - no account with that email → create a passwordless account, link it,
+     log in;
+   - an account with that email exists → **never** log in directly; set a
+     10-minute `oauth_link_pending` cookie and redirect to `/auth/link`, where
+     the user confirms (with the account's password, if it has one) or
+     declines (`LINK_DECLINED`).
+
+   Logging in issues the same kind of JWT the password flow does — from that
+   point on both paths are indistinguishable to the rest of the app.
+   Passwordless accounts get a dismissable "set a password" reminder once per
+   browser session (`SetPasswordReminderDialog`).
 
 ## Further reading
 

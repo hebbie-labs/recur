@@ -19,6 +19,16 @@ const PWA_ASSET_PATTERN = /^\/(manifest\.json|sw\.js|workbox-.*\.js|fallback-.*\
 // template substitution, not next.config.ts's rewrites().
 export default function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+  const isBackendRequest = BACKEND_PROXY_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+
+  // Backend calls must not be redirected to /coming-soon: axios follows the
+  // redirect and gets the placeholder HTML back with a 200, which the
+  // frontend then treats as a successful API response (e.g. an HTML string
+  // as the task list -> "tasks.filter is not a function" crash). A plain
+  // 503 lets the existing error handling treat it as "not logged in".
+  if (process.env.COMING_SOON_MODE === "true" && isBackendRequest) {
+    return NextResponse.json({ message: "Service unavailable" }, { status: 503 });
+  }
 
   // www./main runs the same image as dev/prod with this env var set, so the
   // whole app stays behind a single placeholder route instead of shipping a
@@ -31,7 +41,7 @@ export default function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL(COMING_SOON_PATH, request.url));
   }
 
-  if (!BACKEND_PROXY_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+  if (!isBackendRequest) {
     return NextResponse.next();
   }
 

@@ -77,6 +77,7 @@ jobs:
     needs: build
     if: github.ref == 'refs/heads/dev'
     runs-on: [self-hosted]
+    concurrency: deploy-dev
     steps:
       # GHCR packages are private by default - the build job's login only
       # covers its own (github-hosted) docker daemon, so this runner needs
@@ -86,13 +87,29 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      # compose.deployment.yml lives in this repo but the deploy jobs only
+      # pull images - this syncs the file itself. Untracked files that are
+      # byte-identical to the incoming version are removed first so a stale
+      # local copy doesn't block the pull; real differences still abort it.
+      - run: |
+          cd /srv/recur
+          git fetch origin dev
+          for f in $(git ls-tree -r --name-only origin/dev); do
+            if [ -f "$f" ] && ! git ls-files --error-unmatch "$f" >/dev/null 2>&1; then
+              cmp -s "$f" <(git show origin/dev:"$f") && rm "$f"
+            fi
+          done
+          git pull
       - run: docker compose -f /srv/recur/compose.deployment.yml pull frontend-dev backend-dev db-dev
+      # external network shared with cloudflared, see compose.deployment.yml
+      - run: docker network inspect tunnel >/dev/null 2>&1 || docker network create tunnel
       - run: docker compose -f /srv/recur/compose.deployment.yml up -d frontend-dev backend-dev db-dev
 
   deploy-prod:
     needs: build
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: [self-hosted]
+    concurrency: deploy-prod
     environment: production # requires manual approval, see below
     steps:
       - uses: docker/login-action@v3
@@ -100,13 +117,25 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - run: |
+          cd /srv/recur
+          git fetch origin dev
+          for f in $(git ls-tree -r --name-only origin/dev); do
+            if [ -f "$f" ] && ! git ls-files --error-unmatch "$f" >/dev/null 2>&1; then
+              cmp -s "$f" <(git show origin/dev:"$f") && rm "$f"
+            fi
+          done
+          git pull
       - run: docker compose -f /srv/recur/compose.deployment.yml pull frontend-prod backend-prod db-prod
+      # external network shared with cloudflared, see compose.deployment.yml
+      - run: docker network inspect tunnel >/dev/null 2>&1 || docker network create tunnel
       - run: docker compose -f /srv/recur/compose.deployment.yml up -d frontend-prod backend-prod db-prod
 
   deploy-www:
     needs: build
     if: startsWith(github.ref, 'refs/tags/coming-soon-')
     runs-on: [self-hosted]
+    concurrency: deploy-www
     steps:
       - uses: docker/login-action@v3
         with:
@@ -116,5 +145,16 @@ jobs:
       # frontend-www is COMING_SOON_MODE-gated (no real user data behind it),
       # so unlike deploy-prod this doesn't need manual approval - and it
       # needs no backend/db, see compose.deployment.yml.
+      - run: |
+          cd /srv/recur
+          git fetch origin dev
+          for f in $(git ls-tree -r --name-only origin/dev); do
+            if [ -f "$f" ] && ! git ls-files --error-unmatch "$f" >/dev/null 2>&1; then
+              cmp -s "$f" <(git show origin/dev:"$f") && rm "$f"
+            fi
+          done
+          git pull
       - run: docker compose -f /srv/recur/compose.deployment.yml pull frontend-www
+      # external network shared with cloudflared, see compose.deployment.yml
+      - run: docker network inspect tunnel >/dev/null 2>&1 || docker network create tunnel
       - run: docker compose -f /srv/recur/compose.deployment.yml up -d frontend-www

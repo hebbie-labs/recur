@@ -1,8 +1,15 @@
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import type { Task } from "@/types/task";
-import { occursOn, categoryBorder, type CalendarDay } from "@/utils/calendarGrid";
+import {
+  occursOn,
+  categoryBorder,
+  isOverdueOccurrence,
+  overdueEntryClass,
+  type CalendarDay,
+} from "@/utils/calendarGrid";
 import { cn } from "@/lib/utils";
+import useNow from "@/hooks/useNow";
 
 const START_HOUR = 8;
 const END_HOUR = 24;
@@ -97,6 +104,7 @@ function CalendarWeekView({
   onSelectTask,
   onSelectSlot,
 }: CalendarWeekViewProps) {
+  const now = useNow();
   const currentTimeRow = getCurrentTimeRow();
 
   return (
@@ -203,7 +211,8 @@ function CalendarWeekView({
                 }}
                 className={cn(
                   "cursor-pointer overflow-hidden truncate rounded-md border-l-[3px] bg-card px-1.5 py-0.5 text-[10px] font-medium text-foreground shadow-xs transition-shadow hover:shadow-sm",
-                  categoryBorder[task.category]
+                  categoryBorder[task.category],
+                  isOverdueOccurrence(task, day.date, now) && overdueEntryClass
                 )}
                 title={task.name}
               >

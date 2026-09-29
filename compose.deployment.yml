@@ -1,68 +1,235 @@
-services:
-  frontend-dev:
-    image: ghcr.io/hebbie-labs/recur-frontend:dev
-    container_name: recur-frontend-dev
-    restart: unless-stopped
-    environment:
-      - NEXT_PUBLIC_API_URL=/api
-      - BACKEND_URL=http://backend-dev:8080
-      - NODE_ENV=production
-      - PORT=3000
-    expose:
-      - "3000"
-    depends_on:
-      - backend-dev
+# Deployment compose for the self-hosted home server (reached from the
+# internet via a Cloudflare Tunnel pointed at the frontend containers below
+# - nothing else needs to be publicly reachable).
+#
+# The cloudflared container runs in a separate stack (the homelab compose,
+# outside this repo), so it reaches the frontends by container name
+# (e.g. http://recur-frontend-dev:3000) over the shared external "tunnel"
+# network, not over this stack's own default network. That default network
+# is deleted and recreated on every `docker compose down`/recreate, so a
+# manual `docker network connect` of cloudflared to it silently breaks
+# (502 Bad Gateway, "no such host" in cloudflared's logs). "tunnel" is
+# external, so Compose never removes it; deploy.yml creates it if missing,
+# and the homelab compose must attach cloudflared to it as well.
+#
+# This file lives at /srv/recur/compose.deployment.yml on the host, which
+# .github/workflows/deploy.yml drives with:
+#   docker compose -f /srv/recur/compose.deployment.yml pull backend-dev frontend-dev db-dev
+#   docker compose -f /srv/recur/compose.deployment.yml up -d backend-dev frontend-dev db-dev
+# (and the -prod / -www equivalents on a version / coming-soon tag push).
+# Service names below match those exactly - do not rename them without also
+# updating that workflow. The host's /srv/recur is a git checkout, so a
+# `git pull` there is how changes to this file reach the server; the
+# workflow only pulls images and never syncs this file itself.
+#
+# All three services (backend/frontend/db) are pre-built images pulled from
+# GHCR - the host needs no repo source checked out, only this compose.yml
+# and the ".env" described below. The db image bakes in the schema/seed
+# init scripts from ./database (see that directory's Dockerfile) at build
+# time in CI; it is never built on the host.
+#
+# No secret or credential value is hardcoded here - everything sensitive is
+# a ${VARIABLE} that Docker Compose resolves from a ".env" file sitting next
+# to this one on the host (NOT this repo's frontend/.env or backend/.env,
+# and NOT committed - Compose reads a file literally named ".env" in the
+# same directory as this file by default). It needs:
+#   DEV_DB_PASSWORD, PROD_DB_PASSWORD          - Postgres passwords, one per environment
+#   DEV_JWT_SECRET, PROD_JWT_SECRET            - backend JWT signing secrets
+#   DEV_GOOGLE_CLIENT_ID, DEV_GOOGLE_CLIENT_SECRET,
+#   PROD_GOOGLE_CLIENT_ID, PROD_GOOGLE_CLIENT_SECRET  - Google OAuth2 app credentials
+#   DEV_PUBLIC_ORIGIN, PROD_PUBLIC_ORIGIN      - the public hostnames below (Cloudflare Tunnel), e.g. https://dev.recur.example.com
+# Optional (default empty - the backend then simply has mail / web push off):
+#   BREVO_API_KEY, MAIL_FROM                   - transactional email (shared by dev and prod)
+#   DEV_VAPID_PUBLIC_KEY, DEV_VAPID_PRIVATE_KEY,
+#   PROD_VAPID_PUBLIC_KEY, PROD_VAPID_PRIVATE_KEY     - web push VAPID key pair, one per environment
+# Generate real values for all of these before running this file for real -
+# the point of ${...} here is that a plain `docker compose up` without that
+# .env file fails loudly (missing required value) instead of silently
+# running with a guessable default.
+#
+# Ports are deliberately non-default and split per environment so dev and
+# prod can run side by side without colliding with each other or with any
+# other service on the same host:
+#   frontend-dev  -> host 3080  (container 3000)
+#   frontend-prod -> host 3081  (container 3000)
+#   frontend-www  -> host 3082  (container 3000)
+#   db-dev        -> 127.0.0.1:5480  (container 5432, for psql/debugging via ssh only)
+#   db-prod       -> 127.0.0.1:5481  (container 5432, for psql/debugging via ssh only)
+# backend-dev/backend-prod publish no host port at all - the frontend
+# containers are the only public-facing service; they reach their paired
+# backend purely over the internal compose network (see BACKEND_URL below),
+# and src/proxy.ts forwards /api, /oauth2, and /login/oauth2 to it from
+# there. Adjust the host ports here (and the Cloudflare Tunnel config,
+# which lives outside this repo) if they clash with something else already
+# running on the host.
+#
+# frontend-www is the public [www./main](https://www./main) placeholder: a frontend image with
+# COMING_SOON_MODE=true - proxy.ts then redirects every request (API/OAuth2
+# paths included, except /impressum and /datenschutz) to /coming-soon, so it
+# needs no backend or db of its own. deploy.yml's deploy-www job builds and
+# pulls it automatically on a `coming-soon-*` tag push (its own release
+# channel, independent of dev/prod - see the image tag comment below); the
+# Cloudflare Tunnel route pointing at it is still manual, set up once.
 
+services:
   backend-dev:
     image: ghcr.io/hebbie-labs/recur-backend:dev
     container_name: recur-backend-dev
     restart: unless-stopped
     environment:
-      - DB_URL=jdbc:postgresql://db-dev:5432/recur
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=${DB_PASSWORD}
-      - FRONTEND_URL=https://dev.recur.dpdns.org
-      - CORS_ALLOWED_ORIGIN=https://dev.recur.dpdns.org
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
-      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}
-      - JWT_SECRET=${JWT_SECRET}
-      - BREVO_API_KEY=${BREVO_API_KEY}
-      - MAIL_FROM=noreply@recur.dpdns.org
-    expose:
-      - "8080"
+      DB_URL: jdbc:postgresql://db-dev:5432/recur
+      DB_USERNAME: postgres
+      DB_PASSWORD: ${DEV_DB_PASSWORD:?DEV_DB_PASSWORD is required}
+      JWT_SECRET: ${DEV_JWT_SECRET:?DEV_JWT_SECRET is required}
+      GOOGLE_CLIENT_ID: ${DEV_GOOGLE_CLIENT_ID:?DEV_GOOGLE_CLIENT_ID is required}
+      GOOGLE_CLIENT_SECRET: ${DEV_GOOGLE_CLIENT_SECRET:?DEV_GOOGLE_CLIENT_SECRET is required}
+      CORS_ALLOWED_ORIGIN: ${DEV_PUBLIC_ORIGIN:?DEV_PUBLIC_ORIGIN is required}
+      FRONTEND_URL: ${DEV_PUBLIC_ORIGIN:?DEV_PUBLIC_ORIGIN is required}
+      BREVO_API_KEY: ${BREVO_API_KEY:-}
+      MAIL_FROM: ${MAIL_FROM:-noreply@recur.dpdns.org}
+      VAPID_PUBLIC_KEY: ${DEV_VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${DEV_VAPID_PRIVATE_KEY:-}
     depends_on:
       - db-dev
+    labels:
+      - homepage.group=Recur
+      - homepage.name=Backend (Dev)
+      - homepage.icon=si-springboot
+      - homepage.showStats=true
+      - homepage.description=API, kein Web-UI
+
+  frontend-dev:
+    image: ghcr.io/hebbie-labs/recur-frontend:dev
+    container_name: recur-frontend-dev
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: /api
+      BACKEND_URL: http://backend-dev:8080
+    ports:
+      - "3080:3000"
+    depends_on:
+      - backend-dev
+    networks:
+      - default
+      - tunnel
+    labels:
+      - homepage.group=Recur
+      - homepage.name=Frontend (Dev)
+      - homepage.icon=nextjs.png
+      - homepage.href=https://dev.recur.dpdns.org
+      - homepage.description=Recur Dev-Frontend
 
   db-dev:
     image: ghcr.io/hebbie-labs/recur-db:dev
     container_name: recur-db-dev
     restart: unless-stopped
     environment:
-      - POSTGRES_DB=recur
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - PGDATA=/var/lib/postgresql/data
-    volumes:
-      - recur-db-dev-data:/var/lib/postgresql/data
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DEV_DB_PASSWORD:?DEV_DB_PASSWORD is required}
+      POSTGRES_DB: recur
     ports:
       - "127.0.0.1:5480:5432"
+    volumes:
+      - recur-db-dev-data:/var/lib/postgresql/data
+    labels:
+      - homepage.group=Recur
+      - homepage.name=DB (Dev)
+      - homepage.icon=postgresql.png
+      - homepage.showStats=true
+      - homepage.description=Postgres, kein Web-UI
+
+  backend-prod:
+    image: ghcr.io/hebbie-labs/recur-backend:latest
+    container_name: recur-backend-prod
+    restart: unless-stopped
+    environment:
+      DB_URL: jdbc:postgresql://db-prod:5432/recur
+      DB_USERNAME: postgres
+      DB_PASSWORD: ${PROD_DB_PASSWORD:?PROD_DB_PASSWORD is required}
+      JWT_SECRET: ${PROD_JWT_SECRET:?PROD_JWT_SECRET is required}
+      GOOGLE_CLIENT_ID: ${PROD_GOOGLE_CLIENT_ID:?PROD_GOOGLE_CLIENT_ID is required}
+      GOOGLE_CLIENT_SECRET: ${PROD_GOOGLE_CLIENT_SECRET:?PROD_GOOGLE_CLIENT_SECRET is required}
+      CORS_ALLOWED_ORIGIN: ${PROD_PUBLIC_ORIGIN:?PROD_PUBLIC_ORIGIN is required}
+      FRONTEND_URL: ${PROD_PUBLIC_ORIGIN:?PROD_PUBLIC_ORIGIN is required}
+      BREVO_API_KEY: ${BREVO_API_KEY:-}
+      MAIL_FROM: ${MAIL_FROM:-noreply@recur.dpdns.org}
+      VAPID_PUBLIC_KEY: ${PROD_VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${PROD_VAPID_PRIVATE_KEY:-}
+    depends_on:
+      - db-prod
+    labels:
+      - homepage.group=Recur
+      - homepage.name=Backend (Prod)
+      - homepage.icon=si-springboot
+      - homepage.showStats=true
+      - homepage.description=API, kein Web-UI
+
+  frontend-prod:
+    image: ghcr.io/hebbie-labs/recur-frontend:latest
+    container_name: recur-frontend-prod
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: /api
+      BACKEND_URL: http://backend-prod:8080
+    ports:
+      - "3081:3000"
+    depends_on:
+      - backend-prod
+    networks:
+      - default
+      - tunnel
+    labels:
+      - homepage.group=Recur
+      - homepage.name=Frontend (Prod)
+      - homepage.icon=nextjs.png
+      - homepage.href=https://www.recur.dpdns.org
+      - homepage.description=Recur Prod-Frontend
+
+  db-prod:
+    image: ghcr.io/hebbie-labs/recur-db:latest
+    container_name: recur-db-prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${PROD_DB_PASSWORD:?PROD_DB_PASSWORD is required}
+      POSTGRES_DB: recur
+    ports:
+      - "127.0.0.1:5481:5432"
+    volumes:
+      - recur-db-prod-data:/var/lib/postgresql/data
+    labels:
+      - homepage.group=Recur
+      - homepage.name=DB (Prod)
+      - homepage.icon=postgresql.png
+      - homepage.showStats=true
+      - homepage.description=Postgres, kein Web-UI
 
   frontend-www:
+    # :coming-soon - the moving tag deploy.yml's build job pushes on every
+    # `coming-soon-*` tag push (see deploy-www). Independent of :dev/:latest
+    # since the underlying app version is moot while COMING_SOON_MODE gates
+    # every route before it matters.
     image: ghcr.io/hebbie-labs/recur-frontend:coming-soon
     container_name: recur-frontend-www
     restart: unless-stopped
     environment:
-      - COMING_SOON_MODE=true
-      - NODE_ENV=production
-      - PORT=3000
-    expose:
-      - "3000"
+      COMING_SOON_MODE: "true"
+    ports:
+      - "3082:3000"
+    networks:
+      - default
+      - tunnel
+    labels:
+      - homepage.group=Recur
+      - homepage.name=Coming Soon
+      - homepage.icon=nextjs.png
+      - homepage.href=https://www.recur.dpdns.org
+      - homepage.description=Public Coming-Soon-Seite
 
 networks:
-  default:
-    name: recur_default
+  tunnel:
+    external: true
 
 volumes:
   recur-db-dev-data:
+  recur-db-prod-data:
