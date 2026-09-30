@@ -33,14 +33,24 @@ function CreateProjectDialog({ groupId, onClose }: CreateProjectDialogProps) {
           onClose();
         } catch (err) {
           showErrorToast(
-            err instanceof Error ? err.message : "Fehler beim Erstellen des Projekts."
+            err instanceof Error
+              ? err.message
+              : "Fehler beim Erstellen des Projekts.",
           );
         } finally {
           setSubmitting(false);
         }
       }}
     >
-      {({ values, handleChange, handleBlur, handleSubmit, errors, touched, isSubmitting }) => (
+      {({
+        values,
+        handleChange,
+        handleBlur,
+        handleSubmit,
+        errors,
+        touched,
+        isSubmitting,
+      }) => (
         <AppDialog
           open
           onClose={onClose}

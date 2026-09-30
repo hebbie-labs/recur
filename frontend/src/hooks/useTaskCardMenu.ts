@@ -23,7 +23,8 @@ function useTaskCardMenu({
   const [editOpen, setEditOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-  const [confirmResetProgressOpen, setConfirmResetProgressOpen] = useState(false);
+  const [confirmResetProgressOpen, setConfirmResetProgressOpen] =
+    useState(false);
 
   const canResetProgress = progress > 0;
 
@@ -41,9 +42,12 @@ function useTaskCardMenu({
   const handleToggleArchive = (e: React.MouseEvent) => {
     e.stopPropagation();
     onToggleArchive();
-    showUndoToast(isArchived ? "Aufgabe wiederhergestellt" : "Aufgabe archiviert", () => {
-      onToggleArchive();
-    });
+    showUndoToast(
+      isArchived ? "Aufgabe wiederhergestellt" : "Aufgabe archiviert",
+      () => {
+        onToggleArchive();
+      },
+    );
   };
 
   const handleRequestDelete = (e: React.MouseEvent) => {

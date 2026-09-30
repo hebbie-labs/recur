@@ -68,7 +68,7 @@ function TaskCard({
   const projectGroup = useMemo(() => {
     if (!task.project) return null;
     const groupId = Object.entries(projectsByGroupId).find(([, projects]) =>
-      projects.some((p) => p.id === task.project!.id)
+      projects.some((p) => p.id === task.project!.id),
     )?.[0];
     return groups.find((g) => g.id === groupId) ?? null;
   }, [task.project, projectsByGroupId, groups]);
@@ -133,7 +133,7 @@ function TaskCard({
         "flex h-full flex-col cursor-pointer transition-colors",
         overdue && "border-destructive",
         selectMode && selected && "ring-2 ring-primary",
-        className
+        className,
       )}
       onClick={handleCardClick}
       role="button"
@@ -206,10 +206,12 @@ function TaskCard({
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-2">
         <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-          <span className={cn("size-1.5 rounded-full", categoryDot[task.category])} />
+          <span
+            className={cn("size-1.5 rounded-full", categoryDot[task.category])}
+          />
           {categoryLabels[task.category]}
-          {task.project && (
-            groupMembers.length > 0 ? (
+          {task.project &&
+            (groupMembers.length > 0 ? (
               <div className="flex -space-x-1.5" title={task.project.name}>
                 {visibleGroupMembers.map((member) => (
                   <Avatar
@@ -217,7 +219,9 @@ function TaskCard({
                     size="sm"
                     className={cn(
                       "ring-2",
-                      member.id === user?.id ? "ring-foreground" : "ring-background"
+                      member.id === user?.id
+                        ? "ring-foreground"
+                        : "ring-background",
                     )}
                     title={`${member.firstName} ${member.lastName}`}
                   >
@@ -242,8 +246,7 @@ function TaskCard({
               <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
                 {task.project.name}
               </span>
-            )
-          )}
+            ))}
         </div>
         <div className="line-clamp-1">
           <TaskTitle title={task.name} />
@@ -253,27 +256,32 @@ function TaskCard({
         </div>
         <div className="mt-auto flex items-center gap-4 justify-between">
           <div className="flex flex-wrap items-center gap-2">
-            <TaskTimeFrame start={task.startTime ?? null} end={task.dateUntil} />
+            <TaskTimeFrame
+              start={task.startTime ?? null}
+              end={task.dateUntil}
+            />
             {overdue && <OverdueBadge />}
           </div>
           <div className="flex items-center gap-2">
-            {task.project && task.assignedMembers && task.assignedMembers.length > 0 && (
-              <div className="flex -space-x-2">
-                {task.assignedMembers.map((member) => (
-                  <Avatar
-                    key={member.id}
-                    size="sm"
-                    className="ring-2 ring-background"
-                    title={`Zugewiesen: ${member.firstName} ${member.lastName}`}
-                  >
-                    <AvatarImage src={member.avatarUrl ?? undefined} />
-                    <AvatarFallback>
-                      {`${member.firstName[0] ?? ""}${member.lastName[0] ?? ""}`.toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                ))}
-              </div>
-            )}
+            {task.project &&
+              task.assignedMembers &&
+              task.assignedMembers.length > 0 && (
+                <div className="flex -space-x-2">
+                  {task.assignedMembers.map((member) => (
+                    <Avatar
+                      key={member.id}
+                      size="sm"
+                      className="ring-2 ring-background"
+                      title={`Zugewiesen: ${member.firstName} ${member.lastName}`}
+                    >
+                      <AvatarImage src={member.avatarUrl ?? undefined} />
+                      <AvatarFallback>
+                        {`${member.firstName[0] ?? ""}${member.lastName[0] ?? ""}`.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  ))}
+                </div>
+              )}
             {task.completedBy && (
               <Avatar
                 size="sm"

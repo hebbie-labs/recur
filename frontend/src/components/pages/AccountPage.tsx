@@ -38,7 +38,7 @@ function AccountPage() {
 
   const handleSubmit = async (
     values: Partial<User>,
-    { resetForm }: FormikHelpers<Partial<User>>
+    { resetForm }: FormikHelpers<Partial<User>>,
   ) => {
     setError(null);
     setSaving(true);
@@ -55,7 +55,7 @@ function AccountPage() {
       setError(
         err instanceof Error
           ? err.message
-          : "Unbekannter Fehler beim Bearbeiten des Accounts"
+          : "Unbekannter Fehler beim Bearbeiten des Accounts",
       );
     } finally {
       setSaving(false);

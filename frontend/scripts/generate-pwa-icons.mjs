@@ -11,15 +11,7 @@ const BRAND = [0x1a, 0x1a, 0x1a]; // near-black, matches --sidebar-primary
 const WHITE = [255, 255, 255];
 
 // 5x7 block bitmap for "R", 1 = glyph pixel.
-const GLYPH_R = [
-  "11110",
-  "10001",
-  "10001",
-  "11110",
-  "10100",
-  "10010",
-  "10001",
-];
+const GLYPH_R = ["11110", "10001", "10001", "11110", "10100", "10010", "10001"];
 
 function crc32(buf) {
   let crc = ~0;
@@ -59,7 +51,11 @@ function renderPng(size, padding) {
       const gx = Math.floor((x - offX) / scale);
       const gy = Math.floor((y - offY) / scale);
       const isGlyph =
-        gx >= 0 && gx < glyphW && gy >= 0 && gy < glyphH && GLYPH_R[gy][gx] === "1";
+        gx >= 0 &&
+        gx < glyphW &&
+        gy >= 0 &&
+        gy < glyphH &&
+        GLYPH_R[gy][gx] === "1";
       const color = isGlyph ? WHITE : BRAND;
       const px = rowStart + 1 + x * 3;
       raw[px] = color[0];

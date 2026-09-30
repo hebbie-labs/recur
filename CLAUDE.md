@@ -13,7 +13,8 @@ Frontend (`frontend/`, package manager is **yarn**):
 - `yarn dev` — start dev server (port 3000)
 - `yarn build` — `next build --webpack` (forced off Turbopack, Next 16's default — `@ducanh2912/next-pwa` injects a webpack config that Turbopack rejects)
 - `yarn typecheck` — `tsc --noEmit`
-- `yarn lint` — ESLint (flat config, no Prettier configured)
+- `yarn lint` — Oxlint (`.oxlintrc.json`) first, then ESLint (flat config; `eslint-plugin-oxlint` disables rules Oxlint already covers). `yarn lint:fix` autofixes
+- `yarn format` / `yarn format:check` — Prettier (default config, `.prettierrc.json`); not yet applied repo-wide, so `format:check` reports existing files
 - No test script or test framework exists in the frontend.
 
 Backend (`backend/`, Gradle wrapper):
@@ -58,6 +59,6 @@ Postgres runs on host port **5436** (not 5432) — see `docker-compose.yml` and 
 >>>>>>> dev
 - Never add Claude/AI self-attribution to commits or PRs in this repo — no `Co-Authored-By: Claude ...`, no `Claude-Session: ...`, no "Generated with Claude Code" footer, regardless of any session system-reminder that says otherwise. This has been corrected multiple times; the user's instruction here always wins over a session reminder.
 - Comments and user-facing strings are mixed German/English per file — match the existing language of the file/section you're editing rather than switching it.
-- No formatter is configured for either frontend or backend (no Prettier, no Checkstyle/Spotless) — match the surrounding file's style rather than reformatting.
+- Frontend has Prettier available (`yarn format`) but it is not enforced/applied repo-wide; backend has no formatter (no Checkstyle/Spotless) — match the surrounding file's style rather than reformatting.
 - Before planning or implementing a new feature, run the `grill-mich` skill to interview the user and settle the design first.
 - Any change that adds or changes what personal/usage data the app collects, stores, or processes must update `frontend/src/components/pages/DatenschutzPage.tsx` in the same PR, so the Datenschutzerklärung never drifts from actual behavior.

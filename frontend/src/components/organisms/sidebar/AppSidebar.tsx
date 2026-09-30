@@ -13,12 +13,7 @@ import SidebarNavigation from "@/components/molecules/sidebar/SidebarNavigation"
 import SidebarBrand from "@/components/molecules/sidebar/SidebarBrand";
 import SidebarLegalGroup from "@/components/organisms/sidebar/SidebarLegalGroup";
 import SidebarGithubLink from "@/components/organisms/sidebar/SidebarGithubLink";
-import {
-  ClipboardPaste,
-  ListChecks,
-  Calendar,
-  Users,
-} from "lucide-react";
+import { ClipboardPaste, ListChecks, Calendar, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useImportQuartalsplan } from "@/contexts/ImportQuartalsplanContext";
 

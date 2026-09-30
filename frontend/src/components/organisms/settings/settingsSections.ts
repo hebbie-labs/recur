@@ -33,13 +33,15 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
   {
     id: "privacy",
     label: "Privatsphäre",
-    errorMessage: "Die Privatsphäre-Einstellungen konnten nicht angezeigt werden.",
+    errorMessage:
+      "Die Privatsphäre-Einstellungen konnten nicht angezeigt werden.",
     Component: PrivacySection,
   },
   {
     id: "legal",
     label: "Rechtliches",
-    errorMessage: "Die rechtlichen Informationen konnten nicht angezeigt werden.",
+    errorMessage:
+      "Die rechtlichen Informationen konnten nicht angezeigt werden.",
     Component: LegalSection,
   },
 ];

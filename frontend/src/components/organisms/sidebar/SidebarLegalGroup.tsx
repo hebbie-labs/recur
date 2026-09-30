@@ -1,6 +1,10 @@
 import { useRouter } from "next/navigation";
 import { ChevronRight, Scale } from "lucide-react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   SidebarMenu,
   SidebarMenuButton,

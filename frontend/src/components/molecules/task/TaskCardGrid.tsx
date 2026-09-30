@@ -44,7 +44,9 @@ function TaskCardGrid({
     setCurrentPage(1);
   }
 
-  const totalPages = paginate ? Math.max(1, Math.ceil(sortedTasks.length / PAGE_SIZE)) : 1;
+  const totalPages = paginate
+    ? Math.max(1, Math.ceil(sortedTasks.length / PAGE_SIZE))
+    : 1;
 
   const visibleTasks = useMemo(() => {
     if (!paginate) {
@@ -60,7 +62,7 @@ function TaskCardGrid({
       <div
         className={cn(
           "grid w-full gap-4 p-4",
-          direction === "column" ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2"
+          direction === "column" ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2",
         )}
       >
         {visibleTasks.map((task) => (

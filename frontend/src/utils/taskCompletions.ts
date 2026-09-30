@@ -1,10 +1,16 @@
-import { TaskFrequency, type TaskFrequency as TaskFrequencyType, type Task } from "@/types/task";
+import {
+  TaskFrequency,
+  type TaskFrequency as TaskFrequencyType,
+  type Task,
+} from "@/types/task";
 import { toDateOnlyString } from "@/utils/formatDate";
 
 // Wie viele Tage ein Frequenz-Intervall abdeckt (#152) - identisch zu
 // TaskUtil im Backend, Basis für "max. 1 Completion pro Intervall". ONCE hat
 // kein Intervall-Konzept (kein Eintrag).
-export const FREQUENCY_INTERVAL_DAYS: Partial<Record<TaskFrequencyType, number>> = {
+export const FREQUENCY_INTERVAL_DAYS: Partial<
+  Record<TaskFrequencyType, number>
+> = {
   DAILY: 1,
   WEEKLY: 7,
   MONTHLY: 30,
@@ -34,13 +40,18 @@ export function today(): string {
 type CompletionTask = Pick<Task, "dateCreated" | "frequency" | "completions">;
 
 /** Welches Frequenz-Intervall (seit dateCreated) ein Datum abdeckt - null bei ONCE/fehlender Frequenz, spiegelt TaskUtil#intervalIndexOf im Backend (#152). */
-export function intervalIndexOf(task: CompletionTask, dateOnly: string): number | null {
+export function intervalIndexOf(
+  task: CompletionTask,
+  dateOnly: string,
+): number | null {
   const intervalDays = FREQUENCY_INTERVAL_DAYS[task.frequency];
   if (!intervalDays || !task.dateCreated) return null;
 
   const created = toLocalMidnight(task.dateCreated);
   const target = parseDateOnly(dateOnly);
-  const daysBetween = Math.round((target.getTime() - created.getTime()) / ONE_DAY_MS);
+  const daysBetween = Math.round(
+    (target.getTime() - created.getTime()) / ONE_DAY_MS,
+  );
   return Math.floor(daysBetween / intervalDays);
 }
 
@@ -55,7 +66,10 @@ export function currentPeriodCompletion(task: CompletionTask): string | null {
   const currentIndex = intervalIndexOf(task, today());
   if (currentIndex === null) return null;
 
-  return completions.find((date) => intervalIndexOf(task, date) === currentIndex) ?? null;
+  return (
+    completions.find((date) => intervalIndexOf(task, date) === currentIndex) ??
+    null
+  );
 }
 
 type DoneCheckTask = CompletionTask & {
@@ -76,8 +90,9 @@ function legacyDoneForCurrentPeriod(task: DoneCheckTask): boolean {
   const intervalDays = FREQUENCY_INTERVAL_DAYS[task.frequency];
   return Boolean(
     task.lastAmountDidAt &&
-      intervalDays &&
-      new Date().getTime() - new Date(task.lastAmountDidAt).getTime() < intervalDays * ONE_DAY_MS
+    intervalDays &&
+    new Date().getTime() - new Date(task.lastAmountDidAt).getTime() <
+      intervalDays * ONE_DAY_MS,
   );
 }
 
@@ -113,7 +128,9 @@ export function pastIntervals(task: CompletionTask): PastInterval[] {
 
   const intervals: PastInterval[] = [];
   for (let index = currentIndex - 1; index >= 0; index--) {
-    const start = new Date(created.getTime() + index * intervalDays * ONE_DAY_MS);
+    const start = new Date(
+      created.getTime() + index * intervalDays * ONE_DAY_MS,
+    );
     intervals.push({
       index,
       representativeDate: toDateOnlyString(start),
@@ -123,7 +140,8 @@ export function pastIntervals(task: CompletionTask): PastInterval[] {
   return intervals;
 }
 
-type OverdueTask = DoneCheckTask & Pick<Task, "dateUntil" | "startTime" | "isArchived">;
+type OverdueTask = DoneCheckTask &
+  Pick<Task, "dateUntil" | "startTime" | "isArchived">;
 
 function addLocalDays(date: Date, days: number): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
@@ -148,7 +166,7 @@ function onceDeadline(task: OverdueTask): Date {
     until.getMonth(),
     until.getDate(),
     start.getHours(),
-    start.getMinutes()
+    start.getMinutes(),
   );
 }
 
@@ -164,22 +182,30 @@ function recurringOverdueSince(task: OverdueTask, now: Date): Date | null {
   if (currentIndex < 1 || currentIndex > lastIndex + 1) return null;
 
   const completedIndexes = new Set(
-    (task.completions ?? []).map((date) => intervalIndexOf(task, date))
+    (task.completions ?? []).map((date) => intervalIndexOf(task, date)),
   );
-  if (currentIndex <= lastIndex && completedIndexes.has(currentIndex)) return null;
+  if (currentIndex <= lastIndex && completedIndexes.has(currentIndex))
+    return null;
   if (completedIndexes.has(currentIndex - 1)) return null;
 
   // Mehrere Zeiträume am Stück verpasst -> seit Ende des ersten davon.
   let firstMissed = currentIndex - 1;
-  while (firstMissed > 0 && !completedIndexes.has(firstMissed - 1)) firstMissed--;
+  while (firstMissed > 0 && !completedIndexes.has(firstMissed - 1))
+    firstMissed--;
 
-  return addLocalDays(toLocalMidnight(task.dateCreated), (firstMissed + 1) * intervalDays);
+  return addLocalDays(
+    toLocalMidnight(task.dateCreated),
+    (firstMissed + 1) * intervalDays,
+  );
 }
 
 // Geteilte Projekt-Tasks haben keine Completion-Historie, analog zur
 // Rolling-Window-Sperre (legacyDoneForCurrentPeriod): nach dem letzten Klick
 // ist der nächste Zeitraum fällig, verpasst ist er ein Intervall später.
-function legacyRecurringOverdueSince(task: OverdueTask, now: Date): Date | null {
+function legacyRecurringOverdueSince(
+  task: OverdueTask,
+  now: Date,
+): Date | null {
   const intervalDays = FREQUENCY_INTERVAL_DAYS[task.frequency];
   if (!intervalDays) return null;
 
@@ -195,7 +221,10 @@ function legacyRecurringOverdueSince(task: OverdueTask, now: Date): Date | null 
 }
 
 /** Seit wann ein Task überfällig ist (#153) - null, wenn nicht. DAILY ist nie überfällig. Ein nur für den aktuellen User archivierter Projekt-Task (isArchivedForCurrentUser) muss der Aufrufer selbst ausschliessen. */
-export function overdueSince(task: OverdueTask, now: Date = new Date()): Date | null {
+export function overdueSince(
+  task: OverdueTask,
+  now: Date = new Date(),
+): Date | null {
   if (task.isArchived || !task.dateUntil || !task.dateCreated) return null;
 
   switch (task.frequency) {

@@ -28,7 +28,9 @@ export function useSidebarNavGroups(
     () =>
       groups.find((group) =>
         group.destinations.some((d) => d.path === activeValue),
-      )?.key ?? groups[0]?.key ?? "",
+      )?.key ??
+      groups[0]?.key ??
+      "",
     [groups, activeValue],
   );
 

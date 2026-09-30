@@ -1,4 +1,8 @@
-import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import type { NavigationDestination } from "@/hooks/useNavigationBar";
 import { cn } from "@/lib/utils";
 
@@ -27,7 +31,10 @@ const DRAG_THRESHOLD_PX = 6;
 // hier feinjustieren, falls es in der Ecke noch ungleichmässig wirkt.
 const NAV_EDGE_INSET = "0.75rem";
 
-function BottomNavigation({ destinations, activeValue }: BottomNavigationProps) {
+function BottomNavigation({
+  destinations,
+  activeValue,
+}: BottomNavigationProps) {
   const activeIndex = destinations.findIndex((d) => d.path === activeValue);
   const columnWidth = `(100% / ${destinations.length})`;
   const navRef = useRef<HTMLElement>(null);
@@ -40,7 +47,9 @@ function BottomNavigation({ destinations, activeValue }: BottomNavigationProps) 
   // per Transition hin unterwegs ist, während navigate() erst asynchron die
   // Route (und damit activeIndex) nachzieht - siehe Effect unten. State statt
   // Ref, da es die Transition-Klasse beim Rendern mitbestimmt.
-  const [releaseTargetIndex, setReleaseTargetIndex] = useState<number | null>(null);
+  const [releaseTargetIndex, setReleaseTargetIndex] = useState<number | null>(
+    null,
+  );
 
   const columnLeftPx = (index: number) => {
     const nav = navRef.current;
@@ -58,7 +67,10 @@ function BottomNavigation({ destinations, activeValue }: BottomNavigationProps) 
     const pillWidth = rect.width / destinations.length - insetPx * 2;
     const relativeX = clientX - rect.left;
     const rawLeft = relativeX - pillWidth / 2;
-    const clamped = Math.min(Math.max(rawLeft, insetPx), rect.width - insetPx - pillWidth);
+    const clamped = Math.min(
+      Math.max(rawLeft, insetPx),
+      rect.width - insetPx - pillWidth,
+    );
     setDragLeftPx(clamped);
   };
 
@@ -82,7 +94,10 @@ function BottomNavigation({ destinations, activeValue }: BottomNavigationProps) 
     const rect = nav.getBoundingClientRect();
     const relativeX = clientX - rect.left;
     const colWidth = rect.width / destinations.length;
-    return Math.min(Math.max(Math.floor(relativeX / colWidth), 0), destinations.length - 1);
+    return Math.min(
+      Math.max(Math.floor(relativeX / colWidth), 0),
+      destinations.length - 1,
+    );
   };
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLElement>) => {
@@ -92,7 +107,10 @@ function BottomNavigation({ destinations, activeValue }: BottomNavigationProps) 
 
   const handlePointerMove = (event: ReactPointerEvent<HTMLElement>) => {
     if (pointerDownXRef.current === null) return;
-    if (dragLeftPx === null && Math.abs(event.clientX - pointerDownXRef.current) < DRAG_THRESHOLD_PX) {
+    if (
+      dragLeftPx === null &&
+      Math.abs(event.clientX - pointerDownXRef.current) < DRAG_THRESHOLD_PX
+    ) {
       return;
     }
     updateDragPosition(event.clientX);
@@ -153,7 +171,7 @@ function BottomNavigation({ destinations, activeValue }: BottomNavigationProps) 
           "absolute rounded-full bg-sidebar-accent",
           (dragLeftPx === null || releaseTargetIndex !== null) &&
             "transition-[left,opacity] duration-300 ease-out",
-          activeIndex === -1 && dragLeftPx === null && "opacity-0"
+          activeIndex === -1 && dragLeftPx === null && "opacity-0",
         )}
         style={{
           top: PILL_INSET,
@@ -178,7 +196,7 @@ function BottomNavigation({ destinations, activeValue }: BottomNavigationProps) 
               "relative z-10 flex flex-1 flex-col items-center justify-center gap-0.5 py-3 text-xs transition-colors",
               isActive
                 ? "font-semibold text-sidebar-accent-foreground"
-                : "font-medium text-muted-foreground"
+                : "font-medium text-muted-foreground",
             )}
           >
             <Icon className="h-5 w-5" />

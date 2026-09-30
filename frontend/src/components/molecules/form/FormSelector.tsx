@@ -27,14 +27,15 @@ function FormSelector({ variant, disabled, className }: FormSelectorProps) {
   // useField bindet direkt an Formik, statt Value/onChange/onBlur/Error von
   // aussen durchgereicht zu bekommen und über synthetische Events zu simulieren
   // (analog zum Muster in useDateField.ts).
-  const [field, meta, helpers] = useField<TaskCategory | TaskFrequency | "">(variant);
+  const [field, meta, helpers] = useField<TaskCategory | TaskFrequency | "">(
+    variant,
+  );
   const { setValue, setTouched } = helpers;
 
   const justSelectedRef = useRef(false);
 
-  const items: { value: TaskCategory | TaskFrequency; label: string }[] = isCategory
-    ? CATEGORY_OPTIONS
-    : FREQUENCY_OPTIONS;
+  const items: { value: TaskCategory | TaskFrequency; label: string }[] =
+    isCategory ? CATEGORY_OPTIONS : FREQUENCY_OPTIONS;
 
   const error = meta.touched && !!meta.error;
   const helperText = meta.touched ? meta.error : undefined;
@@ -60,7 +61,9 @@ function FormSelector({ variant, disabled, className }: FormSelectorProps) {
 
   return (
     <Field data-invalid={error ? "true" : "false"} className={className}>
-      <FieldLabel className="mt-3" htmlFor={fieldId}>{label}</FieldLabel>
+      <FieldLabel className="mt-3" htmlFor={fieldId}>
+        {label}
+      </FieldLabel>
       <Select
         items={items}
         value={field.value || ""}

@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
-import withPWAInit, { runtimeCaching as defaultRuntimeCaching } from "@ducanh2912/next-pwa";
+import withPWAInit, {
+  runtimeCaching as defaultRuntimeCaching,
+} from "@ducanh2912/next-pwa";
 
 const withPWA = withPWAInit({
   dest: "public",
@@ -22,7 +24,10 @@ const withPWA = withPWAInit({
         // the closure - referencing an outer const here throws
         // "ReferenceError: ... is not defined" at runtime for every fetch.
         urlPattern: ({ url, sameOrigin }) =>
-          sameOrigin && ["/api", "/oauth2", "/login/oauth2"].some((prefix) => url.pathname.startsWith(prefix)),
+          sameOrigin &&
+          ["/api", "/oauth2", "/login/oauth2"].some((prefix) =>
+            url.pathname.startsWith(prefix),
+          ),
         handler: "NetworkOnly",
       },
       ...defaultRuntimeCaching,

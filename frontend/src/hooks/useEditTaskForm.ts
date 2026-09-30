@@ -93,11 +93,16 @@ function useEditTaskForm({
       const startTimeIso = resolveStartTime(
         values.startDate,
         values.startTimeOfDay,
-        values.frequency
+        values.frequency,
       );
 
-      const { startDate, startTimeOfDay, projectId, reminderLeadTime, ...restValues } =
-        values;
+      const {
+        startDate,
+        startTimeOfDay,
+        projectId,
+        reminderLeadTime,
+        ...restValues
+      } = values;
 
       const payload = {
         ...restValues,
@@ -124,7 +129,7 @@ function useEditTaskForm({
         if (reminderChanged) {
           updatedTask = await setTaskReminderLeadTime(
             task.id,
-            reminderLeadTime || null
+            reminderLeadTime || null,
           );
         }
 
@@ -140,14 +145,14 @@ function useEditTaskForm({
         showErrorToast(
           err instanceof Error
             ? err.message
-            : "Fehler beim Aktualisieren der Aufgabe"
+            : "Fehler beim Aktualisieren der Aufgabe",
         );
         if (isMountedRef.current) {
           setLoading(false);
         }
       }
     },
-    [task, onClose, onTaskUpdated]
+    [task, onClose, onTaskUpdated],
   );
 
   return { loading, handleSubmit };

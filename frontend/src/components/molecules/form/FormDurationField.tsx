@@ -12,9 +12,11 @@ function FormDurationField() {
 
   const isPresetValue = useMemo(
     () => DURATION_OPTIONS.some((option) => option.value === field.value),
-    [field.value]
+    [field.value],
   );
-  const [showCustom, setShowCustom] = useState(() => !!field.value && !isPresetValue);
+  const [showCustom, setShowCustom] = useState(
+    () => !!field.value && !isPresetValue,
+  );
 
   const error = meta.touched && !!meta.error;
   const helperText = meta.touched ? meta.error : undefined;
@@ -51,7 +53,7 @@ function FormDurationField() {
               "rounded-full px-3 py-1 text-xs font-medium transition-colors",
               !showCustom && field.value === option.value
                 ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:text-foreground"
+                : "bg-muted text-muted-foreground hover:text-foreground",
             )}
           >
             {option.label}
@@ -65,7 +67,7 @@ function FormDurationField() {
             "rounded-full px-3 py-1 text-xs font-medium transition-colors",
             showCustom
               ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground hover:text-foreground"
+              : "bg-muted text-muted-foreground hover:text-foreground",
           )}
         >
           Eigene
@@ -82,7 +84,7 @@ function FormDurationField() {
           aria-invalid={error}
           className={cn(
             "mt-1.5 max-w-32",
-            error && "border-destructive focus-visible:ring-destructive"
+            error && "border-destructive focus-visible:ring-destructive",
           )}
         />
       )}

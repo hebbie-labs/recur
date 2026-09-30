@@ -9,7 +9,10 @@ type ResendVerificationFormProps = {
   className?: string;
 };
 
-function ResendVerificationForm({ email, className }: ResendVerificationFormProps) {
+function ResendVerificationForm({
+  email,
+  className,
+}: ResendVerificationFormProps) {
   const [inputEmail, setInputEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -31,7 +34,9 @@ function ResendVerificationForm({ email, className }: ResendVerificationFormProp
       setSent(true);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Ein unbekannter Fehler ist aufgetreten"
+        err instanceof Error
+          ? err.message
+          : "Ein unbekannter Fehler ist aufgetreten",
       );
     } finally {
       setLoading(false);
@@ -40,14 +45,25 @@ function ResendVerificationForm({ email, className }: ResendVerificationFormProp
 
   if (sent) {
     return (
-      <p className={className ? className + " text-sm text-muted-foreground" : "text-sm text-muted-foreground"}>
-        Falls das Konto existiert, haben wir eine neue Bestätigungs-E-Mail gesendet.
+      <p
+        className={
+          className
+            ? className + " text-sm text-muted-foreground"
+            : "text-sm text-muted-foreground"
+        }
+      >
+        Falls das Konto existiert, haben wir eine neue Bestätigungs-E-Mail
+        gesendet.
       </p>
     );
   }
 
   return (
-    <div className={className ? className + " flex flex-col gap-2" : "flex flex-col gap-2"}>
+    <div
+      className={
+        className ? className + " flex flex-col gap-2" : "flex flex-col gap-2"
+      }
+    >
       {!email && (
         <Input
           type="email"

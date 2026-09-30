@@ -13,7 +13,9 @@ function TaskFavorite({ isFavorite, onClick }: TaskFavoriteProps) {
       variant="ghost"
       size="icon"
       className="hover:bg-accent"
-      aria-label={isFavorite ? "Aus Favoriten entfernen" : "Zu Favoriten hinzufügen"}
+      aria-label={
+        isFavorite ? "Aus Favoriten entfernen" : "Zu Favoriten hinzufügen"
+      }
       aria-pressed={isFavorite}
       onClick={(e) => {
         e.stopPropagation();
@@ -23,7 +25,7 @@ function TaskFavorite({ isFavorite, onClick }: TaskFavoriteProps) {
       <Heart
         className={cn(
           "h-5 w-5",
-          isFavorite ? "fill-red-500 text-red-500" : "text-muted-foreground"
+          isFavorite ? "fill-red-500 text-red-500" : "text-muted-foreground",
         )}
       />
     </Button>

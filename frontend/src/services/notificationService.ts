@@ -18,20 +18,26 @@ export function getNotificationSettings(): Promise<NotificationSettings> {
     .then((response) => response.data as NotificationSettings)
     .catch((err) => {
       throw new Error(
-        extractErrorMessage(err, "Fehler beim Laden der Benachrichtigungseinstellungen")
+        extractErrorMessage(
+          err,
+          "Fehler beim Laden der Benachrichtigungseinstellungen",
+        ),
       );
     });
 }
 
 export function updateNotificationSettings(
-  update: Partial<NotificationSettings>
+  update: Partial<NotificationSettings>,
 ): Promise<NotificationSettings> {
   return api
     .patch("/auth/me/notification-settings", update)
     .then((response) => response.data as NotificationSettings)
     .catch((err) => {
       throw new Error(
-        extractErrorMessage(err, "Fehler beim Aktualisieren der Benachrichtigungseinstellungen")
+        extractErrorMessage(
+          err,
+          "Fehler beim Aktualisieren der Benachrichtigungseinstellungen",
+        ),
       );
     });
 }

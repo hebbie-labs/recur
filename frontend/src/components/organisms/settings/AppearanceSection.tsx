@@ -53,8 +53,8 @@ function AppearanceSection() {
           </EmptyMedia>
           <EmptyTitle>Weitere Optionen</EmptyTitle>
           <EmptyDescription>
-            Weitere Anpassungen am Erscheinungsbild sind noch nicht
-            verfügbar und folgen später.
+            Weitere Anpassungen am Erscheinungsbild sind noch nicht verfügbar
+            und folgen später.
           </EmptyDescription>
         </EmptyHeader>
       </Empty>

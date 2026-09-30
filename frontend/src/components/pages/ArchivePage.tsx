@@ -20,7 +20,10 @@ function ArchivePage() {
     handleDelete,
   } = useTasksContext();
 
-  const archivedTaskIds = useMemo(() => archivedTasks.map((task) => task.id), [archivedTasks]);
+  const archivedTaskIds = useMemo(
+    () => archivedTasks.map((task) => task.id),
+    [archivedTasks],
+  );
 
   const {
     selectMode,
@@ -56,7 +59,9 @@ function ArchivePage() {
         description="Es gibt derzeit keine archivierten Aufgaben."
         buttonText="Zurück zu den Aufgaben"
         onButtonClick={() => router.push("/")}
-        icon={() => <OctagonXIcon className="h-12 w-12 text-muted-foreground" />}
+        icon={() => (
+          <OctagonXIcon className="h-12 w-12 text-muted-foreground" />
+        )}
       />
     );
   }
