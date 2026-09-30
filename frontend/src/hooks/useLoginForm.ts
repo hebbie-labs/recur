@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 function useLoginForm() {
   const [backendError, setBackendError] = useState<string | undefined>(
-    undefined
+    undefined,
   );
   const [submitDisabled, setSubmitDisabled] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -24,7 +24,7 @@ function useLoginForm() {
       setBackendError(
         error instanceof Error
           ? error.message
-          : "Ein unbekannter Fehler ist aufgetreten"
+          : "Ein unbekannter Fehler ist aufgetreten",
       );
     } finally {
       setLoading(false);

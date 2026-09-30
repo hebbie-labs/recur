@@ -24,7 +24,7 @@ function toInstantString(date: string | null | undefined): string | null {
 }
 
 function normalizeTaskDates<T extends { dateUntil?: string | null }>(
-  task: T
+  task: T,
 ): T {
   if (task.dateUntil === undefined) return task;
   return { ...task, dateUntil: toInstantString(task.dateUntil) };
@@ -32,7 +32,7 @@ function normalizeTaskDates<T extends { dateUntil?: string | null }>(
 
 /** Wandelt das frontend-freundliche `projectId` in die verschachtelte `project: { id }`-Referenz um, die das Backend (Task.project) erwartet; `projectId` bleibt dabei nicht Teil des gesendeten Bodys. */
 function withProjectReference<T extends { projectId?: string | null }>(
-  payload: T
+  payload: T,
 ): Omit<T, "projectId"> & { project?: { id: string } } {
   const { projectId, ...rest } = payload;
   return {
@@ -51,7 +51,7 @@ function getTasks(archived?: boolean, favorite?: boolean): Promise<Task[]> {
       // z.B. Logout-Race), um das nicht wie einen echten Fehler zu behandeln.
       if (isUnauthorized(err)) throw err;
       throw new Error(
-        extractErrorMessage(err, "Fehler beim Abrufen der Aufgaben")
+        extractErrorMessage(err, "Fehler beim Abrufen der Aufgaben"),
       );
     });
 }
@@ -62,7 +62,7 @@ function createTask(task: NewTask): Promise<Task> {
     .then((response) => response.data as Task)
     .catch((err: unknown) => {
       throw new Error(
-        extractErrorMessage(err, "Fehler beim Erstellen der Aufgabe")
+        extractErrorMessage(err, "Fehler beim Erstellen der Aufgabe"),
       );
     });
 }
@@ -79,12 +79,19 @@ function patchTask(id: string, options: PatchTaskOptions = {}): Promise<Task> {
   } = options;
   return api
     .patch(`/task/${id}`, withProjectReference(normalizeTaskDates(task)), {
-      params: { resetProgress, favorite, archived, amountDid, unassignProject, hidden },
+      params: {
+        resetProgress,
+        favorite,
+        archived,
+        amountDid,
+        unassignProject,
+        hidden,
+      },
     })
     .then((response) => response.data as Task)
     .catch((err: unknown) => {
       throw new Error(
-        extractErrorMessage(err, "Fehler beim Aktualisieren der Aufgabe")
+        extractErrorMessage(err, "Fehler beim Aktualisieren der Aufgabe"),
       );
     });
 }
@@ -95,7 +102,9 @@ function addTaskCompletion(id: string, date: string): Promise<Task> {
     .put(`/task/${id}/completions/${date}`)
     .then((response) => response.data as Task)
     .catch((err: unknown) => {
-      throw new Error(extractErrorMessage(err, "Fehler beim Abhaken des Tages"));
+      throw new Error(
+        extractErrorMessage(err, "Fehler beim Abhaken des Tages"),
+      );
     });
 }
 
@@ -105,7 +114,9 @@ function removeTaskCompletion(id: string, date: string): Promise<Task> {
     .delete(`/task/${id}/completions/${date}`)
     .then((response) => response.data as Task)
     .catch((err: unknown) => {
-      throw new Error(extractErrorMessage(err, "Fehler beim Rückgängigmachen des Tages"));
+      throw new Error(
+        extractErrorMessage(err, "Fehler beim Rückgängigmachen des Tages"),
+      );
     });
 }
 
@@ -116,7 +127,7 @@ function deleteTask(id: string): Promise<Task | null> {
     .then((response) => (response.data as Task | "") || null)
     .catch((err: unknown) => {
       throw new Error(
-        extractErrorMessage(err, "Fehler beim Löschen der Aufgabe")
+        extractErrorMessage(err, "Fehler beim Löschen der Aufgabe"),
       );
     });
 }
@@ -127,7 +138,7 @@ function deleteAllTasks(): Promise<void> {
     .then(() => {})
     .catch((err: unknown) => {
       throw new Error(
-        extractErrorMessage(err, "Fehler beim Löschen aller Aufgaben")
+        extractErrorMessage(err, "Fehler beim Löschen aller Aufgaben"),
       );
     });
 }
@@ -135,14 +146,14 @@ function deleteAllTasks(): Promise<void> {
 /** Setzt/löscht den Erinnerungs-Vorlauf-Override des aktuellen Users für diesen Task (#102-Follow-up) - pro (task, user), daher ein eigener Endpoint statt Teil von createTask/patchTask; `null` löscht den Override wieder (zurück auf die Kontoeinstellung). */
 function setTaskReminderLeadTime(
   id: string,
-  reminderLeadTime: ReminderLeadTime | null
+  reminderLeadTime: ReminderLeadTime | null,
 ): Promise<Task> {
   return api
     .put(`/task/${id}/reminder-lead-time`, { reminderLeadTime })
     .then((response) => response.data as Task)
     .catch((err: unknown) => {
       throw new Error(
-        extractErrorMessage(err, "Fehler beim Setzen des Erinnerungs-Vorlaufs")
+        extractErrorMessage(err, "Fehler beim Setzen des Erinnerungs-Vorlaufs"),
       );
     });
 }
@@ -152,7 +163,9 @@ function assignSelf(id: string): Promise<Task> {
     .post(`/task/${id}/assign`)
     .then((response) => response.data as Task)
     .catch((err: unknown) => {
-      throw new Error(extractErrorMessage(err, "Fehler beim Zuweisen der Aufgabe"));
+      throw new Error(
+        extractErrorMessage(err, "Fehler beim Zuweisen der Aufgabe"),
+      );
     });
 }
 
@@ -161,7 +174,9 @@ function unassignSelf(id: string): Promise<Task> {
     .post(`/task/${id}/unassign`)
     .then((response) => response.data as Task)
     .catch((err: unknown) => {
-      throw new Error(extractErrorMessage(err, "Fehler beim Abmelden von der Aufgabe"));
+      throw new Error(
+        extractErrorMessage(err, "Fehler beim Abmelden von der Aufgabe"),
+      );
     });
 }
 

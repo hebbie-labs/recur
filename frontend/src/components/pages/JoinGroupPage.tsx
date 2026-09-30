@@ -24,7 +24,9 @@ function JoinGroupPage() {
     previewInvite(code)
       .then(setPreview)
       .catch((err: unknown) =>
-        setError(err instanceof Error ? err.message : "Einladungslink ungültig.")
+        setError(
+          err instanceof Error ? err.message : "Einladungslink ungültig.",
+        ),
       )
       .finally(() => setLoading(false));
   }, [code]);
@@ -38,7 +40,11 @@ function JoinGroupPage() {
       showSuccessToast(`Du bist der Gruppe "${group.name}" beigetreten.`);
       router.push(`/groups/${group.id}`);
     } catch (err) {
-      showErrorToast(err instanceof Error ? err.message : "Fehler beim Beitreten der Gruppe.");
+      showErrorToast(
+        err instanceof Error
+          ? err.message
+          : "Fehler beim Beitreten der Gruppe.",
+      );
       setJoining(false);
     }
   };
@@ -69,7 +75,8 @@ function JoinGroupPage() {
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-4">
         <p className="text-sm text-muted-foreground">
-          {preview.memberCount} {preview.memberCount === 1 ? "Mitglied" : "Mitglieder"}
+          {preview.memberCount}{" "}
+          {preview.memberCount === 1 ? "Mitglied" : "Mitglieder"}
         </p>
 
         {preview.alreadyMember ? (

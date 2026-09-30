@@ -30,7 +30,9 @@ const api = axios.create({
 api.interceptors.response.use((response) => {
   const contentType = String(response.headers["content-type"] ?? "");
   if (contentType.includes("text/html")) {
-    return Promise.reject(new Error("Unerwartete Antwort vom Server (HTML statt JSON)"));
+    return Promise.reject(
+      new Error("Unerwartete Antwort vom Server (HTML statt JSON)"),
+    );
   }
   return response;
 });

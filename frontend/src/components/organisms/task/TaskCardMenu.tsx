@@ -39,7 +39,8 @@ function TaskCardMenu({
 }: TaskCardMenuProps) {
   const { handleToggleAssign } = useTasksContext();
   const { user } = useAuth();
-  const isAssignedToMe = task.assignedMembers?.some((m) => m.id === user?.id) ?? false;
+  const isAssignedToMe =
+    task.assignedMembers?.some((m) => m.id === user?.id) ?? false;
   const {
     open,
     editOpen,
@@ -69,7 +70,11 @@ function TaskCardMenu({
   return (
     <>
       {editOpen && (
-        <EditTaskForm task={task} onClose={handleEditClose} onTaskUpdated={onTaskUpdated} />
+        <EditTaskForm
+          task={task}
+          onClose={handleEditClose}
+          onTaskUpdated={onTaskUpdated}
+        />
       )}
 
       <ConfirmDialog
@@ -116,21 +121,28 @@ function TaskCardMenu({
               <DropdownMenuItem onClick={handleToggleArchive}>
                 Aus Archiv Entfernen
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleRequestDelete} className="text-destructive">
+              <DropdownMenuItem
+                onClick={handleRequestDelete}
+                className="text-destructive"
+              >
                 Löschen
               </DropdownMenuItem>
             </>
           ) : (
             <>
               {canEdit && (
-                <DropdownMenuItem onClick={handleToggleEdit}>Bearbeiten</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleToggleEdit}>
+                  Bearbeiten
+                </DropdownMenuItem>
               )}
               {task.project && (
                 <DropdownMenuItem onClick={() => handleToggleAssign(task.id)}>
                   {isAssignedToMe ? "Zuweisung entfernen" : "Mir zuweisen"}
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem onClick={handleToggleArchive}>Archivieren</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleToggleArchive}>
+                Archivieren
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleRequestResetProgress}
                 disabled={!canResetProgress}

@@ -20,7 +20,11 @@ type AppBarProps = {
   showAddTaskButton?: boolean;
 };
 
-function AppBar({ title, isPrimaryRoute = false, showAddTaskButton = false }: AppBarProps) {
+function AppBar({
+  title,
+  isPrimaryRoute = false,
+  showAddTaskButton = false,
+}: AppBarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useAuth();

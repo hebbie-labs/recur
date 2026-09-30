@@ -13,13 +13,15 @@ import {
 } from "../types/auth";
 
 export async function register(
-  request: RegisterRequest
+  request: RegisterRequest,
 ): Promise<AuthResponse> {
   return await api
     .post("/auth/register", request)
     .then((response) => response.data as AuthResponse)
     .catch((error) => {
-      throw new Error(error?.response?.data?.message ?? "Registrierung fehlgeschlagen");
+      throw new Error(
+        error?.response?.data?.message ?? "Registrierung fehlgeschlagen",
+      );
     });
 }
 
@@ -28,45 +30,50 @@ export async function login(request: LoginRequest): Promise<AuthResponse> {
     .post("/auth/login", request)
     .then((response) => response.data as AuthResponse)
     .catch((error) => {
-      throw new Error(error?.response?.data?.message ?? "Anmeldung fehlgeschlagen");
+      throw new Error(
+        error?.response?.data?.message ?? "Anmeldung fehlgeschlagen",
+      );
     });
 }
 
 export async function resendVerification(
-  request: ResendVerificationRequest
+  request: ResendVerificationRequest,
 ): Promise<MessageResponse> {
   return await api
     .post("/auth/resend-verification", request)
     .then((response) => response.data as MessageResponse)
     .catch((error) => {
       throw new Error(
-        error?.response?.data?.message ?? "Bestätigungs-E-Mail konnte nicht erneut gesendet werden"
+        error?.response?.data?.message ??
+          "Bestätigungs-E-Mail konnte nicht erneut gesendet werden",
       );
     });
 }
 
 export async function forgotPassword(
-  request: ForgotPasswordRequest
+  request: ForgotPasswordRequest,
 ): Promise<MessageResponse> {
   return await api
     .post("/auth/forgot-password", request)
     .then((response) => response.data as MessageResponse)
     .catch((error) => {
       throw new Error(
-        error?.response?.data?.message ?? "Anfrage konnte nicht gesendet werden"
+        error?.response?.data?.message ??
+          "Anfrage konnte nicht gesendet werden",
       );
     });
 }
 
 export async function resetPassword(
-  request: ResetPasswordRequest
+  request: ResetPasswordRequest,
 ): Promise<MessageResponse> {
   return await api
     .post("/auth/reset-password", request)
     .then((response) => response.data as MessageResponse)
     .catch((error) => {
       throw new Error(
-        error?.response?.data?.message ?? "Passwort konnte nicht zurückgesetzt werden"
+        error?.response?.data?.message ??
+          "Passwort konnte nicht zurückgesetzt werden",
       );
     });
 }
@@ -78,7 +85,7 @@ export async function exchangeOAuth2Token(): Promise<AuthResponse> {
     .then((response) => response.data as AuthResponse)
     .catch((error) => {
       throw new Error(
-        error?.response?.data?.message ?? "Google-Login fehlgeschlagen"
+        error?.response?.data?.message ?? "Google-Login fehlgeschlagen",
       );
     });
 }
@@ -90,19 +97,22 @@ export async function getOAuth2Link(): Promise<OAuth2LinkInfo> {
     .then((response) => response.data as OAuth2LinkInfo)
     .catch((error) => {
       throw new Error(
-        error?.response?.data?.message ?? "Verknüpfungsanfrage konnte nicht geladen werden"
+        error?.response?.data?.message ??
+          "Verknüpfungsanfrage konnte nicht geladen werden",
       );
     });
 }
 
 /** Verknüpft die Provider-Identität mit dem bestehenden Account und startet die Session (Cookies setzt der Server). password nur, wenn der Account eins hat. */
-export async function confirmOAuth2Link(password?: string): Promise<AuthResponse> {
+export async function confirmOAuth2Link(
+  password?: string,
+): Promise<AuthResponse> {
   return await api
     .post("/auth/oauth2/link/confirm", { password: password ?? null })
     .then((response) => response.data as AuthResponse)
     .catch((error) => {
       throw new Error(
-        error?.response?.data?.message ?? "Verknüpfung fehlgeschlagen"
+        error?.response?.data?.message ?? "Verknüpfung fehlgeschlagen",
       );
     });
 }
@@ -113,13 +123,16 @@ export async function declineOAuth2Link(): Promise<void> {
 }
 
 /** Setzt erstmals ein Passwort für einen Account, der bisher nur über Google/GitHub angemeldet war (#236). */
-export async function setPassword(request: SetPasswordRequest): Promise<UserResponse> {
+export async function setPassword(
+  request: SetPasswordRequest,
+): Promise<UserResponse> {
   return await api
     .post("/auth/me/password", request)
     .then((response) => response.data as UserResponse)
     .catch((error) => {
       throw new Error(
-        error?.response?.data?.message ?? "Passwort konnte nicht gesetzt werden"
+        error?.response?.data?.message ??
+          "Passwort konnte nicht gesetzt werden",
       );
     });
 }
@@ -142,7 +155,7 @@ export async function getCurrentUser(): Promise<UserResponse> {
     .then((response) => response.data as UserResponse)
     .catch((error) => {
       throw new Error(
-        error?.response?.data?.message ?? "Fehler beim Laden der Benutzerdaten"
+        error?.response?.data?.message ?? "Fehler beim Laden der Benutzerdaten",
       );
     });
 }
@@ -157,7 +170,8 @@ export function patchUser(user: Partial<UserResponse>): Promise<UserResponse> {
     .then((response) => response.data as UserResponse)
     .catch((error) => {
       throw new Error(
-        error?.response?.data?.message ?? "Fehler beim Aktualisieren des Benutzers"
+        error?.response?.data?.message ??
+          "Fehler beim Aktualisieren des Benutzers",
       );
     });
 }
@@ -168,13 +182,18 @@ export function deleteCurrentUser(): Promise<void> {
     .then(() => undefined)
     .catch((error) => {
       throw new Error(
-        error?.response?.data?.message ?? "Fehler beim Löschen des Kontos"
+        error?.response?.data?.message ?? "Fehler beim Löschen des Kontos",
       );
     });
 }
 
 /** A 401 from any endpoint other than login/register means our token is missing, expired, or invalid - send the user through /logout (same transitional-page pattern as OAuthCallbackPage) instead of leaving the app half-authenticated with no explanation (#145). */
-const AUTH_ENDPOINTS = ["/auth/login", "/auth/register", "/auth/me", "/auth/oauth2/link"];
+const AUTH_ENDPOINTS = [
+  "/auth/login",
+  "/auth/register",
+  "/auth/me",
+  "/auth/oauth2/link",
+];
 
 // Endpunkte, für die ein 401 nie einen Silent-Refresh auslösen soll -
 // login/register/oauth2/link haben naturgemäss noch keinen Access-Token (ein
@@ -226,7 +245,12 @@ api.interceptors.response.use(
     // mitgeschickt - hier muss nichts mehr manuell an den Request gehängt
     // werden. Mehrere gleichzeitige 401s teilen sich denselben Refresh-Aufruf
     // (refreshPromise).
-    if (status === 401 && !isRefreshExempt && originalRequest && !originalRequest._retry) {
+    if (
+      status === 401 &&
+      !isRefreshExempt &&
+      originalRequest &&
+      !originalRequest._retry
+    ) {
       originalRequest._retry = true;
       try {
         if (!refreshPromise) {
@@ -293,5 +317,5 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );

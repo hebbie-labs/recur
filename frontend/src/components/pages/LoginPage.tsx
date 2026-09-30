@@ -17,7 +17,8 @@ const loginSchema = yup.object().shape({
 
 function LoginPage() {
   const router = useRouter();
-  const { handleSubmit, submitDisabled, loading, backendError } = useLoginForm();
+  const { handleSubmit, submitDisabled, loading, backendError } =
+    useLoginForm();
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center bg-background w-full h-full px-4 py-8">

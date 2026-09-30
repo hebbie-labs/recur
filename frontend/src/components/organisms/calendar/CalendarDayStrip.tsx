@@ -11,7 +11,11 @@ type CalendarDayStripProps = {
 
 /** Proton-Calendar-artiger Wochentag-Streifen fürs Mobile-Wochenansicht: eine
  * Zeile mit den 7 Tagen der Woche, Tap wechselt den unten angezeigten Tag. */
-function CalendarDayStrip({ days, selectedDate, onSelectDay }: CalendarDayStripProps) {
+function CalendarDayStrip({
+  days,
+  selectedDate,
+  onSelectDay,
+}: CalendarDayStripProps) {
   return (
     <div className="grid grid-cols-7 gap-1">
       {days.map((day) => {
@@ -24,7 +28,7 @@ function CalendarDayStrip({ days, selectedDate, onSelectDay }: CalendarDayStripP
             onClick={() => onSelectDay(day.date)}
             className={cn(
               "flex flex-col items-center gap-1 rounded-lg py-1.5 transition-colors hover:bg-accent/40",
-              isSelected && "ring-1 ring-primary"
+              isSelected && "ring-1 ring-primary",
             )}
           >
             <span className="text-[10px] font-medium text-muted-foreground">
@@ -35,7 +39,7 @@ function CalendarDayStrip({ days, selectedDate, onSelectDay }: CalendarDayStripP
                 "flex size-7 items-center justify-center rounded-full text-sm font-semibold tabular-nums",
                 day.isToday
                   ? "bg-primary text-primary-foreground"
-                  : "text-foreground"
+                  : "text-foreground",
               )}
             >
               {format(day.date, "d")}

@@ -11,9 +11,7 @@ function ImpressumPage() {
       </p>
 
       <section className="flex flex-col gap-2">
-        <h2 className="text-base font-semibold text-foreground">
-          Anbieter
-        </h2>
+        <h2 className="text-base font-semibold text-foreground">Anbieter</h2>
         <p>
           Leon Hebeisen
           <br />
@@ -38,17 +36,17 @@ function ImpressumPage() {
           Der Autor übernimmt keinerlei Gewähr hinsichtlich der inhaltlichen
           Richtigkeit, Genauigkeit, Aktualität, Zuverlässigkeit und
           Vollständigkeit der Informationen auf dieser Website.
-          Haftungsansprüche gegen den Anbieter wegen Schäden materieller
-          oder immaterieller Art, welche aus dem Zugriff oder der Nutzung
-          bzw. Nichtnutzung der veröffentlichten Informationen, durch
-          Missbrauch der Verbindung oder durch technische Störungen
-          entstanden sind, werden ausgeschlossen.
+          Haftungsansprüche gegen den Anbieter wegen Schäden materieller oder
+          immaterieller Art, welche aus dem Zugriff oder der Nutzung bzw.
+          Nichtnutzung der veröffentlichten Informationen, durch Missbrauch der
+          Verbindung oder durch technische Störungen entstanden sind, werden
+          ausgeschlossen.
         </p>
         <p>
           Alle Angebote sind unverbindlich. Der Anbieter behält es sich
           ausdrücklich vor, Teile der Seiten oder das gesamte Angebot ohne
-          gesonderte Ankündigung zu verändern, zu ergänzen, zu löschen oder
-          die Veröffentlichung zeitweise oder endgültig einzustellen.
+          gesonderte Ankündigung zu verändern, zu ergänzen, zu löschen oder die
+          Veröffentlichung zeitweise oder endgültig einzustellen.
         </p>
       </section>
 
@@ -69,11 +67,11 @@ function ImpressumPage() {
           Urheberrechte
         </h2>
         <p>
-          Die Urheber- und alle anderen Rechte an Inhalten, Bildern, Fotos
-          oder anderen Dateien auf dieser Website gehören ausschliesslich
-          Leon Hebeisen oder den speziell genannten Rechteinhabern. Für die
-          Reproduktion jeglicher Elemente ist die schriftliche Zustimmung
-          des Urheberrechtsträgers im Voraus einzuholen.
+          Die Urheber- und alle anderen Rechte an Inhalten, Bildern, Fotos oder
+          anderen Dateien auf dieser Website gehören ausschliesslich Leon
+          Hebeisen oder den speziell genannten Rechteinhabern. Für die
+          Reproduktion jeglicher Elemente ist die schriftliche Zustimmung des
+          Urheberrechtsträgers im Voraus einzuholen.
         </p>
       </section>
 

@@ -35,14 +35,24 @@ function CreateGroupDialog({ onClose, onCreated }: CreateGroupDialogProps) {
           onClose();
         } catch (err) {
           showErrorToast(
-            err instanceof Error ? err.message : "Fehler beim Erstellen der Gruppe."
+            err instanceof Error
+              ? err.message
+              : "Fehler beim Erstellen der Gruppe.",
           );
         } finally {
           setSubmitting(false);
         }
       }}
     >
-      {({ values, handleChange, handleBlur, handleSubmit, errors, touched, isSubmitting }) => (
+      {({
+        values,
+        handleChange,
+        handleBlur,
+        handleSubmit,
+        errors,
+        touched,
+        isSubmitting,
+      }) => (
         <AppDialog
           open
           onClose={onClose}

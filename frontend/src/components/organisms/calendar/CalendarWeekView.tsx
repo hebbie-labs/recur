@@ -15,7 +15,7 @@ const START_HOUR = 8;
 const END_HOUR = 24;
 const HOURS = Array.from(
   { length: END_HOUR - START_HOUR },
-  (_, i) => i + START_HOUR
+  (_, i) => i + START_HOUR,
 );
 
 type CalendarWeekViewProps = {
@@ -29,7 +29,8 @@ type CalendarWeekViewProps = {
 // START_HOUR:00-:15, so a time's grid row is its quarter-hour offset + 2.
 function getTaskPosition(task: Task) {
   const taskDate = new Date(task.startTime ?? task.dateCreated);
-  const hoursFromStart = taskDate.getHours() - START_HOUR + taskDate.getMinutes() / 60;
+  const hoursFromStart =
+    taskDate.getHours() - START_HOUR + taskDate.getMinutes() / 60;
 
   const startRow = Math.max(2, Math.floor(hoursFromStart * 4) + 2);
   const rowSpan = Math.max(1, Math.ceil((task.durationMinutes || 15) / 15));
@@ -125,7 +126,7 @@ function CalendarWeekView({
             key={day.date.toISOString()}
             className={cn(
               "sticky top-0 z-20 border-b border-l border-border/70 bg-background py-2 text-center first:border-l-0",
-              day.isToday && "bg-primary/[0.04]"
+              day.isToday && "bg-primary/[0.04]",
             )}
             style={{ gridColumn: index + 2, gridRow: 1 }}
           >
@@ -137,7 +138,7 @@ function CalendarWeekView({
                 "mx-auto mt-0.5 flex size-6 items-center justify-center rounded-full text-sm tabular-nums",
                 day.isToday
                   ? "bg-primary font-semibold text-primary-foreground"
-                  : "text-foreground"
+                  : "text-foreground",
               )}
             >
               {format(day.date, "d")}
@@ -159,7 +160,10 @@ function CalendarWeekView({
                 <div
                   key={`${day.date.toISOString()}-${hour}`}
                   onClick={() => onSelectSlot(day.date, hour)}
-                  style={{ gridColumn: dayIdx + 2, gridRow: `${rowIndex} / span 4` }}
+                  style={{
+                    gridColumn: dayIdx + 2,
+                    gridRow: `${rowIndex} / span 4`,
+                  }}
                   className="cursor-pointer border-t border-l border-border/50 first:border-l-0 hover:bg-accent/40"
                 />
               ))}
@@ -182,7 +186,7 @@ function CalendarWeekView({
                 <div className="absolute -left-1 top-0 size-2 -translate-y-1/2 rounded-full bg-destructive" />
                 <div className="border-t-2 border-destructive" />
               </div>
-            ) : null
+            ) : null,
           )}
 
         {days.map((day, dayIdx) => {
@@ -192,7 +196,10 @@ function CalendarWeekView({
 
           return dayTasks.map((task) => {
             const { startRow, rowSpan } = getTaskPosition(task);
-            const { lane, laneCount } = lanesByTaskId.get(task.id) ?? { lane: 0, laneCount: 1 };
+            const { lane, laneCount } = lanesByTaskId.get(task.id) ?? {
+              lane: 0,
+              laneCount: 1,
+            };
             const widthPercent = 100 / laneCount;
 
             return (
@@ -212,7 +219,7 @@ function CalendarWeekView({
                 className={cn(
                   "cursor-pointer overflow-hidden truncate rounded-md border-l-[3px] bg-card px-1.5 py-0.5 text-[10px] font-medium text-foreground shadow-xs transition-shadow hover:shadow-sm",
                   categoryBorder[task.category],
-                  isOverdueOccurrence(task, day.date, now) && overdueEntryClass
+                  isOverdueOccurrence(task, day.date, now) && overdueEntryClass,
                 )}
                 title={task.name}
               >

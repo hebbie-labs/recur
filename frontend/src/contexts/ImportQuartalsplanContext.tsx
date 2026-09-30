@@ -32,9 +32,7 @@ export function ImportQuartalsplanProvider({
   return (
     <ImportQuartalsplanContext.Provider value={{ openImportQuartalsplan }}>
       {children}
-      {showImportDialog && (
-        <ImportQuartalsplanDialog onClose={handleClose} />
-      )}
+      {showImportDialog && <ImportQuartalsplanDialog onClose={handleClose} />}
     </ImportQuartalsplanContext.Provider>
   );
 }
@@ -43,7 +41,7 @@ export function useImportQuartalsplan() {
   const ctx = useContext(ImportQuartalsplanContext);
   if (!ctx) {
     throw new Error(
-      "useImportQuartalsplan muss innerhalb von ImportQuartalsplanProvider verwendet werden"
+      "useImportQuartalsplan muss innerhalb von ImportQuartalsplanProvider verwendet werden",
     );
   }
   return ctx;

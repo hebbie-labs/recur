@@ -9,7 +9,9 @@ function useDateField(name: string) {
   const [open, setOpen] = useState(false);
   const hasOpenedRef = useRef(false);
 
-  const dateValue = field.value ? new Date(`${field.value}T00:00:00`) : undefined;
+  const dateValue = field.value
+    ? new Date(`${field.value}T00:00:00`)
+    : undefined;
   const showError = meta.touched && !!meta.error;
   const errorMessage = meta.error;
 
@@ -35,7 +37,14 @@ function useDateField(name: string) {
     }
   };
 
-  return { dateValue, showError, errorMessage, open, handleSelect, handleOpenChange };
+  return {
+    dateValue,
+    showError,
+    errorMessage,
+    open,
+    handleSelect,
+    handleOpenChange,
+  };
 }
 
 export default useDateField;

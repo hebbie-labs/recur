@@ -43,8 +43,8 @@ function PrivacyForm({ values, disabled, onFieldChange }: PrivacyFormProps) {
           <FieldTitle>Nutzungsdaten teilen</FieldTitle>
           <FieldDescription>
             Reserviert deine Präferenz für anonymisierte Nutzungsdaten zur
-            Verbesserung der App. Diese Funktion ist aktuell noch nicht
-            aktiv, wir erfassen derzeit keine solchen Daten.
+            Verbesserung der App. Diese Funktion ist aktuell noch nicht aktiv,
+            wir erfassen derzeit keine solchen Daten.
           </FieldDescription>
         </FieldContent>
         <Switch

@@ -6,7 +6,9 @@ function SettingsSectionPage() {
   const { section: sectionId } = useParams<{ section: string }>();
   // "legal" hat auf Mobile keine eigene Zwischenseite - die Rows in
   // SettingsPage.tsx verlinken dafür direkt auf /impressum, /datenschutz, /agb.
-  const section = SETTINGS_SECTIONS.find((s) => s.id === sectionId && s.id !== "legal");
+  const section = SETTINGS_SECTIONS.find(
+    (s) => s.id === sectionId && s.id !== "legal",
+  );
 
   if (!section) {
     redirect("/settings");

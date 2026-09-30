@@ -18,20 +18,26 @@ export function getPrivacySettings(): Promise<PrivacySettings> {
     .then((response) => response.data as PrivacySettings)
     .catch((err) => {
       throw new Error(
-        extractErrorMessage(err, "Fehler beim Laden der Privatsphäre-Einstellungen")
+        extractErrorMessage(
+          err,
+          "Fehler beim Laden der Privatsphäre-Einstellungen",
+        ),
       );
     });
 }
 
 export function updatePrivacySettings(
-  update: Partial<PrivacySettings>
+  update: Partial<PrivacySettings>,
 ): Promise<PrivacySettings> {
   return api
     .patch("/auth/me/privacy-settings", update)
     .then((response) => response.data as PrivacySettings)
     .catch((err) => {
       throw new Error(
-        extractErrorMessage(err, "Fehler beim Aktualisieren der Privatsphäre-Einstellungen")
+        extractErrorMessage(
+          err,
+          "Fehler beim Aktualisieren der Privatsphäre-Einstellungen",
+        ),
       );
     });
 }
