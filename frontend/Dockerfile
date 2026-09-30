@@ -24,6 +24,9 @@ COPY --from=build-stage /app/.next/static ./.next/static
 COPY --from=build-stage /app/public ./public
 EXPOSE 3000
 ENV PORT=3000
+# Docker sets HOSTNAME to the container id, which server.js would bind to - a
+# single IP, unreachable from the other network (cloudflared -> 502).
+ENV HOSTNAME=0.0.0.0
 # Which backend to proxy /api, /oauth2, /login/oauth2 to - overridden per
 # environment (backend-dev / backend-prod) via the container's BACKEND_URL
 # env var, e.g. http://backend-prod:8080. Falls back to localhost:8080 if
