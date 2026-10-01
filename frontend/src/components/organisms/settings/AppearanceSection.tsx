@@ -1,5 +1,6 @@
 import { Moon, Palette, Sun } from "lucide-react";
 import useDarkMode from "@/hooks/useDarkMode";
+import InstallAppCard from "@/components/organisms/settings/InstallAppCard";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -45,6 +46,8 @@ function AppearanceSection() {
           </Button>
         </CardContent>
       </Card>
+
+      <InstallAppCard />
 
       <Empty>
         <EmptyHeader>
