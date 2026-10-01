@@ -1,0 +1,17 @@
+{
+  "name": "desktop",
+  "version": "1.0.0",
+  "main": "dist/main.js",
+  "env": {
+    "RECUR_URL": "http://localhost:3000"
+  },
+  "scripts": {
+    "start": "tsc && electron ."
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "electron": "^44.5.1",
+    "typescript": "^7.0.2"
+  }
+}
