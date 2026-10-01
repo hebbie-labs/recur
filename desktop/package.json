@@ -1,26 +1,36 @@
 {
-  "name": "desktop",
+  "productName": "Recur",
+  "name": "recur-desktop",
   "version": "1.0.0",
+  "description": "Recur Desktop Application",
+  "icon": "icon.png",
+  "author": "HebbieLabs",
   "main": "dist/main.js",
   "files": [
     "dist/"
   ],
-  "webPreferences": {
-    "nodeIntegration": false,
-    "contextIsolation": true,
-    "sandbox": true,
-    "preload": "dist/preload.js"
-  },
-  "env": {
-    "RECUR_URL": "http://localhost:3000"
-  },
   "scripts": {
-    "start": "tsc && electron ."
+    "start": "tsc && electron .",
+    "dist": "tsc && electron-builder"
+  },
+  "build": {
+    "appId": "com.hebbielabs.recur",
+    "productName": "Recur",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*"
+    ],
+    "win": {
+      "target": "nsis"
+    }
   },
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^26.6.3",
     "electron": "^44.5.1",
+    "electron-builder": "^26.15.3",
     "typescript": "^7.0.2"
   }
 }

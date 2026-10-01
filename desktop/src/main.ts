@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, shell } from "electron";
 import path from "node:path";
 
 const APP_URL = process.env.RECUR_URL ?? "http://localhost:3000";
@@ -11,14 +11,15 @@ function isInternal(url: string): boolean {
     return false;
   }
 }
+
 function openExternal(url: string): void {
   try {
     const { protocol } = new URL(url);
     if (protocol === "https:" || protocol === "mailto:") {
-      require("electron").shell.openExternal(url);
+      shell.openExternal(url);
     }
   } catch {
-    console.error("Error opening external URL:", url);
+    // ungültige URL: ignorieren
   }
 }
 
