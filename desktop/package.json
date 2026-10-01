@@ -2,6 +2,15 @@
   "name": "desktop",
   "version": "1.0.0",
   "main": "dist/main.js",
+  "files": [
+    "dist/"
+  ],
+  "webPreferences": {
+    "nodeIntegration": false,
+    "contextIsolation": true,
+    "sandbox": true,
+    "preload": "dist/preload.js"
+  },
   "env": {
     "RECUR_URL": "http://localhost:3000"
   },
