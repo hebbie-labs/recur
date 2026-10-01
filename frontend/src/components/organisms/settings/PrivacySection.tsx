@@ -34,7 +34,7 @@ function PrivacySection({ initialSettings }: PrivacySectionProps) {
       setError(
         error instanceof Error
           ? error.message
-          : "Unbekannter Fehler beim Aktualisieren der Privatsphäre-Einstellungen"
+          : "Unbekannter Fehler beim Aktualisieren der Privatsphäre-Einstellungen",
       );
     } finally {
       setSaving(false);
@@ -51,7 +51,7 @@ function PrivacySection({ initialSettings }: PrivacySectionProps) {
       setDeleteError(
         error instanceof Error
           ? error.message
-          : "Unbekannter Fehler beim Löschen des Kontos"
+          : "Unbekannter Fehler beim Löschen des Kontos",
       );
       setDeleting(false);
     }

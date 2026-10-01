@@ -10,7 +10,9 @@ const RECURRING_FREQUENCIES: string[] = [
 ];
 
 function isRecurring(frequency: unknown): boolean {
-  return typeof frequency === "string" && RECURRING_FREQUENCIES.includes(frequency);
+  return (
+    typeof frequency === "string" && RECURRING_FREQUENCIES.includes(frequency)
+  );
 }
 
 // Gemeinsame Feld-Validatoren für Add- und Edit-Formular - beide Formulare
@@ -51,7 +53,7 @@ const dateUntilSchema = yup
       const startDate = this.parent.startDate;
       if (!value || !startDate) return true;
       return value.getTime() >= startDate.getTime();
-    }
+    },
   );
 
 // Leere Strings müssen explizit auf null transformiert werden: Yups
@@ -73,7 +75,7 @@ const startDateSchema = yup
     (value) => {
       if (!value) return true;
       return toDateOnlyString(value) >= toDateOnlyString(new Date());
-    }
+    },
   );
 
 const startTimeOfDaySchema = yup
@@ -82,7 +84,7 @@ const startTimeOfDaySchema = yup
   .test(
     "time-format",
     "Ungültiges Zeitformat (Format muss HH:mm sein)",
-    (value) => !value || /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(value)
+    (value) => !value || /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(value),
   );
 
 const projectIdSchema = yup.string();

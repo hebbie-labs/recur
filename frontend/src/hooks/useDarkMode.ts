@@ -8,7 +8,9 @@ function useDarkMode() {
   // this replaces). typeof-guard keeps this safe if ever rendered ahead of
   // that script for some reason (e.g. during SSR).
   const [isDark, setIsDark] = useState(
-    () => typeof document !== "undefined" && document.documentElement.classList.contains("dark")
+    () =>
+      typeof document !== "undefined" &&
+      document.documentElement.classList.contains("dark"),
   );
 
   const toggleDark = (pressed: boolean) => {

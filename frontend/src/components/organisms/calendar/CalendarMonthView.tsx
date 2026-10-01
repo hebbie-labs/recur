@@ -7,11 +7,14 @@ import {
   sortByStartTime,
   categoryDot,
   categoryBorder,
+  isOverdueOccurrence,
+  overdueEntryClass,
   type CalendarDay,
   type CalendarWeek,
 } from "@/utils/calendarGrid";
 import { cn } from "@/lib/utils";
 import DetailDialog from "@/components/molecules/dialog/DetailDialog";
+import useNow from "@/hooks/useNow";
 
 const WEEKDAY_LABELS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 const MAX_VISIBLE_TASKS = 3;
@@ -36,6 +39,7 @@ function CalendarMonthView({
   compact = false,
 }: CalendarMonthViewProps) {
   const [dayListDate, setDayListDate] = useState<Date | null>(null);
+  const now = useNow();
 
   const dayListTasks = dayListDate
     ? sortByStartTime(tasks.filter((task) => occursOn(task, dayListDate)))
@@ -44,7 +48,12 @@ function CalendarMonthView({
   return (
     <div className="overflow-hidden rounded-xl border border-border">
       <div className="flex">
-        <div className={cn(WEEK_COLUMN_WIDTH, "shrink-0 border-r border-b border-border/70")} />
+        <div
+          className={cn(
+            WEEK_COLUMN_WIDTH,
+            "shrink-0 border-r border-b border-border/70",
+          )}
+        />
         <div className="grid flex-1 grid-cols-7">
           {WEEKDAY_LABELS.map((label) => (
             <div
@@ -74,7 +83,7 @@ function CalendarMonthView({
           <div className="grid flex-1 grid-cols-7">
             {week.days.map((day) => {
               const dayTasks = sortByStartTime(
-                tasks.filter((task) => occursOn(task, day.date))
+                tasks.filter((task) => occursOn(task, day.date)),
               );
               const visibleTasks = dayTasks.slice(0, MAX_VISIBLE_TASKS);
               const overflowCount = dayTasks.length - visibleTasks.length;
@@ -86,7 +95,7 @@ function CalendarMonthView({
                   className={cn(
                     "group flex cursor-pointer flex-col gap-1 border-r border-b border-border/70 p-2 transition-colors last:border-r-0 hover:bg-accent/40",
                     compact ? "min-h-9 items-center py-1.5" : "min-h-28",
-                    day.isToday && "bg-primary/[0.04]"
+                    day.isToday && "bg-primary/[0.04]",
                   )}
                 >
                   <span
@@ -96,8 +105,8 @@ function CalendarMonthView({
                       day.isToday
                         ? "bg-primary font-semibold text-primary-foreground"
                         : day.isCurrentMonth
-                        ? "text-foreground"
-                        : "text-muted-foreground/50"
+                          ? "text-foreground"
+                          : "text-muted-foreground/50",
                     )}
                   >
                     {format(day.date, "d")}
@@ -105,7 +114,14 @@ function CalendarMonthView({
 
                   {compact ? (
                     dayTasks.length > 0 && (
-                      <span className="size-1 rounded-full bg-muted-foreground/60" />
+                      <span
+                        className={cn(
+                          "size-1 rounded-full bg-muted-foreground/60",
+                          dayTasks.some((task) =>
+                            isOverdueOccurrence(task, day.date, now),
+                          ) && "bg-destructive",
+                        )}
+                      />
                     )
                   ) : (
                     <div className="flex flex-col gap-1">
@@ -119,7 +135,9 @@ function CalendarMonthView({
                           title={task.name}
                           className={cn(
                             "cursor-pointer truncate rounded-md border-l-[3px] bg-card px-1.5 py-0.5 text-[11px] font-medium text-foreground shadow-xs transition-shadow hover:shadow-sm",
-                            categoryBorder[task.category]
+                            categoryBorder[task.category],
+                            isOverdueOccurrence(task, day.date, now) &&
+                              overdueEntryClass,
                           )}
                         >
                           {task.name}
@@ -163,10 +181,18 @@ function CalendarMonthView({
                 setDayListDate(null);
                 onSelectTask(task);
               }}
-              className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-accent"
+              className={cn(
+                "flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-accent",
+                dayListDate &&
+                  isOverdueOccurrence(task, dayListDate, now) &&
+                  "text-destructive",
+              )}
             >
               <span
-                className={cn("size-2 shrink-0 rounded-full", categoryDot[task.category])}
+                className={cn(
+                  "size-2 shrink-0 rounded-full",
+                  categoryDot[task.category],
+                )}
               />
               <span className="truncate">{task.name}</span>
             </div>

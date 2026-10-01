@@ -4,7 +4,11 @@ type ProgressIndicatorProps = {
   strokeWidth?: number;
 };
 
-function ProgressIndicator({ value, size = 44, strokeWidth = 4 }: ProgressIndicatorProps) {
+function ProgressIndicator({
+  value,
+  size = 44,
+  strokeWidth = 4,
+}: ProgressIndicatorProps) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const clamped = Math.min(100, Math.max(0, value));
@@ -21,7 +25,14 @@ function ProgressIndicator({ value, size = 44, strokeWidth = 4 }: ProgressIndica
       aria-label="Fortschritt"
     >
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" strokeWidth={strokeWidth} className="stroke-muted" />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          strokeWidth={strokeWidth}
+          className="stroke-muted"
+        />
         <circle
           cx={size / 2}
           cy={size / 2}

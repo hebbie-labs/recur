@@ -1,5 +1,9 @@
 import { useEffect, type ChangeEvent, type FocusEvent } from "react";
-import { useFormikContext, type FormikErrors, type FormikTouched } from "formik";
+import {
+  useFormikContext,
+  type FormikErrors,
+  type FormikTouched,
+} from "formik";
 import { TaskFrequency, type TaskCategory } from "@/types/task";
 import FormTextField from "@/components/molecules/form/FormTextField";
 import FormTextAreaField from "@/components/molecules/form/FormTextAreaField";
@@ -44,7 +48,9 @@ function fieldErrorProps<K extends keyof FormValues>({
   const error = !!touched[name] && !!errors[name];
   return {
     error,
-    helperText: touched[name] ? (errors[name] as string | undefined) : undefined,
+    helperText: touched[name]
+      ? (errors[name] as string | undefined)
+      : undefined,
   };
 }
 
@@ -53,10 +59,10 @@ type BasicsFieldsProps = {
   errors: FormikErrors<FormValues>;
   touched: FormikTouched<FormValues>;
   handleChange: (
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => void;
   handleBlur: (
-    event: FocusEvent<HTMLInputElement | HTMLTextAreaElement>
+    event: FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => void;
   autoFocusName?: boolean;
 };
@@ -118,7 +124,7 @@ export function TaskDetailFields({ values }: DetailFieldsProps) {
     setFieldValue("startDate", toDateOnlyString(rounded));
     setFieldValue(
       "startTimeOfDay",
-      `${pad(rounded.getHours())}:${pad(rounded.getMinutes())}`
+      `${pad(rounded.getHours())}:${pad(rounded.getMinutes())}`,
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [values.frequency]);

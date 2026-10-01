@@ -20,7 +20,9 @@ const DEFAULT_LABEL = "Standard (aus Einstellungen)";
 function FormReminderLeadTimeField() {
   const uid = useId();
   const fieldId = `reminder-lead-time-${uid}`;
-  const [field, , helpers] = useField<ReminderLeadTime | "">("reminderLeadTime");
+  const [field, , helpers] = useField<ReminderLeadTime | "">(
+    "reminderLeadTime",
+  );
 
   return (
     <Field>
@@ -30,7 +32,9 @@ function FormReminderLeadTimeField() {
       <Select
         value={field.value || "DEFAULT"}
         onValueChange={(value) =>
-          helpers.setValue(value === "DEFAULT" ? "" : (value as ReminderLeadTime))
+          helpers.setValue(
+            value === "DEFAULT" ? "" : (value as ReminderLeadTime),
+          )
         }
       >
         <SelectTrigger id={fieldId}>
@@ -38,7 +42,8 @@ function FormReminderLeadTimeField() {
             {(value: string) =>
               value === "DEFAULT" || !value
                 ? DEFAULT_LABEL
-                : LEAD_TIME_OPTIONS.find((option) => option.value === value)?.label
+                : LEAD_TIME_OPTIONS.find((option) => option.value === value)
+                    ?.label
             }
           </SelectValue>
         </SelectTrigger>

@@ -91,7 +91,7 @@ function extractKwFromText(text: string): number | null {
 
 function buildRowsFromCells(
   columnOrder: (HeaderKey | null)[],
-  dataRows: string[][]
+  dataRows: string[][],
 ): QuartalsplanRow[] {
   const isKompetenzFormat = columnOrder.includes("kompetenzabnahme");
   const rows: QuartalsplanRow[] = [];
@@ -160,14 +160,17 @@ function parseHtmlTable(html: string): QuartalsplanRow[] {
 
   const dataTrs = hasRecognizedHeader ? trs.slice(1) : trs;
   const dataRows = dataTrs.map((tr) =>
-    Array.from(tr.querySelectorAll("td, th")).map(cellText)
+    Array.from(tr.querySelectorAll("td, th")).map(cellText),
   );
 
   return buildRowsFromCells(columnOrder, dataRows);
 }
 
 function parsePlainTextTable(text: string): QuartalsplanRow[] {
-  const lines = text.split("\n").map((l) => l.trimEnd()).filter((l) => l.trim());
+  const lines = text
+    .split("\n")
+    .map((l) => l.trimEnd())
+    .filter((l) => l.trim());
   if (lines.length === 0) return [];
 
   const headerCells = lines[0].split("\t");
@@ -185,7 +188,7 @@ function parsePlainTextTable(text: string): QuartalsplanRow[] {
 
 export function parseClipboardTable(
   html: string | null,
-  text: string | null
+  text: string | null,
 ): QuartalsplanRow[] {
   if (html) {
     const rows = parseHtmlTable(html);
@@ -239,7 +242,7 @@ function isPastOrToday(date: Date): boolean {
 
 function draftFromDate(
   date: Date,
-  dateSource: "explicit" | "computed"
+  dateSource: "explicit" | "computed",
 ): Pick<DraftTask, "dateUntil" | "dateSource" | "selected" | "warning"> {
   const past = isPastOrToday(date);
   return {
@@ -258,7 +261,7 @@ function nextDraftId(): string {
 
 export function buildDraftTasks(
   rows: QuartalsplanRow[],
-  referenceYear: number
+  referenceYear: number,
 ): DraftTask[] {
   const drafts: DraftTask[] = [];
 
@@ -278,7 +281,7 @@ export function buildDraftTasks(
         name: truncate(row.pruefungen, NAME_MAX),
         description: truncate(
           [row.modul, `KW ${row.kw}`].filter(Boolean).join(" · "),
-          DESCRIPTION_MAX
+          DESCRIPTION_MAX,
         ),
         dateUntil,
         dateSource,
@@ -313,13 +316,13 @@ export function buildDraftTasks(
 /** Recomputes dateUntil for drafts whose date came from a KW fallback (not explicit text), leaving explicit dates untouched. */
 export function recomputeComputedDates(
   drafts: DraftTask[],
-  referenceYear: number
+  referenceYear: number,
 ): DraftTask[] {
   return drafts.map((draft) => {
     if (draft.dateSource !== "computed") return draft;
     const { dateUntil, selected, warning } = draftFromDate(
       fridayOfIsoWeek(draft.kw, referenceYear),
-      "computed"
+      "computed",
     );
     return { ...draft, dateUntil, selected, warning };
   });

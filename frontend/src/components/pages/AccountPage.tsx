@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import LoadingButton from "@/components/atoms/loading/LoadingButton";
 import AccountForm from "@/components/organisms/settings/AccountForm";
+import SetPasswordForm from "@/components/organisms/settings/SetPasswordForm";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 
@@ -37,7 +38,7 @@ function AccountPage() {
 
   const handleSubmit = async (
     values: Partial<User>,
-    { resetForm }: FormikHelpers<Partial<User>>
+    { resetForm }: FormikHelpers<Partial<User>>,
   ) => {
     setError(null);
     setSaving(true);
@@ -54,7 +55,7 @@ function AccountPage() {
       setError(
         err instanceof Error
           ? err.message
-          : "Unbekannter Fehler beim Bearbeiten des Accounts"
+          : "Unbekannter Fehler beim Bearbeiten des Accounts",
       );
     } finally {
       setSaving(false);
@@ -114,6 +115,22 @@ function AccountPage() {
           </>
         )}
       </Formik>
+
+      {/* Dauerhafter Ort für das Passwort, falls die Erinnerung (SetPasswordReminderDialog) weggeklickt wurde (#236). */}
+      {!user.hasPassword && (
+        <>
+          <Separator className="my-6" />
+          <section className="flex flex-col gap-3">
+            <div>
+              <h2 className="text-base font-semibold">Passwort setzen</h2>
+              <p className="text-sm text-muted-foreground">
+                Damit du dich auch mit deiner E-Mail anmelden kannst.
+              </p>
+            </div>
+            <SetPasswordForm />
+          </section>
+        </>
+      )}
 
       {isMobile && (
         <>

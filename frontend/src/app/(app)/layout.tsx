@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import ProtectedRoute from "@/components/organisms/ProtectedRoute";
 import DefaultLayout from "@/components/templates/DefaultLayout";
+import SetPasswordReminderDialog from "@/components/organisms/dialogs/SetPasswordReminderDialog";
 import { SETTINGS_SECTIONS } from "@/components/organisms/settings/settingsSections";
 
 function getPageTitle(pathname: string): string {
@@ -17,7 +18,10 @@ function getPageTitle(pathname: string): string {
   if (pathname === "/settings") return "Einstellungen";
   if (pathname.startsWith("/settings/")) {
     const sectionId = pathname.slice("/settings/".length);
-    return SETTINGS_SECTIONS.find((s) => s.id === sectionId)?.label ?? "Einstellungen";
+    return (
+      SETTINGS_SECTIONS.find((s) => s.id === sectionId)?.label ??
+      "Einstellungen"
+    );
   }
   if (pathname === "/account") return "Account";
   return "";
@@ -31,6 +35,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <DefaultLayout pageTitle={getPageTitle(pathname)}>
         {children}
       </DefaultLayout>
+      <SetPasswordReminderDialog />
     </ProtectedRoute>
   );
 }

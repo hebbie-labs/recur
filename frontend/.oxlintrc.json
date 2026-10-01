@@ -1,0 +1,10 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "react", "nextjs", "import"],
+  "categories": { "correctness": "error" },
+  "env": { "browser": true },
+  "rules": {
+    "typescript/no-unused-vars": ["error", { "ignoreRestSiblings": true }]
+  },
+  "ignorePatterns": [".next", "out", "dist", "ds-bundle", "**/._*"]
+}

@@ -17,6 +17,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.session.NullAuthenticatedSessionStrategy;
@@ -36,6 +37,8 @@ import ch.noseryoung.domain.recur.auth.security.oauth2.CustomOAuth2UserService;
 import ch.noseryoung.domain.recur.auth.security.oauth2.CustomOidcUserService;
 import ch.noseryoung.domain.recur.auth.security.oauth2.OAuth2AuthenticationFailureHandler;
 import ch.noseryoung.domain.recur.auth.security.oauth2.OAuth2AuthenticationSuccessHandler;
+import ch.noseryoung.domain.recur.auth.security.oauth2.OAuth2ModeAuthorizationRequestRepository;
+import ch.noseryoung.domain.recur.auth.security.oauth2.OAuth2ModeAuthorizationRequestResolver;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -66,6 +69,15 @@ public class SecurityConfig {
                         "/error/**"
         };
 
+        // Ohne Login erreichbar (der Nutzer hat ja erst die Provider-Seite
+        // hinter sich), aber - anders als PUBLIC_PATHS - MIT CSRF-Schutz: die
+        // Bestätigung verknüpft eine fremde Identität mit einem Account und
+        // darf nicht von einer Drittseite ausgelöst werden können (#236).
+        private static final String[] PERMIT_ALL_CSRF_PROTECTED_PATHS = {
+                        "/api/auth/oauth2/link",
+                        "/api/auth/oauth2/link/**"
+        };
+
         @Value("${app.cors.allowed-origin}")
         private String allowedOrigins;
 
@@ -92,7 +104,8 @@ public class SecurityConfig {
         }
 
         @Bean
-        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        public SecurityFilterChain filterChain(HttpSecurity http,
+                        ClientRegistrationRepository clientRegistrationRepository) throws Exception {
                 http
                                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                                 // Access-Token liegt jetzt in einem HttpOnly-Cookie statt im
@@ -137,6 +150,8 @@ public class SecurityConfig {
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers(PUBLIC_PATHS)
                                                 .permitAll()
+                                                .requestMatchers(PERMIT_ALL_CSRF_PROTECTED_PATHS)
+                                                .permitAll()
                                                 // /api/auth/me (GET/PATCH/DELETE) intentionally NOT
                                                 // permitAll - the "/api/auth/**" wildcard used to
                                                 // cover it too, so anonymous requests reached
@@ -157,6 +172,14 @@ public class SecurityConfig {
                                                                                 "Keine Berechtigung für diese Ressource",
                                                                                 request.getRequestURI())))
                                 .oauth2Login(oauth2 -> oauth2
+                                                // Register- vs. Login-Button durch den
+                                                // Provider-Roundtrip tragen (#236).
+                                                .authorizationEndpoint(authorization -> authorization
+                                                                .authorizationRequestResolver(
+                                                                                new OAuth2ModeAuthorizationRequestResolver(
+                                                                                                clientRegistrationRepository))
+                                                                .authorizationRequestRepository(
+                                                                                new OAuth2ModeAuthorizationRequestRepository()))
                                                 .userInfoEndpoint(userInfo -> userInfo
                                                                 .userService(customOAuth2UserService)
                                                                 .oidcUserService(customOidcUserService))
@@ -214,8 +237,11 @@ public class SecurityConfig {
                 return source;
         }
 
+        // static: OAuth2AuthenticationSuccessHandler -> OAuth2AccountLinkingService
+        // braucht den Encoder, SecurityConfig selbst aber den SuccessHandler -
+        // als Instanz-Methode wäre das ein Zirkelbezug beim Bean-Aufbau.
         @Bean
-        public PasswordEncoder passwordEncoder() {
+        public static PasswordEncoder passwordEncoder() {
                 return new BCryptPasswordEncoder();
         }
 

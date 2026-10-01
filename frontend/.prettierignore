@@ -1,0 +1,7 @@
+.next
+out
+dist
+ds-bundle
+public
+yarn.lock
+**/._*

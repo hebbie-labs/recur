@@ -132,6 +132,12 @@ public class AuthService {
         return new AuthResult(new AuthResponse(UserResponse.from(rotation.user())), token, rotation.rawToken());
     }
 
+    // Startet eine Session für einen bereits anderweitig authentifizierten
+    // User, z.B. nach bestätigter OAuth2-Verknüpfung (#236).
+    public AuthResult startSession(User user, HttpServletRequest httpRequest) {
+        return authResult(user, httpRequest);
+    }
+
     private AuthResult authResult(User user, HttpServletRequest httpRequest) {
         String token = jwtService.generateToken(user);
         String refreshToken = refreshTokenService.issue(user, httpRequest);
@@ -210,13 +216,16 @@ public class AuthService {
     }
 
     // Antwortet immer gleich (Controller-Ebene), egal ob das Konto existiert,
-    // ein Google-Konto ist (kein passwordHash) oder noch nicht verifiziert ist
+    // noch kein Passwort hat (reines OAuth-Konto - das setzt sein Passwort
+    // eingeloggt über /api/auth/me/password) oder noch nicht verifiziert ist
     // (keine bestätigte Möglichkeit, den echten Inhaber zu erreichen) -
     // verhindert, dass dieser Endpunkt registrierte E-Mail-Adressen oder deren
-    // Login-Methode enumerierbar macht.
+    // Login-Methode enumerierbar macht. Geprüft wird passwordHash statt
+    // provider, da auch ein über Google entstandenes Konto inzwischen ein
+    // Passwort haben kann (#236).
     public void forgotPassword(String email) {
         User user = userRepository.findByEmail(email).orElse(null);
-        if (user == null || user.getProvider() != AuthProvider.LOCAL
+        if (user == null || user.getPasswordHash() == null
                 || !Boolean.TRUE.equals(user.getEmailVerified())) {
             return;
         }

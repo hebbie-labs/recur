@@ -17,7 +17,13 @@ type EmptyProps = {
   onButtonClick?: () => void;
 };
 
-function Empty({ title, description, buttonText, onButtonClick, icon: Icon }: EmptyProps) {
+function Empty({
+  title,
+  description,
+  buttonText,
+  onButtonClick,
+  icon: Icon,
+}: EmptyProps) {
   return (
     <EmptyComponent className="flex flex-col items-center justify-center gap-4">
       {Icon && (

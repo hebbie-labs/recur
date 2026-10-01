@@ -14,10 +14,10 @@ function TaskTimeFrame({ start, end }: TaskTimeFrameProps) {
     formattedStart && formattedEnd
       ? `${formattedStart} - ${formattedEnd}`
       : formattedStart
-      ? `Ab ${formattedStart}`
-      : formattedEnd
-      ? `Bis ${formattedEnd}`
-      : "Kein Zeitraum angegeben";
+        ? `Ab ${formattedStart}`
+        : formattedEnd
+          ? `Bis ${formattedEnd}`
+          : "Kein Zeitraum angegeben";
 
   return (
     <div className="flex items-center gap-1.5 text-sm text-muted-foreground">

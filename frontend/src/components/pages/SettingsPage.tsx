@@ -15,7 +15,9 @@ const LEGAL_PAGES = [
 
 // Auf Mobile drillbare Sections - ohne "legal": das verlinkt dort direkt auf
 // die bestehenden Rechtsseiten statt eine eigene Zwischenseite zu haben.
-const MOBILE_DRILLDOWN_SECTIONS = SETTINGS_SECTIONS.filter((s) => s.id !== "legal");
+const MOBILE_DRILLDOWN_SECTIONS = SETTINGS_SECTIONS.filter(
+  (s) => s.id !== "legal",
+);
 
 function SettingsRow({
   label,
@@ -63,14 +65,20 @@ function MobileSettingsList() {
 
       <SettingsRowGroup>
         {LEGAL_PAGES.map(({ label, path }) => (
-          <SettingsRow key={path} label={label} onClick={() => router.push(path)} />
+          <SettingsRow
+            key={path}
+            label={label}
+            onClick={() => router.push(path)}
+          />
         ))}
       </SettingsRowGroup>
 
       <SettingsRowGroup>
         <SettingsRow
           label="GitHub"
-          onClick={() => window.open(GITHUB_REPO_URL, "_blank", "noopener,noreferrer")}
+          onClick={() =>
+            window.open(GITHUB_REPO_URL, "_blank", "noopener,noreferrer")
+          }
           trailing={<ExternalLink className="h-4 w-4 text-muted-foreground" />}
         />
       </SettingsRowGroup>

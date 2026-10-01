@@ -58,7 +58,9 @@ export function AddTaskProvider({ children }: { children: ReactNode }) {
 export function useAddTask() {
   const ctx = useContext(AddTaskContext);
   if (!ctx) {
-    throw new Error("useAddTask muss innerhalb von AddTaskProvider verwendet werden");
+    throw new Error(
+      "useAddTask muss innerhalb von AddTaskProvider verwendet werden",
+    );
   }
   return ctx;
 }

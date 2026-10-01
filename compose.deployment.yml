@@ -1,6 +1,16 @@
 # Deployment compose for the self-hosted home server (reached from the
-# internet via a Cloudflare Tunnel pointed at the frontend containers'
-# published ports below - nothing else needs to be publicly reachable).
+# internet via a Cloudflare Tunnel pointed at the frontend containers below
+# - nothing else needs to be publicly reachable).
+#
+# The cloudflared container runs in a separate stack (the homelab compose,
+# outside this repo), so it reaches the frontends by container name
+# (e.g. http://recur-frontend-dev:3000) over the shared external "tunnel"
+# network, not over this stack's own default network. That default network
+# is deleted and recreated on every `docker compose down`/recreate, so a
+# manual `docker network connect` of cloudflared to it silently breaks
+# (502 Bad Gateway, "no such host" in cloudflared's logs). "tunnel" is
+# external, so Compose never removes it; deploy.yml creates it if missing,
+# and the homelab compose must attach cloudflared to it as well.
 #
 # This file lives at /srv/recur/compose.deployment.yml on the host, which
 # .github/workflows/deploy.yml drives with:
@@ -84,7 +94,7 @@ services:
     labels:
       - homepage.group=Recur
       - homepage.name=Backend (Dev)
-      - homepage.icon=spring.png
+      - homepage.icon=si-springboot
       - homepage.showStats=true
       - homepage.description=API, kein Web-UI
 
@@ -93,12 +103,16 @@ services:
     container_name: recur-frontend-dev
     restart: unless-stopped
     environment:
+      HOSTNAME: 0.0.0.0
       NEXT_PUBLIC_API_URL: /api
       BACKEND_URL: http://backend-dev:8080
     ports:
       - "3080:3000"
     depends_on:
       - backend-dev
+    networks:
+      - default
+      - tunnel
     labels:
       - homepage.group=Recur
       - homepage.name=Frontend (Dev)
@@ -147,7 +161,7 @@ services:
     labels:
       - homepage.group=Recur
       - homepage.name=Backend (Prod)
-      - homepage.icon=spring.png
+      - homepage.icon=si-springboot
       - homepage.showStats=true
       - homepage.description=API, kein Web-UI
 
@@ -156,12 +170,16 @@ services:
     container_name: recur-frontend-prod
     restart: unless-stopped
     environment:
+      HOSTNAME: 0.0.0.0
       NEXT_PUBLIC_API_URL: /api
       BACKEND_URL: http://backend-prod:8080
     ports:
       - "3081:3000"
     depends_on:
       - backend-prod
+    networks:
+      - default
+      - tunnel
     labels:
       - homepage.group=Recur
       - homepage.name=Frontend (Prod)
@@ -197,15 +215,23 @@ services:
     container_name: recur-frontend-www
     restart: unless-stopped
     environment:
+      HOSTNAME: 0.0.0.0
       COMING_SOON_MODE: "true"
     ports:
       - "3082:3000"
+    networks:
+      - default
+      - tunnel
     labels:
       - homepage.group=Recur
       - homepage.name=Coming Soon
       - homepage.icon=nextjs.png
       - homepage.href=https://www.recur.dpdns.org
       - homepage.description=Public Coming-Soon-Seite
+
+networks:
+  tunnel:
+    external: true
 
 volumes:
   recur-db-dev-data:

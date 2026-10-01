@@ -11,7 +11,10 @@ function useArchiveSelection({ taskIds, onDelete }: UseArchiveSelectionParams) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [confirmBulkDeleteOpen, setConfirmBulkDeleteOpen] = useState(false);
 
-  const isSelected = useCallback((id: string) => selectedIds.has(id), [selectedIds]);
+  const isSelected = useCallback(
+    (id: string) => selectedIds.has(id),
+    [selectedIds],
+  );
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -61,7 +64,9 @@ function useArchiveSelection({ taskIds, onDelete }: UseArchiveSelectionParams) {
   const confirmBulkDelete = useCallback(async () => {
     await Promise.all(Array.from(selectedIds).map((id) => onDelete(id, true)));
     setConfirmBulkDeleteOpen(false);
-    showSuccessToast(`${selectedCount} ${selectedCount === 1 ? "Aufgabe wurde" : "Aufgaben wurden"} gelöscht.`);
+    showSuccessToast(
+      `${selectedCount} ${selectedCount === 1 ? "Aufgabe wurde" : "Aufgaben wurden"} gelöscht.`,
+    );
     exitSelectMode();
   }, [selectedIds, selectedCount, onDelete, exitSelectMode]);
 

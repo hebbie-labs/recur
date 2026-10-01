@@ -6,49 +6,39 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.stereotype.Component;
 
 import ch.noseryoung.domain.recur.user.enums.AuthProvider;
-import ch.noseryoung.domain.recur.user.model.User;
-import ch.noseryoung.domain.recur.user.repository.UserRepository;
-import ch.noseryoung.domain.recur.shared.service.EmailService;
-import lombok.RequiredArgsConstructor;
 
+// Liest und validiert nur die Provider-Attribute - welcher Recur-Account dazu
+// gehört (oder ob verknüpft werden muss), entscheidet erst
+// OAuth2AccountLinkingService im OAuth2AuthenticationSuccessHandler (#236).
+// Hier ist das nicht möglich, weil der OAuth2UserService synchron durchläuft
+// und dem Nutzer keine Rückfrage ("Verknüpfen? Passwort?") stellen kann.
 @Component
-@RequiredArgsConstructor
 public class OAuth2UserAttributeResolver {
 
-    private final UserRepository userRepository;
-    private final EmailService emailService;
-
-    // Google needs ASAP aa "sub" attribute
-
-    public User resolve(Map<String, Object> attributes,
+    public OAuth2Identity resolve(Map<String, Object> attributes,
             String providerName, Map<String, Object> providerSpecificAttributes) {
-
-        String email;
-        String fullName;
-        String firstName;
-        String lastName;
-        String avatarUrl;
 
         if ("google".equals(providerName)) {
 
-            email = (String) attributes.get("email");
-            fullName = (String) attributes.get("name");
-            firstName = (String) attributes.get("given_name");
-            lastName = (String) attributes.get("family_name");
-            avatarUrl = (String) attributes.get("picture");
+            String subjectId = (String) attributes.get("sub");
+            String email = (String) attributes.get("email");
+            String fullName = (String) attributes.get("name");
+            String firstName = (String) attributes.get("given_name");
+            String lastName = (String) attributes.get("family_name");
+            String avatarUrl = (String) attributes.get("picture");
 
             Boolean emailVerified = (Boolean) attributes.get("email_verified");
+
+            if (subjectId == null || subjectId.isBlank()) {
+                throw new OAuth2AuthenticationException(
+                        "Google Account liefert keine eindeutige ID.");
+            }
 
             if (email == null || email.isBlank()) {
                 throw new OAuth2AuthenticationException(
                         "Google Account besitzt keine E-Mail Adresse.");
             }
 
-            /*
-             * Google verifiziert die Adresse bereits über OIDC - auch wenn dieses
-             * Konto ursprünglich lokal registriert und nie bestätigt wurde, gilt es
-             * ab jetzt als verifiziert.
-             */
             if (!Boolean.TRUE.equals(emailVerified)) {
                 throw new OAuth2AuthenticationException(
                         "Google E-Mail Adresse ist nicht verifiziert.");
@@ -62,35 +52,22 @@ public class OAuth2UserAttributeResolver {
                 }
             }
 
-            User user = userRepository.findByEmail(email).orElseGet(() -> User.builder().email(email)
-                    .provider(AuthProvider.GOOGLE).enabled(true).emailVerified(true)
-                    .build());
-
-            boolean isNewUser = user.getId() == null;
-
-            user.setFirstName(firstName);
-            user.setLastName(lastName);
-            user.setAvatarUrl(avatarUrl);
-
-            User savedUser = userRepository.save(user);
-
-            if (isNewUser) {
-                emailService.send(savedUser.getEmail(), "Willkommen bei Recur",
-                        "Hallo " + savedUser.getFirstName() + ",\n\n"
-                                + "willkommen bei Recur! Dein Konto wurde erfolgreich über Google erstellt.");
-            }
-
-            return savedUser;
+            return new OAuth2Identity(AuthProvider.GOOGLE, subjectId, email, firstName, lastName, avatarUrl);
 
         } else if ("github".equals(providerName)) {
 
-            email = (String) providerSpecificAttributes.get("email");
-
-            firstName = (String) attributes.get("name");
-            lastName = null;
-            avatarUrl = (String) attributes.get("avatar_url");
+            // GitHub liefert die numerische User-ID als Integer/Long.
+            Object id = attributes.get("id");
+            String email = (String) providerSpecificAttributes.get("email");
+            String firstName = (String) attributes.get("name");
+            String avatarUrl = (String) attributes.get("avatar_url");
 
             Boolean verifiedEmail = (Boolean) providerSpecificAttributes.get("verifiedEmail");
+
+            if (id == null) {
+                throw new OAuth2AuthenticationException(
+                        "GitHub Account liefert keine eindeutige ID.");
+            }
 
             if (email == null || email.isBlank()) {
                 throw new OAuth2AuthenticationException(
@@ -106,25 +83,7 @@ public class OAuth2UserAttributeResolver {
                 firstName = "GitHub User";
             }
 
-            User user = userRepository.findByEmail(email).orElseGet(() -> User.builder().email(email)
-                    .provider(AuthProvider.GITHUB).enabled(true).emailVerified(true)
-                    .build());
-
-            boolean isNewUser = user.getId() == null;
-
-            user.setFirstName(firstName);
-            user.setLastName(lastName);
-            user.setAvatarUrl(avatarUrl);
-
-            User savedUser = userRepository.save(user);
-
-            if (isNewUser) {
-                emailService.send(savedUser.getEmail(), "Willkommen bei Recur",
-                        "Hallo " + savedUser.getFirstName() + ",\n\n"
-                                + "willkommen bei Recur! Dein Konto wurde erfolgreich über GitHub erstellt.");
-            }
-
-            return savedUser;
+            return new OAuth2Identity(AuthProvider.GITHUB, String.valueOf(id), email, firstName, null, avatarUrl);
 
         } else
             throw new IllegalArgumentException(

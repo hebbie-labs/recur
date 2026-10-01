@@ -93,7 +93,9 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       return incoming.map((next) => {
         const existing = prevById.get(next.id);
         if (!existing) return next;
-        const existingTime = existing.updatedAt ? Date.parse(existing.updatedAt) : 0;
+        const existingTime = existing.updatedAt
+          ? Date.parse(existing.updatedAt)
+          : 0;
         const nextTime = next.updatedAt ? Date.parse(next.updatedAt) : 0;
         return nextTime > existingTime ? next : existing;
       });
@@ -138,20 +140,20 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       if (!task.project || !user) return false;
       return task.archivedBy?.some((m) => m.id === user.id) ?? false;
     },
-    [user]
+    [user],
   );
 
   const visibleTasks = useMemo(
     () => tasks.filter((t) => !isArchivedForCurrentUser(t)),
-    [tasks, isArchivedForCurrentUser]
+    [tasks, isArchivedForCurrentUser],
   );
   const favoriteTasks = useMemo(
     () => tasks.filter((t) => t.isFavorite && !isArchivedForCurrentUser(t)),
-    [tasks, isArchivedForCurrentUser]
+    [tasks, isArchivedForCurrentUser],
   );
   const archivedTasks = useMemo(
     () => tasks.filter((t) => isArchivedForCurrentUser(t)),
-    [tasks, isArchivedForCurrentUser]
+    [tasks, isArchivedForCurrentUser],
   );
 
   const handleToggleFavorite = useCallback(async (taskId: string) => {
@@ -161,7 +163,9 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     const newFavorite = !previousFavorite;
 
     setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, isFavorite: newFavorite } : t))
+      prev.map((t) =>
+        t.id === taskId ? { ...t, isFavorite: newFavorite } : t,
+      ),
     );
 
     // Nur das eigene Feld zurückrollen statt eines vollen Snapshots, damit
@@ -169,9 +173,15 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     // (z.B. Archivieren) nicht durch diesen Rollback überschrieben wird.
     await patchTask(taskId, { favorite: newFavorite }).catch((err) => {
       setTasks((prev) =>
-        prev.map((t) => (t.id === taskId ? { ...t, isFavorite: previousFavorite } : t))
+        prev.map((t) =>
+          t.id === taskId ? { ...t, isFavorite: previousFavorite } : t,
+        ),
       );
-      showErrorToast(err instanceof Error ? err.message : "Fehler beim Aktualisieren des Favoritenstatus");
+      showErrorToast(
+        err instanceof Error
+          ? err.message
+          : "Fehler beim Aktualisieren des Favoritenstatus",
+      );
     });
   }, []);
 
@@ -190,19 +200,29 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       const previousTask = task;
 
       setTasks((prev) =>
-        prev.map((t) => (t.id === taskId ? { ...t, isArchived: newArchived } : t))
+        prev.map((t) =>
+          t.id === taskId ? { ...t, isArchived: newArchived } : t,
+        ),
       );
 
       await patchTask(taskId, { archived: newArchived })
         .then((updatedTask) => {
-          setTasks((prev) => prev.map((t) => (t.id === taskId ? updatedTask : t)));
+          setTasks((prev) =>
+            prev.map((t) => (t.id === taskId ? updatedTask : t)),
+          );
         })
         .catch((err) => {
-          setTasks((prev) => prev.map((t) => (t.id === taskId ? previousTask : t)));
-          showErrorToast(err instanceof Error ? err.message : "Fehler beim Archivieren der Aufgabe");
+          setTasks((prev) =>
+            prev.map((t) => (t.id === taskId ? previousTask : t)),
+          );
+          showErrorToast(
+            err instanceof Error
+              ? err.message
+              : "Fehler beim Archivieren der Aufgabe",
+          );
         });
     },
-    [isArchivedForCurrentUser]
+    [isArchivedForCurrentUser],
   );
 
   // Self-Service: nur bei geteilten Projekt-Tasks relevant. Kein optimistisches
@@ -212,16 +232,25 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     async (taskId: string) => {
       const task = tasksRef.current.find((t) => t.id === taskId);
       if (!task || !user) return;
-      const isAssigned = task.assignedMembers?.some((m) => m.id === user.id) ?? false;
+      const isAssigned =
+        task.assignedMembers?.some((m) => m.id === user.id) ?? false;
 
       try {
-        const updatedTask = isAssigned ? await unassignSelf(taskId) : await assignSelf(taskId);
-        setTasks((prev) => prev.map((t) => (t.id === taskId ? updatedTask : t)));
+        const updatedTask = isAssigned
+          ? await unassignSelf(taskId)
+          : await assignSelf(taskId);
+        setTasks((prev) =>
+          prev.map((t) => (t.id === taskId ? updatedTask : t)),
+        );
       } catch (err) {
-        showErrorToast(err instanceof Error ? err.message : "Fehler beim Zuweisen der Aufgabe");
+        showErrorToast(
+          err instanceof Error
+            ? err.message
+            : "Fehler beim Zuweisen der Aufgabe",
+        );
       }
     },
-    [user]
+    [user],
   );
 
   const handleResetProgress = useCallback(async (taskId: string) => {
@@ -235,9 +264,15 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     setTasks((prev) =>
       prev.map((t) =>
         t.id === taskId
-          ? { ...t, amountDid: 0, progress: 0, lastAmountDidAt: null, completions: [] }
-          : t
-      )
+          ? {
+              ...t,
+              amountDid: 0,
+              progress: 0,
+              lastAmountDidAt: null,
+              completions: [],
+            }
+          : t,
+      ),
     );
 
     await patchTask(taskId, { resetProgress: true }).catch((err) => {
@@ -251,10 +286,14 @@ export function TasksProvider({ children }: { children: ReactNode }) {
                 lastAmountDidAt: previousLastAmountDidAt,
                 completions: previousCompletions,
               }
-            : t
-        )
+            : t,
+        ),
       );
-      showErrorToast(err instanceof Error ? err.message : "Fehler beim Zurücksetzen des Fortschritts");
+      showErrorToast(
+        err instanceof Error
+          ? err.message
+          : "Fehler beim Zurücksetzen des Fortschritts",
+      );
     });
   }, []);
 
@@ -280,13 +319,21 @@ export function TasksProvider({ children }: { children: ReactNode }) {
               setTasks((prev) => [...prev, restoredTask]);
             })
             .catch((err) => {
-              showErrorToast(err instanceof Error ? err.message : "Fehler beim Wiederherstellen der Aufgabe");
+              showErrorToast(
+                err instanceof Error
+                  ? err.message
+                  : "Fehler beim Wiederherstellen der Aufgabe",
+              );
             });
         });
       })
       .catch((err) => {
         setTasks(previousTasks);
-        showErrorToast(err instanceof Error ? err.message : "Fehler beim Löschen der Aufgabe");
+        showErrorToast(
+          err instanceof Error
+            ? err.message
+            : "Fehler beim Löschen der Aufgabe",
+        );
       });
   }, []);
 
@@ -295,23 +342,39 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   // primären Abhaken-Toggle unten. Kein optimistisches Update, da Konflikt-
   // /Datums-Validierung serverseitig passiert (siehe TaskService) und der
   // Server-Stand (neu abgeleitetes amountDid/progress) direkt übernommen wird.
-  const handleAddCompletion = useCallback(async (taskId: string, date: string) => {
-    try {
-      const updatedTask = await addTaskCompletion(taskId, date);
-      setTasks((prev) => prev.map((t) => (t.id === taskId ? updatedTask : t)));
-    } catch (err) {
-      showErrorToast(err instanceof Error ? err.message : "Fehler beim Abhaken des Tages");
-    }
-  }, []);
+  const handleAddCompletion = useCallback(
+    async (taskId: string, date: string) => {
+      try {
+        const updatedTask = await addTaskCompletion(taskId, date);
+        setTasks((prev) =>
+          prev.map((t) => (t.id === taskId ? updatedTask : t)),
+        );
+      } catch (err) {
+        showErrorToast(
+          err instanceof Error ? err.message : "Fehler beim Abhaken des Tages",
+        );
+      }
+    },
+    [],
+  );
 
-  const handleRemoveCompletion = useCallback(async (taskId: string, date: string) => {
-    try {
-      const updatedTask = await removeTaskCompletion(taskId, date);
-      setTasks((prev) => prev.map((t) => (t.id === taskId ? updatedTask : t)));
-    } catch (err) {
-      showErrorToast(err instanceof Error ? err.message : "Fehler beim Rückgängigmachen des Tages");
-    }
-  }, []);
+  const handleRemoveCompletion = useCallback(
+    async (taskId: string, date: string) => {
+      try {
+        const updatedTask = await removeTaskCompletion(taskId, date);
+        setTasks((prev) =>
+          prev.map((t) => (t.id === taskId ? updatedTask : t)),
+        );
+      } catch (err) {
+        showErrorToast(
+          err instanceof Error
+            ? err.message
+            : "Fehler beim Rückgängigmachen des Tages",
+        );
+      }
+    },
+    [],
+  );
 
   // Der primäre Abhaken-Button ist ein Toggle (#152): ist das aktuelle
   // Frequenz-Intervall bereits erledigt, nimmt ein erneuter Klick genau
@@ -326,10 +389,18 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       if (targetTask.project) {
         const newAmountDid = (targetTask.amountDid ?? 0) + 1;
         try {
-          const updatedTask = await patchTask(taskId, { amountDid: newAmountDid });
-          setTasks((prev) => prev.map((t) => (t.id === taskId ? updatedTask : t)));
+          const updatedTask = await patchTask(taskId, {
+            amountDid: newAmountDid,
+          });
+          setTasks((prev) =>
+            prev.map((t) => (t.id === taskId ? updatedTask : t)),
+          );
         } catch (err) {
-          showErrorToast(err instanceof Error ? err.message : "Fehler beim Aktualisieren der erledigten Menge");
+          showErrorToast(
+            err instanceof Error
+              ? err.message
+              : "Fehler beim Aktualisieren der erledigten Menge",
+          );
         }
         return;
       }
@@ -341,11 +412,13 @@ export function TasksProvider({ children }: { children: ReactNode }) {
         await handleAddCompletion(taskId, today());
       }
     },
-    [handleAddCompletion, handleRemoveCompletion]
+    [handleAddCompletion, handleRemoveCompletion],
   );
 
   const handleUpdateTask = useCallback((updatedTask: Task) => {
-    setTasks((prev) => prev.map((task) => (task.id === updatedTask.id ? updatedTask : task)));
+    setTasks((prev) =>
+      prev.map((task) => (task.id === updatedTask.id ? updatedTask : task)),
+    );
   }, []);
 
   const value: TasksContextValue = {
@@ -368,13 +441,17 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     syncTasks,
   };
 
-  return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;
+  return (
+    <TasksContext.Provider value={value}>{children}</TasksContext.Provider>
+  );
 }
 
 export function useTasksContext() {
   const ctx = useContext(TasksContext);
   if (!ctx) {
-    throw new Error("useTasksContext muss innerhalb von TasksProvider verwendet werden");
+    throw new Error(
+      "useTasksContext muss innerhalb von TasksProvider verwendet werden",
+    );
   }
   return ctx;
 }

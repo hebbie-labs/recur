@@ -10,7 +10,12 @@ import {
   getISOWeek,
 } from "date-fns";
 import { de } from "date-fns/locale";
-import { TaskCategory, type Task, type TaskCategory as TaskCategoryType } from "@/types/task";
+import {
+  TaskCategory,
+  type Task,
+  type TaskCategory as TaskCategoryType,
+} from "@/types/task";
+import { isOverdue } from "@/utils/taskCompletions";
 
 /** Canonical per-category accent colors, shared by the calendar's category dots/filter chips and TaskCard's category badge - the single color source for a task's category across the app. */
 export const categoryDot: Record<TaskCategoryType, string> = {
@@ -85,7 +90,7 @@ export function getWeekLabel(days: CalendarDay[]): string {
     return `${format(firstDay, "d.", { locale: de })} – ${format(
       lastDay,
       "d. MMMM yyyy",
-      { locale: de }
+      { locale: de },
     )}`;
   }
 
@@ -93,14 +98,14 @@ export function getWeekLabel(days: CalendarDay[]): string {
     return `${format(firstDay, "d. MMMM", { locale: de })} – ${format(
       lastDay,
       "d. MMMM yyyy",
-      { locale: de }
+      { locale: de },
     )}`;
   }
 
   return `${format(firstDay, "d. MMMM yyyy", { locale: de })} – ${format(
     lastDay,
     "d. MMMM yyyy",
-    { locale: de }
+    { locale: de },
   )}`;
 }
 
@@ -115,7 +120,9 @@ export function occursOn(task: Task, date: Date): boolean {
     // carry a due date. For a one-off task that due date IS the occurrence;
     // a repeating task has no anchor to derive a pattern from, so it can't
     // be placed at all.
-    return task.frequency === "ONCE" && isSameDay(new Date(task.dateUntil), date);
+    return (
+      task.frequency === "ONCE" && isSameDay(new Date(task.dateUntil), date)
+    );
   }
 
   const taskDate = new Date(task.startTime);
@@ -148,6 +155,21 @@ export function occursOn(task: Task, date: Date): boolean {
       return false;
   }
 }
+
+/** Ob ein Kalender-Eintrag als überfällig hervorgehoben wird (#153) - nur Vorkommen bis heute, künftige Termine eines überfälligen Tasks bleiben normal. */
+export function isOverdueOccurrence(
+  task: Task,
+  date: Date,
+  now: Date,
+): boolean {
+  const day = new Date(date);
+  day.setHours(0, 0, 0, 0);
+  return day <= now && isOverdue(task, now);
+}
+
+/** Klassen für einen überfälligen Kalender-Eintrag - überschreiben bg-card/text-foreground des normalen Eintrags. */
+export const overdueEntryClass =
+  "bg-destructive/10 text-destructive ring-1 ring-destructive/40";
 
 /** Sorts tasks occurring on a day by their start time (earliest first). */
 export function sortByStartTime(tasks: Task[]): Task[] {

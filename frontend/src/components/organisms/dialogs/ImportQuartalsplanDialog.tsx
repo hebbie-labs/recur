@@ -26,8 +26,8 @@ function ImportQuartalsplanDialog({ onClose }: ImportQuartalsplanDialogProps) {
 
   const [rows, setRows] = useState<QuartalsplanRow[]>([]);
   const [drafts, setDrafts] = useState<DraftTask[]>([]);
-  const [referenceYear, setReferenceYear] = useState<number>(
-    new Date().getFullYear()
+  const [referenceYear, setReferenceYear] = useState<number>(() =>
+    new Date().getFullYear(),
   );
   const [parseError, setParseError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -43,7 +43,7 @@ function ImportQuartalsplanDialog({ onClose }: ImportQuartalsplanDialogProps) {
     const parsedRows = parseClipboardTable(html, text);
     if (parsedRows.length === 0) {
       setParseError(
-        "Keine Tabellenzeilen erkannt. Bitte die Quartalsplan-Tabelle direkt aus Smartlearn kopieren und hier einfügen."
+        "Keine Tabellenzeilen erkannt. Bitte die Quartalsplan-Tabelle direkt aus Smartlearn kopieren und hier einfügen.",
       );
       return;
     }
@@ -64,7 +64,7 @@ function ImportQuartalsplanDialog({ onClose }: ImportQuartalsplanDialogProps) {
 
   function updateDraft(id: string, patch: Partial<DraftTask>) {
     setDrafts((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, ...patch } : d))
+      prev.map((d) => (d.id === id ? { ...d, ...patch } : d)),
     );
   }
 
@@ -88,8 +88,8 @@ function ImportQuartalsplanDialog({ onClose }: ImportQuartalsplanDialogProps) {
           frequency: TaskFrequency.ONCE,
           dateUntil: draft.dateUntil,
           progress: 0,
-        })
-      )
+        }),
+      ),
     );
     setLoading(false);
 
@@ -108,21 +108,21 @@ function ImportQuartalsplanDialog({ onClose }: ImportQuartalsplanDialogProps) {
 
     if (failCount === 0) {
       showSuccessToast(
-        `${succeededIds.size} von ${selected.length} Aufgaben importiert`
+        `${succeededIds.size} von ${selected.length} Aufgaben importiert`,
       );
       onClose();
       return;
     }
 
     showErrorToast(
-      `${succeededIds.size} von ${selected.length} Aufgaben importiert, ${failCount} fehlgeschlagen`
+      `${succeededIds.size} von ${selected.length} Aufgaben importiert, ${failCount} fehlgeschlagen`,
     );
     setDrafts((prev) =>
       prev.map((d) =>
         selected.some((s) => s.id === d.id)
           ? { ...d, selected: !succeededIds.has(d.id) }
-          : d
-      )
+          : d,
+      ),
     );
   }
 

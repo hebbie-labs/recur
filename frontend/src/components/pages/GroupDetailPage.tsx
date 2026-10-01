@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { LinkIcon, PlusIcon, TrashIcon, ArchiveIcon, ArchiveRestoreIcon, ShieldIcon } from "lucide-react";
+import {
+  LinkIcon,
+  PlusIcon,
+  TrashIcon,
+  ArchiveIcon,
+  ArchiveRestoreIcon,
+  ShieldIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LoadingButton from "@/components/atoms/loading/LoadingButton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -37,14 +44,21 @@ function GroupDetailPage() {
 
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [confirmDeleteGroupOpen, setConfirmDeleteGroupOpen] = useState(false);
-  const [confirmDeleteProjectId, setConfirmDeleteProjectId] = useState<string | null>(null);
-  const [confirmTransferMemberId, setConfirmTransferMemberId] = useState<string | null>(null);
-  const [leaveSuccessorDialogOpen, setLeaveSuccessorDialogOpen] = useState(false);
+  const [confirmDeleteProjectId, setConfirmDeleteProjectId] = useState<
+    string | null
+  >(null);
+  const [confirmTransferMemberId, setConfirmTransferMemberId] = useState<
+    string | null
+  >(null);
+  const [leaveSuccessorDialogOpen, setLeaveSuccessorDialogOpen] =
+    useState(false);
   const [leavingGroup, setLeavingGroup] = useState(false);
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
   const [transferringAdmin, setTransferringAdmin] = useState(false);
   const [deletingGroup, setDeletingGroup] = useState(false);
-  const [togglingProjectId, setTogglingProjectId] = useState<string | null>(null);
+  const [togglingProjectId, setTogglingProjectId] = useState<string | null>(
+    null,
+  );
   const [deletingProject, setDeletingProject] = useState(false);
 
   // window.location.origin doesn't exist during Next's server-render pass
@@ -60,11 +74,17 @@ function GroupDetailPage() {
   }, []);
 
   const group = groups.find((g) => g.id === id);
-  const projects = useMemo(() => projectsByGroupId[id ?? ""] ?? [], [projectsByGroupId, id]);
+  const projects = useMemo(
+    () => projectsByGroupId[id ?? ""] ?? [],
+    [projectsByGroupId, id],
+  );
 
   const activeTasksInGroup = useMemo(
-    () => tasks.filter((t) => t.project && projects.some((p) => p.id === t.project!.id)),
-    [tasks, projects]
+    () =>
+      tasks.filter(
+        (t) => t.project && projects.some((p) => p.id === t.project!.id),
+      ),
+    [tasks, projects],
   );
 
   // War die Gruppe schon mal da und ist jetzt (nach einem Auto-Sync-Poll) weg,
@@ -82,7 +102,9 @@ function GroupDetailPage() {
     }
     if (!loading && hadGroupRef.current) {
       if (!selfInitiatedRemovalRef.current) {
-        showInfoToast("Diese Gruppe ist nicht mehr verfügbar - sie wurde gelöscht oder du wurdest entfernt.");
+        showInfoToast(
+          "Diese Gruppe ist nicht mehr verfügbar - sie wurde gelöscht oder du wurdest entfernt.",
+        );
         router.push("/groups");
       }
       hadGroupRef.current = false;
@@ -114,7 +136,11 @@ function GroupDetailPage() {
       router.push("/groups");
     } catch (err) {
       selfInitiatedRemovalRef.current = false;
-      showErrorToast(err instanceof Error ? err.message : "Fehler beim Verlassen der Gruppe.");
+      showErrorToast(
+        err instanceof Error
+          ? err.message
+          : "Fehler beim Verlassen der Gruppe.",
+      );
     } finally {
       setLeaveSuccessorDialogOpen(false);
       setLeavingGroup(false);
@@ -138,7 +164,11 @@ function GroupDetailPage() {
       await removeMember(id, memberId);
       showSuccessToast("Mitglied entfernt.");
     } catch (err) {
-      showErrorToast(err instanceof Error ? err.message : "Fehler beim Entfernen des Mitglieds.");
+      showErrorToast(
+        err instanceof Error
+          ? err.message
+          : "Fehler beim Entfernen des Mitglieds.",
+      );
     } finally {
       setRemovingMemberId(null);
     }
@@ -150,7 +180,11 @@ function GroupDetailPage() {
       await transferAdmin(id, memberId);
       showSuccessToast("Adminrolle übertragen.");
     } catch (err) {
-      showErrorToast(err instanceof Error ? err.message : "Fehler beim Übertragen der Adminrolle.");
+      showErrorToast(
+        err instanceof Error
+          ? err.message
+          : "Fehler beim Übertragen der Adminrolle.",
+      );
     } finally {
       setTransferringAdmin(false);
       setConfirmTransferMemberId(null);
@@ -166,19 +200,28 @@ function GroupDetailPage() {
       router.push("/groups");
     } catch (err) {
       selfInitiatedRemovalRef.current = false;
-      showErrorToast(err instanceof Error ? err.message : "Fehler beim Löschen der Gruppe.");
+      showErrorToast(
+        err instanceof Error ? err.message : "Fehler beim Löschen der Gruppe.",
+      );
     } finally {
       setDeletingGroup(false);
       setConfirmDeleteGroupOpen(false);
     }
   };
 
-  const handleToggleArchiveProject = async (projectId: string, currentlyArchived: boolean) => {
+  const handleToggleArchiveProject = async (
+    projectId: string,
+    currentlyArchived: boolean,
+  ) => {
     setTogglingProjectId(projectId);
     try {
       await patchProject(id, projectId, !currentlyArchived);
     } catch (err) {
-      showErrorToast(err instanceof Error ? err.message : "Fehler beim Aktualisieren des Projekts.");
+      showErrorToast(
+        err instanceof Error
+          ? err.message
+          : "Fehler beim Aktualisieren des Projekts.",
+      );
     } finally {
       setTogglingProjectId(null);
     }
@@ -190,7 +233,11 @@ function GroupDetailPage() {
       await deleteProject(id, projectId);
       showSuccessToast("Projekt gelöscht.");
     } catch (err) {
-      showErrorToast(err instanceof Error ? err.message : "Fehler beim Löschen des Projekts.");
+      showErrorToast(
+        err instanceof Error
+          ? err.message
+          : "Fehler beim Löschen des Projekts.",
+      );
     } finally {
       setDeletingProject(false);
       setConfirmDeleteProjectId(null);
@@ -208,7 +255,9 @@ function GroupDetailPage() {
           </Button>
         </CardHeader>
         <CardContent>
-          <p className="break-all text-sm text-muted-foreground">{inviteLink}</p>
+          <p className="break-all text-sm text-muted-foreground">
+            {inviteLink}
+          </p>
         </CardContent>
       </Card>
 
@@ -224,11 +273,16 @@ function GroupDetailPage() {
             const isMemberAdmin = group.createdBy?.id === member.id;
 
             return (
-              <div key={member.id} className="flex items-center justify-between gap-3">
+              <div
+                key={member.id}
+                className="flex items-center justify-between gap-3"
+              >
                 <div className="flex items-center gap-3">
                   <Avatar size="sm">
                     <AvatarImage src={member.avatarUrl ?? undefined} />
-                    <AvatarFallback>{initials(member.firstName, member.lastName)}</AvatarFallback>
+                    <AvatarFallback>
+                      {initials(member.firstName, member.lastName)}
+                    </AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="flex items-center gap-1.5 text-sm font-medium">
@@ -241,7 +295,9 @@ function GroupDetailPage() {
                         </span>
                       )}
                     </p>
-                    <p className="text-xs text-muted-foreground">{member.email}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {member.email}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
@@ -293,11 +349,22 @@ function GroupDetailPage() {
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           {projects.length === 0 && (
-            <p className="text-sm text-muted-foreground">Noch keine Projekte in dieser Gruppe.</p>
+            <p className="text-sm text-muted-foreground">
+              Noch keine Projekte in dieser Gruppe.
+            </p>
           )}
           {projects.map((project) => (
-            <div key={project.id} className="flex items-center justify-between gap-3">
-              <span className={project.isArchived ? "text-sm text-muted-foreground line-through" : "text-sm"}>
+            <div
+              key={project.id}
+              className="flex items-center justify-between gap-3"
+            >
+              <span
+                className={
+                  project.isArchived
+                    ? "text-sm text-muted-foreground line-through"
+                    : "text-sm"
+                }
+              >
                 {project.name}
               </span>
               {isAdmin && (
@@ -305,7 +372,9 @@ function GroupDetailPage() {
                   <LoadingButton
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleToggleArchiveProject(project.id, project.isArchived)}
+                    onClick={() =>
+                      handleToggleArchiveProject(project.id, project.isArchived)
+                    }
                     loading={togglingProjectId === project.id}
                   >
                     {project.isArchived ? (
@@ -334,7 +403,10 @@ function GroupDetailPage() {
       <Separator />
 
       {isAdmin && (
-        <Button variant="destructive" onClick={() => setConfirmDeleteGroupOpen(true)}>
+        <Button
+          variant="destructive"
+          onClick={() => setConfirmDeleteGroupOpen(true)}
+        >
           <TrashIcon className="h-4 w-4" />
           Gruppe löschen
         </Button>
@@ -364,14 +436,19 @@ function GroupDetailPage() {
         onOpenChange={(open) => !open && setConfirmDeleteProjectId(null)}
         question="Projekt wirklich löschen?"
         description="Das Projekt und alle zugehörigen Tasks werden unwiderruflich gelöscht."
-        onConfirm={() => confirmDeleteProjectId && handleDeleteProject(confirmDeleteProjectId)}
+        onConfirm={() =>
+          confirmDeleteProjectId && handleDeleteProject(confirmDeleteProjectId)
+        }
         onCancel={() => setConfirmDeleteProjectId(null)}
         confirmText="Projekt löschen"
         loading={deletingProject}
       />
 
       {showCreateProject && (
-        <CreateProjectDialog groupId={id} onClose={() => setShowCreateProject(false)} />
+        <CreateProjectDialog
+          groupId={id}
+          onClose={() => setShowCreateProject(false)}
+        />
       )}
 
       <ConfirmDialog
@@ -379,9 +456,13 @@ function GroupDetailPage() {
         onOpenChange={(open) => !open && setConfirmTransferMemberId(null)}
         question="Adminrolle übertragen?"
         description={`${
-          group.members.find((m) => m.id === confirmTransferMemberId)?.firstName ?? "Dieses Mitglied"
+          group.members.find((m) => m.id === confirmTransferMemberId)
+            ?.firstName ?? "Dieses Mitglied"
         } wird zum neuen Gruppen-Admin. Du verlierst dadurch deine Admin-Rechte in dieser Gruppe.`}
-        onConfirm={() => confirmTransferMemberId && handleTransferAdmin(confirmTransferMemberId)}
+        onConfirm={() =>
+          confirmTransferMemberId &&
+          handleTransferAdmin(confirmTransferMemberId)
+        }
         onCancel={() => setConfirmTransferMemberId(null)}
         confirmText="Übertragen"
         loading={transferringAdmin}
