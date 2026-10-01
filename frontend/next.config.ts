@@ -7,6 +7,8 @@ const withPWA = withPWAInit({
   // No SW in dev - HMR + a service worker fighting over cached assets is
   // more trouble than it's worth locally.
   disable: process.env.NODE_ENV === "development",
+  // Offline-Navigation zeigt diese Seite statt des Browser-Fehlers.
+  fallbacks: { document: "/~offline" },
   workboxOptions: {
     runtimeCaching: [
       {

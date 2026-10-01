@@ -8,7 +8,7 @@ const COMING_SOON_ALLOWED_PATHS = new Set([COMING_SOON_PATH, "/impressum", "/dat
 // next-pwa's generated service worker + manifest - must reach the browser
 // as-is even in coming-soon mode, otherwise the SW registration fetches the
 // coming-soon HTML instead of sw.js and gets stuck in a broken state.
-const PWA_ASSET_PATTERN = /^\/(manifest\.json|sw\.js|workbox-.*\.js|fallback-.*\.js|icons\/.*)$/;
+const PWA_ASSET_PATTERN = /^\/(manifest\.json|sw\.js|workbox-.*\.js|fallback-.*\.js|icons\/.*|screenshots\/.*|~offline)$/;
 
 // next.config.ts's rewrites() is resolved once at `next build` time and its
 // destination gets frozen into .next/routes-manifest.json - reading
