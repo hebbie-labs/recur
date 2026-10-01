@@ -1,8 +1,17 @@
 import { app, BrowserWindow, shell } from "electron";
 import path from "node:path";
 
-const APP_URL = process.env.RECUR_URL ?? "http://localhost:3000";
+const DEV_URL = "http://localhost:3000";
+const PROD_URL = "https://www.recur.dpdns.org";
+
+const APP_URL = app.isPackaged ? PROD_URL : DEV_URL;
 const APP_ORIGIN = new URL(APP_URL).origin;
+
+if (app.isPackaged && new URL(APP_URL).protocol !== "https:") {
+  throw new Error(
+    `APP_URL must use the https: protocol in production, but is ${APP_URL}`
+  );
+}
 
 function isInternal(url: string): boolean {
   try {
