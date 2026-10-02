@@ -1,0 +1,95 @@
+name: desktop-release
+
+# Eigener Tag-Präfix: deploy.yml reagiert auf "v*" und "coming-soon-*", ein
+# "desktop-v*"-Tag löst dort nichts aus.
+on:
+  push:
+    tags: ["desktop-v*"]
+
+# GITHUB_TOKEN braucht Schreibrechte, um Releases anzulegen.
+permissions:
+  contents: write
+
+concurrency: desktop-release
+
+jobs:
+  release:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: desktop/yarn.lock
+
+      # electron-updater vergleicht die Version aus desktop/package.json mit
+      # der installierten. Weicht der Tag davon ab, würde ein Release mit
+      # falscher Versionsnummer ausgeliefert - lieber hier abbrechen.
+      - name: Tag must match desktop/package.json version
+        shell: bash
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if [ "$GITHUB_REF_NAME" != "desktop-v$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match desktop/package.json version $version (expected desktop-v$version)"
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - run: yarn install --frozen-lockfile
+
+      # --publish never: Hochladen übernimmt der nächste Schritt. Der
+      # GitHub-Publisher von electron-builder würde selbst einen Tag "v<version>"
+      # anlegen, und der würde deploy.yml (Prod-Deploy) auslösen.
+      - run: yarn dist --publish never
+
+      - name: Publish releases
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          cd release
+          installer="Recur-Setup-$VERSION.exe"
+          for f in "$installer" "$installer.blockmap" latest.yml; do
+            test -f "$f" || { echo "::error::missing build output $f"; exit 1; }
+          done
+
+          notes="Windows-Installer für Recur $VERSION.
+
+          Der Installer ist (noch) nicht signiert: Windows SmartScreen zeigt beim ersten Start \"Unbekannter Herausgeber\". Klicke auf \"Weitere Informationen\" und dann auf \"Trotzdem ausführen\"."
+
+          # 1) Release pro Version: bleibt bestehen, zum Herunterladen und für den Verlauf.
+          #    --latest=false: sonst würde es das "Latest"-Etikett der Web-Releases übernehmen.
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$installer" "$installer.blockmap" latest.yml --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "$installer" "$installer.blockmap" latest.yml \
+              --title "Recur Desktop $VERSION" --notes "$notes" --latest=false
+          fi
+
+          # 2) Fester Update-Ordner "desktop-latest": die URL in desktop/package.json
+          #    (build.publish.url) zeigt hierher, egal welches Release auf GitHub
+          #    gerade "Latest" ist. Als Pre-release markiert, damit es nie "Latest" wird.
+          if ! gh release view desktop-latest >/dev/null 2>&1; then
+            gh release create desktop-latest --target "$GITHUB_SHA" --prerelease --latest=false \
+              --title "Desktop update feed" \
+              --notes "Wird bei jedem Desktop-Release überschrieben und von der App zum Aktualisieren gelesen. Nicht zum Herunterladen gedacht, die Installer stehen in den Releases desktop-v*."
+          fi
+
+          # Erst Installer und Blockmap, dann latest.yml: Solange latest.yml noch auf
+          # die alte Version zeigt, existiert deren Datei auch noch.
+          gh release upload desktop-latest "$installer" "$installer.blockmap" --clobber
+          gh release upload desktop-latest latest.yml --clobber
+
+          # Alte Installer aufräumen (alles außer den eben hochgeladenen Dateien).
+          gh release view desktop-latest --json assets --jq '.assets[].name' | while read -r name; do
+            case "$name" in
+              "$installer" | "$installer.blockmap" | latest.yml) ;;
+              *) gh release delete-asset desktop-latest "$name" --yes ;;
+            esac
+          done
