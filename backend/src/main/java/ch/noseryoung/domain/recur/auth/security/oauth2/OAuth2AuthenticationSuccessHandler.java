@@ -44,9 +44,7 @@ public class OAuth2AuthenticationSuccessHandler
         public static final String LINK_COOKIE_PATH = "/api/auth/oauth2/link";
         public static final Duration LINK_COOKIE_TTL = Duration.ofMinutes(10);
 
-        // recur://auth?code=... - muss zu handleDeepLink in desktop/src/main.ts passen.
-        private static final String DESKTOP_SCHEME = "recur";
-        private static final String DESKTOP_AUTH_HOST = "auth";
+        private static final String DESKTOP_LANDING_PATH = "/auth/desktop";
 
         private static final Logger log = LoggerFactory.getLogger(OAuth2AuthenticationSuccessHandler.class);
 
@@ -143,17 +141,24 @@ public class OAuth2AuthenticationSuccessHandler
         }
 
         // Login aus der Desktop-App: Der Browser bekommt bewusst KEINE Cookies -
-        // er ist nur Durchgang. Stattdessen geht ein Einmal-Code per Deep-Link
-        // an die App, die ihn mit ihrem Verifier einlöst (siehe
-        // DesktopLoginCodeService und AuthController#exchangeDesktopCode).
-        // Verknüpfungs- und Fehlerfälle laufen unverändert im Browser.
+        // er ist nur Durchgang. Stattdessen geht ein Einmal-Code an die App, die
+        // ihn mit ihrem Verifier einlöst (siehe DesktopLoginCodeService und
+        // AuthController#exchangeDesktopCode). Verknüpfungs- und Fehlerfälle
+        // laufen unverändert im Browser.
+        //
+        // Der Code geht NICHT direkt per Redirect auf recur://, sondern über die
+        // Frontend-Seite /auth/desktop (DesktopLoginPage): Der Browser blockt
+        // einen Sprung auf ein fremdes Protokoll ohne Klick auf der Seite, und
+        // ein Service Worker (installierte PWA) reicht einen Redirect auf
+        // recur:// gar nicht durch. Die Seite öffnet recur://auth?code=... per
+        // Klick bzw. Auto-Versuch (muss zu handleDeepLink in
+        // desktop/src/main.ts passen).
         private void completeDesktopLogin(User user, String challenge, HttpServletResponse response)
                         throws IOException {
                 String code = desktopLoginCodeService.issue(user, challenge);
 
-                response.sendRedirect(UriComponentsBuilder.newInstance()
-                                .scheme(DESKTOP_SCHEME)
-                                .host(DESKTOP_AUTH_HOST)
+                response.sendRedirect(UriComponentsBuilder.fromUriString(frontendUrl)
+                                .path(DESKTOP_LANDING_PATH)
                                 .queryParam("code", code)
                                 .build()
                                 .toUriString());
