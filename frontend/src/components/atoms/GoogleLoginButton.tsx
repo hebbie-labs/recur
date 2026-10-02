@@ -2,8 +2,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import googleLogo from "@/../../public/icons/google.svg";
 import type { OAuth2Mode } from "@/types/auth";
-
-const GOOGLE_AUTH_URL = "/oauth2/authorization/google";
+import { startOAuthLogin } from "@/utils/startOAuthLogin";
 
 type GoogleLoginButtonProps = {
   /** "register" lässt das Backend abbrechen statt einzuloggen, falls diese Google-Identität schon ein Konto hat (#236). */
@@ -15,9 +14,7 @@ function GoogleLoginButton({ mode = "login" }: GoogleLoginButtonProps) {
     <Button
       variant="outline"
       className="w-full"
-      onClick={() => {
-        window.location.href = `${GOOGLE_AUTH_URL}?mode=${mode}`;
-      }}
+      onClick={() => startOAuthLogin("google", mode)}
     >
       <Image
         src={googleLogo}
