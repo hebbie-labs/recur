@@ -1,6 +1,7 @@
-import { app, BrowserWindow, shell, ipcMain, session } from "electron";
+import { app, BrowserWindow, Menu, shell, ipcMain, session } from "electron";
 import path from "node:path";
 import crypto from "node:crypto";
+import { autoUpdater } from "electron-updater";
 
 let pendingVerifier: string | null = null;
 
@@ -162,6 +163,9 @@ if (!gotLock) {
   });
 
   app.whenReady().then(() => {
+    if (app.isPackaged) {
+      Menu.setApplicationMenu(null);
+    }
     session.defaultSession.setPermissionRequestHandler(
       (_webContents, permission, callback) => {
         callback(false);
@@ -173,6 +177,11 @@ if (!gotLock) {
       }
     );
     createWindow();
+    if (app.isPackaged) {
+      autoUpdater.checkForUpdatesAndNotify().catch((err) => {
+        console.error("Update check failed:", err);
+      });
+    }
     const link = findDeepLink(process.argv);
     if (link) handleDeepLink(link);
   });

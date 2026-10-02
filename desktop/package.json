@@ -3,12 +3,8 @@
   "name": "recur-desktop",
   "version": "1.0.0",
   "description": "Recur Desktop Application",
-  "icon": "icon.png",
   "author": "HebbieLabs",
   "main": "dist/main.js",
-  "files": [
-    "dist/"
-  ],
   "scripts": {
     "start": "tsc && electron .",
     "dist": "tsc && electron-builder"
@@ -24,6 +20,13 @@
     ],
     "win": {
       "target": "nsis"
+    },
+    "nsis": {
+      "artifactName": "Recur-Setup-${version}.${ext}"
+    },
+    "publish": {
+      "provider": "generic",
+      "url": "https://github.com/hebbie-labs/recur/releases/download/desktop-latest"
     },
     "protocols": {
       "name": "Recur",
@@ -47,5 +50,8 @@
     "electron": "^44.5.1",
     "electron-builder": "^26.15.3",
     "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
   }
 }
