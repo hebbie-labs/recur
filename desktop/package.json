@@ -27,7 +27,18 @@
     },
     "protocols": {
       "name": "Recur",
-      "schemes": ["recur"]
+      "schemes": [
+        "recur"
+      ]
+    },
+    "electronFuses": {
+      "runAsNode": false,
+      "enableNodeOptionsEnvironmentVariable": false,
+      "enableNodeCliInspectArguments": false,
+      "onlyLoadAppFromAsar": true,
+      "enableEmbeddedAsarIntegrityValidation": true,
+      "enableCookieEncryption": true,
+      "grantFileProtocolExtraPrivileges": false
     }
   },
   "license": "MIT",

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, ipcMain } from "electron";
+import { app, BrowserWindow, shell, ipcMain, session } from "electron";
 import path from "node:path";
 import crypto from "node:crypto";
 
@@ -35,7 +35,7 @@ function openExternal(url: string): void {
   }
 }
 
-ipcMain.on("auth:open-login", (event, provider: string) => {
+ipcMain.on("auth:open-login", (event, provider: string, mode: string) => {
   const senderUrl = event.senderFrame?.url;
   if (!senderUrl || !isInternal(senderUrl)) return;
   if (provider !== "google" && provider !== "github") return;
@@ -47,7 +47,8 @@ ipcMain.on("auth:open-login", (event, provider: string) => {
     .digest("base64url");
   pendingVerifier = verifier;
 
-  const loginUrl = `${APP_URL}/oauth2/authorization/${provider}?challenge=${challenge}`;
+  const safeMode = mode === "register" ? "register" : "login";
+  const loginUrl = `${APP_URL}/oauth2/authorization/${provider}?mode=${safeMode}&challenge=${challenge}`;
   shell.openExternal(loginUrl);
 });
 
@@ -63,7 +64,7 @@ if (process.defaultApp) {
   app.setAsDefaultProtocolClient("recur");
 }
 
-function handleDeepLink(rawUrl: string): void {
+async function handleDeepLink(rawUrl: string): Promise<void> {
   let url: URL;
   try {
     url = new URL(rawUrl);
@@ -76,11 +77,34 @@ function handleDeepLink(rawUrl: string): void {
   if (url.hostname !== "auth") {
     return;
   }
+
+  const verifier = pendingVerifier;
+  if (!verifier) return;
+  pendingVerifier = null;
+
   const code = url.searchParams.get("code");
   if (!code) {
     return;
   }
-  console.log(`Received auth code: ${code}`);
+  try {
+    const res = await session.defaultSession.fetch(
+      `${APP_URL}/api/auth/oauth2/desktop/exchange`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, verifier }),
+        credentials: "include",
+      }
+    );
+    if (!res.ok) {
+      console.error("Desktop login failed:", res.status);
+      return;
+    }
+
+    win?.loadURL(APP_URL);
+  } catch (err) {
+    console.error("Error during desktop login:", err);
+  }
 }
 
 function findDeepLink(argv: string[]): string | undefined {
