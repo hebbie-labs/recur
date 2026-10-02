@@ -79,6 +79,10 @@ jobs:
     runs-on: [self-hosted]
     concurrency: deploy-dev
     steps:
+      # Own docker config per job: the shared runner's ~/.docker must stay
+      # untouched, login-action's post-step `docker logout` would wipe the
+      # ghcr.io login other repos on this runner rely on.
+      - run: echo "DOCKER_CONFIG=$RUNNER_TEMP/.docker" >> "$GITHUB_ENV"
       # GHCR packages are private by default - the build job's login only
       # covers its own (github-hosted) docker daemon, so this runner needs
       # its own login before it can pull.
@@ -112,6 +116,10 @@ jobs:
     concurrency: deploy-prod
     environment: production # requires manual approval, see below
     steps:
+      # Own docker config per job: the shared runner's ~/.docker must stay
+      # untouched, login-action's post-step `docker logout` would wipe the
+      # ghcr.io login other repos on this runner rely on.
+      - run: echo "DOCKER_CONFIG=$RUNNER_TEMP/.docker" >> "$GITHUB_ENV"
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -137,6 +145,10 @@ jobs:
     runs-on: [self-hosted]
     concurrency: deploy-www
     steps:
+      # Own docker config per job: the shared runner's ~/.docker must stay
+      # untouched, login-action's post-step `docker logout` would wipe the
+      # ghcr.io login other repos on this runner rely on.
+      - run: echo "DOCKER_CONFIG=$RUNNER_TEMP/.docker" >> "$GITHUB_ENV"
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
