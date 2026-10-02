@@ -162,6 +162,16 @@ if (!gotLock) {
   });
 
   app.whenReady().then(() => {
+    session.defaultSession.setPermissionRequestHandler(
+      (_webContents, permission, callback) => {
+        callback(false);
+      }
+    );
+    session.defaultSession.setPermissionCheckHandler(
+      (_webContents, permission) => {
+        return false;
+      }
+    );
     createWindow();
     const link = findDeepLink(process.argv);
     if (link) handleDeepLink(link);
