@@ -1,5 +1,8 @@
-import { app, BrowserWindow, shell } from "electron";
+import { app, BrowserWindow, shell, ipcMain } from "electron";
 import path from "node:path";
+import crypto from "node:crypto";
+
+let pendingVerifier: string | null = null;
 
 const DEV_URL = "http://localhost:3000";
 const PROD_URL = "https://www.recur.dpdns.org";
@@ -28,9 +31,25 @@ function openExternal(url: string): void {
       shell.openExternal(url);
     }
   } catch {
-    // ungültige URL: ignorieren
+    return;
   }
 }
+
+ipcMain.on("auth:open-login", (event, provider: string) => {
+  const senderUrl = event.senderFrame?.url;
+  if (!senderUrl || !isInternal(senderUrl)) return;
+  if (provider !== "google" && provider !== "github") return;
+
+  const verifier = crypto.randomBytes(32).toString("base64url");
+  const challenge = crypto
+    .createHash("sha256")
+    .update(verifier)
+    .digest("base64url");
+  pendingVerifier = verifier;
+
+  const loginUrl = `${APP_URL}/oauth2/authorization/${provider}?challenge=${challenge}`;
+  shell.openExternal(loginUrl);
+});
 
 let win: BrowserWindow | null = null;
 
