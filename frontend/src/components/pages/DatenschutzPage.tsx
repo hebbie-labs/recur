@@ -201,6 +201,26 @@ function DatenschutzPage() {
 
       <section className="flex flex-col gap-2">
         <h2 className="text-base font-semibold text-foreground">
+          Desktop-App (Windows)
+        </h2>
+        <p>
+          Die Desktop-App zeigt dieselbe Recur-Oberfläche wie der Browser, es
+          werden also dieselben Daten verarbeitet wie oben beschrieben. Die
+          Anmeldung mit Google oder GitHub läuft in deinem Standardbrowser, die
+          Sitzungs-Cookies liegen danach lokal im Profilordner der App und sind
+          mit Schlüsseln deines Windows-Kontos verschlüsselt.
+        </p>
+        <p>
+          Beim Start prüft die App bei GitHub, ob eine neuere Version
+          bereitsteht, damit Sicherheits- und Fehlerkorrekturen ausgeliefert
+          werden können. Dabei erhält GitHub technisch bedingt deine IP-Adresse.
+          Konto- oder Aufgabendaten werden dafür nicht übertragen. Es gelten die
+          Datenschutzbestimmungen von GitHub.
+        </p>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <h2 className="text-base font-semibold text-foreground">
           Speicherdauer und Hosting
         </h2>
         <p>
