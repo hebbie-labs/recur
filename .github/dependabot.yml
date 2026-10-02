@@ -1,0 +1,17 @@
+version: 2
+
+updates:
+  # Electron bringt Chromium mit: Sicherheitslücken des Browsers landen
+  # direkt in der Desktop-App, sie muss also regelmäßig nachziehen.
+  - package-ecosystem: npm
+    directory: /desktop
+    target-branch: dev
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: monthly

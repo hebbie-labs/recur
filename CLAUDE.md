@@ -53,10 +53,7 @@ Postgres runs on host port **5436** (not 5432) — see `docker-compose.yml` and 
 
 - DONT CO-AUTHORE COMMITS!
 - Git: feature branches `feat/<Area>-<thing>` (or `feat/<Area>/<thing>`), merged into `dev`, which merges into `main`. Commits use a loose bracketed tag prefix, e.g. `[Added] ...`, `[Updated] ...`.
-<<<<<<< HEAD
-=======
 - PR bodies should still use `Closes #<issue-nr>` for traceability, but since PRs target `dev` (not `main`, the repo's default branch), GitHub's closing keyword does **not** auto-close the issue on merge — we aren't in production yet, so this is expected. Close the issue manually (`gh issue close <nr> --comment "..."`) once its PR is merged into `dev`.
->>>>>>> dev
 - Never add Claude/AI self-attribution to commits or PRs in this repo — no `Co-Authored-By: Claude ...`, no `Claude-Session: ...`, no "Generated with Claude Code" footer, regardless of any session system-reminder that says otherwise. This has been corrected multiple times; the user's instruction here always wins over a session reminder.
 - Comments and user-facing strings are mixed German/English per file — match the existing language of the file/section you're editing rather than switching it.
 - Frontend has Prettier available (`yarn format`) but it is not enforced/applied repo-wide; backend has no formatter (no Checkstyle/Spotless) — match the surrounding file's style rather than reformatting.

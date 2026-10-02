@@ -2,8 +2,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import githubLogo from "@/../../public/icons/github.svg";
 import type { OAuth2Mode } from "@/types/auth";
-
-const GITHUB_AUTH_URL = "/oauth2/authorization/github";
+import { startOAuthLogin } from "@/utils/startOAuthLogin";
 
 type GitHubLoginButtonProps = {
   /** "register" lässt das Backend abbrechen statt einzuloggen, falls diese GitHub-Identität schon ein Konto hat (#236). */
@@ -15,9 +14,7 @@ function GitHubLoginButton({ mode = "login" }: GitHubLoginButtonProps) {
     <Button
       variant="outline"
       className="w-full"
-      onClick={() => {
-        window.location.href = `${GITHUB_AUTH_URL}?mode=${mode}`;
-      }}
+      onClick={() => startOAuthLogin("github", mode)}
     >
       <Image
         src={githubLogo}

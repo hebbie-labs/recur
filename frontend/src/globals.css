@@ -151,3 +151,65 @@
     @apply cursor-pointer;
   }
 }
+
+/*
+ * Desktop-App (Electron, titleBarOverlay): Windows zeichnet nur noch die
+ * Fenster-Buttons, die Titelleiste (DesktopTitleBar) kommt von der Seite.
+ * Alles hier greift nur unter html[data-desktop] - das setzt das Init-Skript
+ * in app/layout.tsx -, im Browser und in der PWA ändert sich nichts.
+ * Bewusst außerhalb von @layer, damit es die Tailwind-Utilities schlägt.
+ */
+.desktop-titlebar {
+  display: none;
+}
+
+html[data-desktop] {
+  /* Muss zur Höhe in desktop/src/main.ts (titleBarOverlay.height) passen. */
+  --titlebar-height: 32px;
+}
+
+/* body wird zum eigenen Scrollbereich unterhalb der Leiste, statt dass das
+ * Dokument scrollt: So landen sticky-Elemente (AppBar, Kalender-Kopf) unter
+ * der Leiste und nicht dahinter. !important, weil Radix beim Öffnen eines
+ * Dialogs per Scroll-Lock "position: relative !important" auf den body
+ * setzt, was das Layout sonst springen ließe. */
+html[data-desktop] body {
+  position: fixed !important;
+  inset: var(--titlebar-height) 0 0 0;
+  overflow: auto;
+}
+
+html[data-desktop] .desktop-titlebar {
+  display: flex;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--titlebar-height);
+  /* Unter den Dialog-Overlays (z-50), damit die nicht von der Leiste
+   * zerschnitten werden, über Sidebar (z-10) und AppBar (z-20). */
+  z-index: 40;
+  align-items: center;
+  gap: 0.5rem;
+  padding-inline: 0.75rem;
+  font-size: 0.75rem;
+  background: var(--background);
+  color: var(--foreground);
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+/* Vollhöhe-Seiten und die feste Sidebar rechnen mit dem ganzen Fenster -
+ * ohne diese Anpassung wären sie 32 px zu hoch und würden scrollen. */
+html[data-desktop] .min-h-svh,
+html[data-desktop] .min-h-screen {
+  min-height: calc(100svh - var(--titlebar-height));
+}
+
+html[data-desktop] .h-svh {
+  height: calc(100svh - var(--titlebar-height));
+}
+
+html[data-desktop] [data-slot="sidebar-container"] {
+  top: var(--titlebar-height);
+}
