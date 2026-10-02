@@ -36,8 +36,17 @@ public class OAuth2ModeAuthorizationRequestRepository
         if (authorizationRequest != null) {
             Object mode = authorizationRequest.getAttribute(OAuth2ModeAuthorizationRequestResolver.MODE_ATTRIBUTE);
             request.setAttribute(OAuth2ModeAuthorizationRequestResolver.MODE_ATTRIBUTE, mode);
+            Object challenge = authorizationRequest
+                    .getAttribute(OAuth2ModeAuthorizationRequestResolver.DESKTOP_CHALLENGE_ATTRIBUTE);
+            request.setAttribute(OAuth2ModeAuthorizationRequestResolver.DESKTOP_CHALLENGE_ATTRIBUTE, challenge);
         }
         return authorizationRequest;
+    }
+
+    // null, wenn der Login nicht von der Desktop-App gestartet wurde.
+    public static String desktopChallengeOf(HttpServletRequest request) {
+        Object challenge = request.getAttribute(OAuth2ModeAuthorizationRequestResolver.DESKTOP_CHALLENGE_ATTRIBUTE);
+        return challenge instanceof String value ? value : null;
     }
 
     public static OAuth2Mode modeOf(HttpServletRequest request) {

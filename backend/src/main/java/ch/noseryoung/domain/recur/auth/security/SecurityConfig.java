@@ -56,6 +56,7 @@ public class SecurityConfig {
                         "/api/auth/register",
                         "/api/auth/login",
                         "/api/auth/oauth2/token",
+                        "/api/auth/oauth2/desktop/exchange",
                         "/api/auth/refresh",
                         "/api/auth/logout",
                         "/api/auth/verify-email",

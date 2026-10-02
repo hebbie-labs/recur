@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import ch.noseryoung.domain.recur.auth.dto.AuthResponse;
+import ch.noseryoung.domain.recur.auth.dto.DesktopExchangeRequest;
 import ch.noseryoung.domain.recur.auth.dto.ForgotPasswordRequest;
 import ch.noseryoung.domain.recur.auth.dto.LoginRequest;
 import ch.noseryoung.domain.recur.auth.dto.MessageResponse;
@@ -38,6 +39,7 @@ import ch.noseryoung.domain.recur.auth.security.jwt.RefreshTokenService;
 import ch.noseryoung.domain.recur.auth.service.AuthService;
 import ch.noseryoung.domain.recur.auth.service.AuthService.AuthResult;
 import ch.noseryoung.domain.recur.auth.service.AuthService.TokenExchangeResult;
+import ch.noseryoung.domain.recur.auth.service.DesktopLoginCodeService;
 import ch.noseryoung.domain.recur.auth.service.OAuth2AccountLinkingService;
 import ch.noseryoung.domain.recur.auth.service.OAuth2AccountLinkingService.LinkInfo;
 import ch.noseryoung.domain.recur.user.model.User;
@@ -63,16 +65,18 @@ public class AuthController {
     private final RefreshTokenService refreshTokenService;
     private final JwtService jwtService;
     private final OAuth2AccountLinkingService linkingService;
+    private final DesktopLoginCodeService desktopLoginCodeService;
 
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
     public AuthController(AuthService authService, RefreshTokenService refreshTokenService, JwtService jwtService,
-            OAuth2AccountLinkingService linkingService) {
+            OAuth2AccountLinkingService linkingService, DesktopLoginCodeService desktopLoginCodeService) {
         this.authService = authService;
         this.refreshTokenService = refreshTokenService;
         this.jwtService = jwtService;
         this.linkingService = linkingService;
+        this.desktopLoginCodeService = desktopLoginCodeService;
     }
 
     @PostMapping("/register")
@@ -190,6 +194,24 @@ public class AuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, jwtService.buildCookie(result.accessToken(), request).toString())
                 .header(HttpHeaders.SET_COOKIE, clearHandoffCookie.toString())
+                .body(result.authResponse());
+    }
+
+    // Löst den Einmal-Code der Desktop-App ein (siehe DesktopLoginCodeService).
+    // Ohne CSRF-Schutz und ohne Login erreichbar, wie /login: Es gibt vorher
+    // keinen Cookie-Zustand zu schützen, und ohne Code UND passenden Verifier
+    // passiert nichts. Die Cookies landen in der Session der App, die den
+    // Request gestellt hat - nicht im Browser, in dem der Provider-Login lief.
+    @PostMapping("/oauth2/desktop/exchange")
+    public ResponseEntity<AuthResponse> exchangeDesktopCode(
+            @Valid @RequestBody DesktopExchangeRequest request,
+            HttpServletRequest httpRequest) {
+        User user = desktopLoginCodeService.redeem(request.code(), request.verifier());
+        AuthResult result = authService.startSession(user, httpRequest);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, jwtService.buildCookie(result.accessToken(), httpRequest).toString())
+                .header(HttpHeaders.SET_COOKIE, refreshTokenService.buildCookie(result.refreshToken(), httpRequest).toString())
                 .body(result.authResponse());
     }
 
