@@ -37,7 +37,7 @@ function SetPasswordReminderDialog() {
   // Client-Render ohnehin noch null (AuthContext lädt erst clientseitig),
   // der Dialog also in beiden Fällen geschlossen.
   const [dismissed, setDismissed] = useState(() =>
-    typeof window === "undefined" ? true : readDismissed()
+    typeof window === "undefined" ? true : readDismissed(),
   );
 
   const dismiss = () => {
@@ -56,7 +56,10 @@ function SetPasswordReminderDialog() {
             Damit du dich auch mit deiner E-Mail anmelden kannst.
           </DialogDescription>
         </DialogHeader>
-        <SetPasswordForm onSuccess={() => setDismissed(true)} onCancel={dismiss} />
+        <SetPasswordForm
+          onSuccess={() => setDismissed(true)}
+          onCancel={dismiss}
+        />
       </DialogContent>
     </Dialog>
   );

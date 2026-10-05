@@ -1,7 +1,13 @@
 import { useRouter } from "next/navigation";
 import { AlertCircle } from "lucide-react";
 import LegalFooterLinks from "@/components/molecules/LegalFooterLinks";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 // Passwort-Reset ist vorübergehend deaktiviert (#128): der Link würde ohnehin

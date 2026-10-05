@@ -16,7 +16,13 @@ import TaskCardGridSkeleton from "../molecules/task/TaskCardGridSkeleton";
 // bevor man auf "Alle anzeigen" tippen muss.
 const PREVIEW_COUNT = 3;
 
-function SectionHeader({ title, action }: { title: string; action: ReactNode }) {
+function SectionHeader({
+  title,
+  action,
+}: {
+  title: string;
+  action: ReactNode;
+}) {
   return (
     <div className="mb-2 flex items-center justify-between">
       <h2 className="text-lg font-semibold text-foreground">{title}</h2>
@@ -77,7 +83,14 @@ function MobileHomeSections({
       onToggleDone,
       onTaskUpdated: onUpdateTask,
     }),
-    [onToggleFavorite, onToggleArchive, onResetProgress, onDelete, onToggleDone, onUpdateTask],
+    [
+      onToggleFavorite,
+      onToggleArchive,
+      onResetProgress,
+      onDelete,
+      onToggleDone,
+      onUpdateTask,
+    ],
   );
 
   // Archivierte Aufgaben sind schreibgeschützt (siehe ArchivePage.tsx) - kein
@@ -104,13 +117,21 @@ function MobileHomeSections({
             onButtonClick={onOpenAddTask}
           />
         ) : (
-          <TaskCardGrid sortedTasks={sortedTasks} handlers={mainHandlers} direction="row" paginate />
+          <TaskCardGrid
+            sortedTasks={sortedTasks}
+            handlers={mainHandlers}
+            direction="row"
+            paginate
+          />
         )}
       </div>
 
       {favoriteTasks.length > 0 && (
         <div>
-          <SectionHeader title="Favoriten" action={<SeeAllLink path="/favorites" />} />
+          <SectionHeader
+            title="Favoriten"
+            action={<SeeAllLink path="/favorites" />}
+          />
           <TaskCardGrid
             sortedTasks={favoriteTasks.slice(0, PREVIEW_COUNT)}
             handlers={previewHandlers}
@@ -121,7 +142,10 @@ function MobileHomeSections({
 
       {archivedTasks.length > 0 && (
         <div>
-          <SectionHeader title="Archiv" action={<SeeAllLink path="/archive" />} />
+          <SectionHeader
+            title="Archiv"
+            action={<SeeAllLink path="/archive" />}
+          />
           <TaskCardGrid
             sortedTasks={archivedTasks.slice(0, PREVIEW_COUNT)}
             handlers={previewHandlers}
@@ -171,7 +195,10 @@ function HomePage() {
   const { openAddTaskForm } = useAddTask();
 
   const now = useNow();
-  const sortedTasks = useMemo(() => sortTasks(tasks, sortBy, now), [tasks, sortBy, now]);
+  const sortedTasks = useMemo(
+    () => sortTasks(tasks, sortBy, now),
+    [tasks, sortBy, now],
+  );
 
   if (loading) {
     return <TaskCardGridSkeleton count={6} direction="row" />;

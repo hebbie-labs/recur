@@ -13,7 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { NotificationSettings, ReminderLeadTime } from "@/types/notifications";
+import type {
+  NotificationSettings,
+  ReminderLeadTime,
+} from "@/types/notifications";
 import { LEAD_TIME_OPTIONS } from "@/constants/taskOptions";
 
 type NotificationFormProps = {
@@ -22,7 +25,11 @@ type NotificationFormProps = {
   onFieldChange: (update: Partial<NotificationSettings>) => void;
 };
 
-function NotificationForm({ values, disabled, onFieldChange }: NotificationFormProps) {
+function NotificationForm({
+  values,
+  disabled,
+  onFieldChange,
+}: NotificationFormProps) {
   return (
     <div className="flex flex-col gap-4">
       <Field orientation="horizontal">
@@ -30,8 +37,8 @@ function NotificationForm({ values, disabled, onFieldChange }: NotificationFormP
           <FieldTitle>E-Mail-Benachrichtigungen</FieldTitle>
           <FieldDescription>
             Aktuell nicht verfügbar: unser E-Mail-Versand wird derzeit von
-            manchen Mail-Providern blockiert, daher ist der Versand
-            serverseitig deaktiviert.
+            manchen Mail-Providern blockiert, daher ist der Versand serverseitig
+            deaktiviert.
           </FieldDescription>
         </FieldContent>
         <Switch disabled checked={false} />
@@ -57,8 +64,8 @@ function NotificationForm({ values, disabled, onFieldChange }: NotificationFormP
         <FieldContent>
           <FieldTitle>Erinnerungs-Vorlauf</FieldTitle>
           <FieldDescription>
-            Wie lange vor dem Fälligkeitsdatum einer Aufgabe du erinnert
-            werden möchtest.
+            Wie lange vor dem Fälligkeitsdatum einer Aufgabe du erinnert werden
+            möchtest.
           </FieldDescription>
         </FieldContent>
         <Select
@@ -70,7 +77,8 @@ function NotificationForm({ values, disabled, onFieldChange }: NotificationFormP
           <SelectTrigger disabled={disabled} className="w-[200px] shrink-0">
             <SelectValue>
               {(value: ReminderLeadTime) =>
-                LEAD_TIME_OPTIONS.find((option) => option.value === value)?.label
+                LEAD_TIME_OPTIONS.find((option) => option.value === value)
+                  ?.label
               }
             </SelectValue>
           </SelectTrigger>

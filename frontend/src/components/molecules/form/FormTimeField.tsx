@@ -41,7 +41,7 @@ function FormTimeField({
         onBlur={onBlur}
         className={cn(
           error && "border-destructive focus-visible:ring-destructive",
-          className
+          className,
         )}
         value={value ?? ""}
         aria-invalid={error ? "true" : "false"}

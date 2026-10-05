@@ -20,8 +20,8 @@ function AgbPage() {
         </h2>
         <p>
           Recur ist eine kostenlose Anwendung zur Verwaltung von Aufgaben
-          (Tasks), Gewohnheiten, Gruppen und Projekten. Es werden derzeit
-          keine kostenpflichtigen Funktionen angeboten.
+          (Tasks), Gewohnheiten, Gruppen und Projekten. Es werden derzeit keine
+          kostenpflichtigen Funktionen angeboten.
         </p>
       </section>
 
@@ -29,9 +29,9 @@ function AgbPage() {
         <h2 className="text-base font-semibold text-foreground">Konto</h2>
         <p>
           Für die Nutzung von Recur ist ein Konto erforderlich, entweder per
-          E-Mail/Passwort oder über Google-Login. Du bist dafür
-          verantwortlich, deine Zugangsdaten geheim zu halten und uns über
-          eine missbräuchliche Nutzung deines Kontos zu informieren.
+          E-Mail/Passwort oder über Google-Login. Du bist dafür verantwortlich,
+          deine Zugangsdaten geheim zu halten und uns über eine missbräuchliche
+          Nutzung deines Kontos zu informieren.
         </p>
       </section>
 
@@ -42,10 +42,10 @@ function AgbPage() {
         <p>
           Wenn du Aufgaben oder Projekte mit anderen Nutzer:innen in einer
           Gruppe teilst, sind diese Inhalte für die übrigen Gruppenmitglieder
-          sichtbar. Du bist selbst dafür verantwortlich, welche Inhalte du
-          mit einer Gruppe teilst. Streitigkeiten zwischen Mitgliedern einer
-          Gruppe (z.B. über geteilte Aufgaben) sind eigenverantwortlich zu
-          klären; wir übernehmen dafür keine Vermittlungspflicht.
+          sichtbar. Du bist selbst dafür verantwortlich, welche Inhalte du mit
+          einer Gruppe teilst. Streitigkeiten zwischen Mitgliedern einer Gruppe
+          (z.B. über geteilte Aufgaben) sind eigenverantwortlich zu klären; wir
+          übernehmen dafür keine Vermittlungspflicht.
         </p>
       </section>
 
@@ -54,9 +54,9 @@ function AgbPage() {
           Pflichten der Nutzer:innen
         </h2>
         <p>
-          Du verpflichtest dich, Recur nicht für rechtswidrige Zwecke zu
-          nutzen und keine Inhalte einzustellen, die gegen geltendes Recht
-          oder Rechte Dritter verstossen.
+          Du verpflichtest dich, Recur nicht für rechtswidrige Zwecke zu nutzen
+          und keine Inhalte einzustellen, die gegen geltendes Recht oder Rechte
+          Dritter verstossen.
         </p>
       </section>
 
@@ -65,10 +65,10 @@ function AgbPage() {
           Verfügbarkeit und Haftung
         </h2>
         <p>
-          Recur wird ohne Gewähr für ständige Verfügbarkeit bereitgestellt.
-          Es besteht kein Anspruch auf unterbrechungsfreien Betrieb. Die
-          Haftung für leichte Fahrlässigkeit wird, soweit gesetzlich
-          zulässig, ausgeschlossen.
+          Recur wird ohne Gewähr für ständige Verfügbarkeit bereitgestellt. Es
+          besteht kein Anspruch auf unterbrechungsfreien Betrieb. Die Haftung
+          für leichte Fahrlässigkeit wird, soweit gesetzlich zulässig,
+          ausgeschlossen.
         </p>
       </section>
 
@@ -89,10 +89,9 @@ function AgbPage() {
           Änderungen dieser Bedingungen
         </h2>
         <p>
-          Wir behalten uns vor, diese Nutzungsbedingungen bei Bedarf
-          anzupassen, etwa wenn neue Funktionen (z.B. Bezahlfunktionen)
-          hinzukommen. Die jeweils aktuelle Version ist stets über diese
-          Seite abrufbar.
+          Wir behalten uns vor, diese Nutzungsbedingungen bei Bedarf anzupassen,
+          etwa wenn neue Funktionen (z.B. Bezahlfunktionen) hinzukommen. Die
+          jeweils aktuelle Version ist stets über diese Seite abrufbar.
         </p>
       </section>
 

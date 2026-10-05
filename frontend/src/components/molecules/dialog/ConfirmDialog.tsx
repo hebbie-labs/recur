@@ -7,7 +7,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
 import LoadingButton from "@/components/atoms/loading/LoadingButton";
 
 type ConfirmDialogProps = {
@@ -38,7 +38,6 @@ function ConfirmDialog({
   onOpenChange,
   loading,
 }: ConfirmDialogProps) {
-
   const buttonVariant = severity === "high" ? "destructive" : "default";
 
   return (
@@ -53,7 +52,11 @@ function ConfirmDialog({
           <AlertDialogCancel onClick={onCancel} disabled={loading}>
             {cancelText || "Abbrechen"}
           </AlertDialogCancel>
-          <LoadingButton onClick={onConfirm} variant={buttonVariant} loading={loading}>
+          <LoadingButton
+            onClick={onConfirm}
+            variant={buttonVariant}
+            loading={loading}
+          >
             {confirmText || "Fortfahren"}
           </LoadingButton>
         </AlertDialogFooter>

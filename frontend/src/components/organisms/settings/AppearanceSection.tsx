@@ -1,5 +1,6 @@
 import { Moon, Palette, Sun } from "lucide-react";
 import useDarkMode from "@/hooks/useDarkMode";
+import InstallAppCard from "@/components/organisms/settings/InstallAppCard";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -46,6 +47,8 @@ function AppearanceSection() {
         </CardContent>
       </Card>
 
+      <InstallAppCard />
+
       <Empty>
         <EmptyHeader>
           <EmptyMedia variant="icon">
@@ -53,8 +56,8 @@ function AppearanceSection() {
           </EmptyMedia>
           <EmptyTitle>Weitere Optionen</EmptyTitle>
           <EmptyDescription>
-            Weitere Anpassungen am Erscheinungsbild sind noch nicht
-            verfügbar und folgen später.
+            Weitere Anpassungen am Erscheinungsbild sind noch nicht verfügbar
+            und folgen später.
           </EmptyDescription>
         </EmptyHeader>
       </Empty>

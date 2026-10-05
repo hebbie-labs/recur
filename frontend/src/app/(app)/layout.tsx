@@ -18,7 +18,10 @@ function getPageTitle(pathname: string): string {
   if (pathname === "/settings") return "Einstellungen";
   if (pathname.startsWith("/settings/")) {
     const sectionId = pathname.slice("/settings/".length);
-    return SETTINGS_SECTIONS.find((s) => s.id === sectionId)?.label ?? "Einstellungen";
+    return (
+      SETTINGS_SECTIONS.find((s) => s.id === sectionId)?.label ??
+      "Einstellungen"
+    );
   }
   if (pathname === "/account") return "Account";
   return "";

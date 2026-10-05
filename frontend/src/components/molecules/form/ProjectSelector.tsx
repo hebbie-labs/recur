@@ -57,7 +57,9 @@ function ProjectSelector({ className, disabled }: ProjectSelectorProps) {
       <Select
         items={items}
         value={selectValue}
-        onValueChange={(value) => helpers.setValue(value === PERSONAL_VALUE ? "" : (value ?? ""))}
+        onValueChange={(value) =>
+          helpers.setValue(value === PERSONAL_VALUE ? "" : (value ?? ""))
+        }
         disabled={disabled}
       >
         <SelectTrigger id={fieldId}>

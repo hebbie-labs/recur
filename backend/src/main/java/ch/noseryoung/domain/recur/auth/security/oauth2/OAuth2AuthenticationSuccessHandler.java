@@ -17,6 +17,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import ch.noseryoung.domain.recur.auth.enums.OAuth2ErrorCode;
 import ch.noseryoung.domain.recur.auth.security.jwt.JwtService;
 import ch.noseryoung.domain.recur.auth.security.jwt.RefreshTokenService;
+import ch.noseryoung.domain.recur.auth.service.DesktopLoginCodeService;
 import ch.noseryoung.domain.recur.auth.service.OAuth2AccountLinkingService;
 import ch.noseryoung.domain.recur.auth.service.OAuth2AccountLinkingService.Aborted;
 import ch.noseryoung.domain.recur.auth.service.OAuth2AccountLinkingService.LinkRequired;
@@ -43,11 +44,14 @@ public class OAuth2AuthenticationSuccessHandler
         public static final String LINK_COOKIE_PATH = "/api/auth/oauth2/link";
         public static final Duration LINK_COOKIE_TTL = Duration.ofMinutes(10);
 
+        private static final String DESKTOP_LANDING_PATH = "/auth/desktop";
+
         private static final Logger log = LoggerFactory.getLogger(OAuth2AuthenticationSuccessHandler.class);
 
         private final JwtService jwtService;
         private final RefreshTokenService refreshTokenService;
         private final OAuth2AccountLinkingService linkingService;
+        private final DesktopLoginCodeService desktopLoginCodeService;
 
         @Value("${app.oauth2.redirect-path}")
         private String redirectPath;
@@ -75,7 +79,15 @@ public class OAuth2AuthenticationSuccessHandler
                                         OAuth2ModeAuthorizationRequestRepository.modeOf(request));
 
                         switch (outcome) {
-                                case LoggedIn(User user) -> completeLogin(user, request, response);
+                                case LoggedIn(User user) -> {
+                                        String desktopChallenge = OAuth2ModeAuthorizationRequestRepository
+                                                        .desktopChallengeOf(request);
+                                        if (desktopChallenge != null) {
+                                                completeDesktopLogin(user, desktopChallenge, response);
+                                        } else {
+                                                completeLogin(user, request, response);
+                                        }
+                                }
                                 case LinkRequired(PendingOAuth2Link pendingLink) ->
                                                 startLink(pendingLink, request, response);
                                 case Aborted(OAuth2ErrorCode code) -> response.sendRedirect(
@@ -126,6 +138,30 @@ public class OAuth2AuthenticationSuccessHandler
                                 .toUriString();
 
                 response.sendRedirect(redirectUrl);
+        }
+
+        // Login aus der Desktop-App: Der Browser bekommt bewusst KEINE Cookies -
+        // er ist nur Durchgang. Stattdessen geht ein Einmal-Code an die App, die
+        // ihn mit ihrem Verifier einlöst (siehe DesktopLoginCodeService und
+        // AuthController#exchangeDesktopCode). Verknüpfungs- und Fehlerfälle
+        // laufen unverändert im Browser.
+        //
+        // Der Code geht NICHT direkt per Redirect auf recur://, sondern über die
+        // Frontend-Seite /auth/desktop (DesktopLoginPage): Der Browser blockt
+        // einen Sprung auf ein fremdes Protokoll ohne Klick auf der Seite, und
+        // ein Service Worker (installierte PWA) reicht einen Redirect auf
+        // recur:// gar nicht durch. Die Seite öffnet recur://auth?code=... per
+        // Klick bzw. Auto-Versuch (muss zu handleDeepLink in
+        // desktop/src/main.ts passen).
+        private void completeDesktopLogin(User user, String challenge, HttpServletResponse response)
+                        throws IOException {
+                String code = desktopLoginCodeService.issue(user, challenge);
+
+                response.sendRedirect(UriComponentsBuilder.fromUriString(frontendUrl)
+                                .path(DESKTOP_LANDING_PATH)
+                                .queryParam("code", code)
+                                .build()
+                                .toUriString());
         }
 
         // Noch KEIN Login: es gibt bereits einen Account mit dieser E-Mail, und

@@ -6,6 +6,7 @@ import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequest
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 
 import ch.noseryoung.domain.recur.auth.enums.OAuth2Mode;
+import ch.noseryoung.domain.recur.auth.service.DesktopLoginCodeService;
 import jakarta.servlet.http.HttpServletRequest;
 
 // Übernimmt ?mode=register von /oauth2/authorization/{provider} in die
@@ -16,6 +17,11 @@ import jakarta.servlet.http.HttpServletRequest;
 public class OAuth2ModeAuthorizationRequestResolver implements OAuth2AuthorizationRequestResolver {
 
     public static final String MODE_ATTRIBUTE = "recur_oauth2_mode";
+
+    // Challenge der Desktop-App (?challenge=...), siehe DesktopLoginCodeService.
+    // Nur ihre Anwesenheit macht den Login zum Desktop-Login. Wie der Modus
+    // wird sie serverseitig beim state gespeichert und nicht übers Netz getragen.
+    public static final String DESKTOP_CHALLENGE_ATTRIBUTE = "recur_desktop_challenge";
 
     // Spring-Default von OAuth2AuthorizationRequestRedirectFilter - die
     // Frontend-Buttons verlinken auf /oauth2/authorization/{provider}.
@@ -49,8 +55,18 @@ public class OAuth2ModeAuthorizationRequestResolver implements OAuth2Authorizati
                 ? OAuth2Mode.REGISTER
                 : OAuth2Mode.LOGIN;
 
+        // Eine ungültige Challenge wird ignoriert: der Login läuft dann als
+        // normaler Browser-Login, es entsteht kein Code für die App.
+        String challenge = request.getParameter("challenge");
+        boolean desktop = DesktopLoginCodeService.isValidChallenge(challenge);
+
         return OAuth2AuthorizationRequest.from(authorizationRequest)
-                .attributes(attributes -> attributes.put(MODE_ATTRIBUTE, mode.name()))
+                .attributes(attributes -> {
+                    attributes.put(MODE_ATTRIBUTE, mode.name());
+                    if (desktop) {
+                        attributes.put(DESKTOP_CHALLENGE_ATTRIBUTE, challenge);
+                    }
+                })
                 .build();
     }
 }

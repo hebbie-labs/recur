@@ -1,18 +1,23 @@
-import { TaskFrequency, type TaskFrequency as TaskFrequencyType } from "@/types/task";
+import {
+  TaskFrequency,
+  type TaskFrequency as TaskFrequencyType,
+} from "@/types/task";
 import { toDateOnlyString } from "@/utils/formatDate";
 
 const QUARTER_HOUR_MS = 15 * 60 * 1000;
 
 /** Rundet einen Zeitpunkt auf die nächste volle Viertelstunde auf (12:11 -> 12:15, 13:16 -> 13:30) - rechnet auf Basis der Unix-Epoche statt lokaler Stunden/Minuten, das funktioniert unabhängig von der Zeitzone, weil reale UTC-Offsets stets ein Vielfaches von 15 Minuten sind. */
 export function roundUpToQuarterHour(date: Date): Date {
-  return new Date(Math.ceil(date.getTime() / QUARTER_HOUR_MS) * QUARTER_HOUR_MS);
+  return new Date(
+    Math.ceil(date.getTime() / QUARTER_HOUR_MS) * QUARTER_HOUR_MS,
+  );
 }
 
 /** Kombiniert startDate + startTimeOfDay zu einem ISO-Instant; ist bei wiederkehrender Frequenz keins der beiden gesetzt, wird "jetzt" (aufgerundet) als Anker verwendet, da `occursOn` (calendarGrid.ts) startTime braucht, um die Aufgabe überhaupt im Kalender zu platzieren. Bei ONCE bleibt ein leerer Start optional. */
 export function resolveStartTime(
   startDate: string,
   startTimeOfDay: string,
-  frequency: TaskFrequencyType | ""
+  frequency: TaskFrequencyType | "",
 ): string | null {
   if (startDate && startTimeOfDay) {
     return new Date(`${startDate}T${startTimeOfDay}`).toISOString();

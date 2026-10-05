@@ -52,7 +52,7 @@ function FormTextField({
           className={cn(
             error && "border-destructive focus-visible:ring-destructive",
             endAdornment && "pr-10",
-            className
+            className,
           )}
           value={value ?? ""}
           aria-invalid={error ? "true" : "false"}

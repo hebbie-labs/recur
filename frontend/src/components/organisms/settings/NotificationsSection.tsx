@@ -1,7 +1,10 @@
 import { useState } from "react";
 import type { NotificationSettings } from "@/types/notifications";
 import { updateNotificationSettings } from "@/services/notificationService";
-import { disablePushNotifications, enablePushNotifications } from "@/services/pushService";
+import {
+  disablePushNotifications,
+  enablePushNotifications,
+} from "@/services/pushService";
 import { Skeleton } from "@/components/ui/skeleton";
 import NotificationForm from "./NotificationForm";
 import useNotificationSettings from "@/hooks/useNotificationSettings";
@@ -37,7 +40,7 @@ function NotificationsSection({ initialSettings }: NotificationsSectionProps) {
       setError(
         error instanceof Error
           ? error.message
-          : "Unbekannter Fehler beim Aktualisieren der Benachrichtigungseinstellungen"
+          : "Unbekannter Fehler beim Aktualisieren der Benachrichtigungseinstellungen",
       );
     } finally {
       setSaving(false);

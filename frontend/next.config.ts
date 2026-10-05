@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
-import withPWAInit, { runtimeCaching as defaultRuntimeCaching } from "@ducanh2912/next-pwa";
+import withPWAInit, {
+  runtimeCaching as defaultRuntimeCaching,
+} from "@ducanh2912/next-pwa";
 
 const withPWA = withPWAInit({
   dest: "public",
@@ -7,6 +9,8 @@ const withPWA = withPWAInit({
   // No SW in dev - HMR + a service worker fighting over cached assets is
   // more trouble than it's worth locally.
   disable: process.env.NODE_ENV === "development",
+  // Offline-Navigation zeigt diese Seite statt des Browser-Fehlers.
+  fallbacks: { document: "/~offline" },
   workboxOptions: {
     runtimeCaching: [
       {
@@ -21,8 +25,13 @@ const withPWA = withPWAInit({
         // Function.prototype.toString() into the emitted sw.js, which drops
         // the closure - referencing an outer const here throws
         // "ReferenceError: ... is not defined" at runtime for every fetch.
+        // /auth/desktop carries the one-time desktop-login code in its URL
+        // and must not end up in the cache.
         urlPattern: ({ url, sameOrigin }) =>
-          sameOrigin && ["/api", "/oauth2", "/login/oauth2"].some((prefix) => url.pathname.startsWith(prefix)),
+          sameOrigin &&
+          ["/api", "/oauth2", "/login/oauth2", "/auth/desktop"].some((prefix) =>
+            url.pathname.startsWith(prefix),
+          ),
         handler: "NetworkOnly",
       },
       ...defaultRuntimeCaching,

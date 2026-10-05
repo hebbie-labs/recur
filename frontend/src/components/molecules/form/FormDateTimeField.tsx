@@ -6,7 +6,11 @@ import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { toDateOnlyString } from "@/utils/formatDate";
 
@@ -27,7 +31,8 @@ function FormDateTimeField({ label }: FormDateTimeFieldProps) {
     : undefined;
 
   const showError =
-    (dateMeta.touched && !!dateMeta.error) || (timeMeta.touched && !!timeMeta.error);
+    (dateMeta.touched && !!dateMeta.error) ||
+    (timeMeta.touched && !!timeMeta.error);
   const errorMessage = dateMeta.error ?? timeMeta.error;
 
   const handleSelectDate = (date: Date | undefined) => {
@@ -78,11 +83,14 @@ function FormDateTimeField({ label }: FormDateTimeFieldProps) {
                 className={cn(
                   "flex-1 justify-start text-left font-normal",
                   !dateValue && "text-muted-foreground",
-                  showError && "border-destructive focus-visible:ring-destructive"
+                  showError &&
+                    "border-destructive focus-visible:ring-destructive",
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateValue ? dateValue.toLocaleDateString("de-DE") : "Datum auswählen"}
+                {dateValue
+                  ? dateValue.toLocaleDateString("de-DE")
+                  : "Datum auswählen"}
               </Button>
             }
           />
@@ -103,7 +111,7 @@ function FormDateTimeField({ label }: FormDateTimeFieldProps) {
           aria-invalid={showError}
           className={cn(
             "w-28",
-            showError && "border-destructive focus-visible:ring-destructive"
+            showError && "border-destructive focus-visible:ring-destructive",
           )}
         />
         {(dateField.value || timeField.value) && (

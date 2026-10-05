@@ -8,7 +8,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import ProgressIndicator from "@/components/atoms/ProgressIndicator";
 import DetailDialog from "@/components/molecules/dialog/DetailDialog";
 import TaskCardMenu from "@/components/organisms/task/TaskCardMenu";
-import { overdueSince, pastIntervals, parseDateOnly } from "@/utils/taskCompletions";
+import {
+  overdueSince,
+  pastIntervals,
+  parseDateOnly,
+} from "@/utils/taskCompletions";
 import OverdueBadge from "@/components/atoms/task/OverdueBadge";
 import useNow from "@/hooks/useNow";
 import { useTasksContext } from "@/contexts/TasksContext";
@@ -30,7 +34,13 @@ type TaskDetailDialogProps = {
 };
 
 /** Verlauf vergangener Frequenz-Intervalle mit Nachtrag/Rückgängig pro Tag (#152) - nur für persönliche, wiederkehrende Tasks (ONCE hat kein Intervall-Konzept, Projekt-Tasks liegen ausserhalb des Feature-Scopes). Bei einem archivierten Habit read-only (#155), das Backend lehnt die Requests ohnehin ab. */
-function CompletionHistoryList({ task, isArchived }: { task: Task; isArchived: boolean }) {
+function CompletionHistoryList({
+  task,
+  isArchived,
+}: {
+  task: Task;
+  isArchived: boolean;
+}) {
   const { handleAddCompletion, handleRemoveCompletion } = useTasksContext();
   const intervals = pastIntervals(task);
 
@@ -54,7 +64,9 @@ function CompletionHistoryList({ task, isArchived }: { task: Task; isArchived: b
                   : handleAddCompletion(task.id, interval.representativeDate)
               }
             />
-            {format(parseDateOnly(interval.representativeDate), "dd.MM.yyyy", { locale: de })}
+            {format(parseDateOnly(interval.representativeDate), "dd.MM.yyyy", {
+              locale: de,
+            })}
           </label>
         ))}
       </div>
@@ -85,7 +97,9 @@ function TaskDetailDialog({
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-              <span className={`size-2 rounded-full ${categoryDot[task.category]}`} />
+              <span
+                className={`size-2 rounded-full ${categoryDot[task.category]}`}
+              />
               {categoryLabels[task.category]}
             </div>
             <TaskCardMenu
@@ -104,23 +118,35 @@ function TaskDetailDialog({
           <div className="flex flex-col gap-2 text-sm">
             {task.description && (
               <div className="flex flex-col gap-0.5">
-                <span className="text-xs text-muted-foreground">Beschreibung</span>
-                <span style={{ wordWrap: "break-word" }}>{task.description}</span>
+                <span className="text-xs text-muted-foreground">
+                  Beschreibung
+                </span>
+                <span style={{ wordWrap: "break-word" }}>
+                  {task.description}
+                </span>
               </div>
             )}
             <div className="flex flex-col gap-0.5">
-              <span className="text-xs text-muted-foreground">Wiederholung</span>
+              <span className="text-xs text-muted-foreground">
+                Wiederholung
+              </span>
               <span>{frequencyLabels[task.frequency]}</span>
             </div>
             {task.startTime && (
               <div className="flex gap-6">
                 <div className="flex flex-col gap-0.5">
                   <span className="text-xs text-muted-foreground">Datum</span>
-                  <span>{format(new Date(task.startTime), "dd.MM.yyyy", { locale: de })}</span>
+                  <span>
+                    {format(new Date(task.startTime), "dd.MM.yyyy", {
+                      locale: de,
+                    })}
+                  </span>
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <span className="text-xs text-muted-foreground">Uhrzeit</span>
-                  <span>{format(new Date(task.startTime), "HH:mm", { locale: de })}</span>
+                  <span>
+                    {format(new Date(task.startTime), "HH:mm", { locale: de })}
+                  </span>
                 </div>
                 {task.durationMinutes && (
                   <div className="flex flex-col gap-0.5">
@@ -132,15 +158,22 @@ function TaskDetailDialog({
             )}
             {task.dateUntil && (
               <div className="flex flex-col gap-0.5">
-                <span className="text-xs text-muted-foreground">Fällig bis</span>
-                <span>{format(new Date(task.dateUntil), "dd.MM.yyyy", { locale: de })}</span>
+                <span className="text-xs text-muted-foreground">
+                  Fällig bis
+                </span>
+                <span>
+                  {format(new Date(task.dateUntil), "dd.MM.yyyy", {
+                    locale: de,
+                  })}
+                </span>
               </div>
             )}
             {overdueSinceDate && (
               <div className="flex flex-wrap items-center gap-2">
                 <OverdueBadge />
                 <span className="text-xs text-destructive">
-                  überfällig seit {format(overdueSinceDate, "dd.MM.yyyy", { locale: de })}
+                  überfällig seit{" "}
+                  {format(overdueSinceDate, "dd.MM.yyyy", { locale: de })}
                 </span>
               </div>
             )}
@@ -148,7 +181,11 @@ function TaskDetailDialog({
 
           <div className="flex items-center justify-between gap-4 border-t border-border pt-3">
             <div className="flex items-center gap-3">
-              <ProgressIndicator value={task.progress} size={40} strokeWidth={4} />
+              <ProgressIndicator
+                value={task.progress}
+                size={40}
+                strokeWidth={4}
+              />
               <span className="text-xs text-muted-foreground">Fortschritt</span>
             </div>
             {!isArchived && (

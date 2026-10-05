@@ -45,11 +45,13 @@ export function useAutoSync() {
         console.error("Auto-sync failed:", err);
         failureCountRef.current += 1;
         if (failureCountRef.current >= FAILURES_BEFORE_WARNING) {
-          showSyncErrorToast("Sync unterbrochen – wird automatisch weiter versucht.");
+          showSyncErrorToast(
+            "Sync unterbrochen – wird automatisch weiter versucht.",
+          );
         }
         const backoff = Math.min(
           SYNC_INTERVAL_MS * 2 ** (failureCountRef.current - 1),
-          MAX_BACKOFF_MS
+          MAX_BACKOFF_MS,
         );
         scheduleNext(backoff);
       } finally {

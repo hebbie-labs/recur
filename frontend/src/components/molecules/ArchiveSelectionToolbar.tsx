@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { CheckSquareIcon, Square, SquareCheck, Trash2Icon, XIcon } from "lucide-react";
+import {
+  CheckSquareIcon,
+  Square,
+  SquareCheck,
+  Trash2Icon,
+  XIcon,
+} from "lucide-react";
 
 type ArchiveSelectionToolbarProps = {
   selectMode: boolean;
@@ -34,7 +40,9 @@ function ArchiveSelectionToolbar({
 
   return (
     <div className="flex items-center justify-between gap-2 px-4 pt-4">
-      <span className="text-sm text-muted-foreground">{selectedCount} ausgewählt</span>
+      <span className="text-sm text-muted-foreground">
+        {selectedCount} ausgewählt
+      </span>
       <div className="flex items-center gap-1.5">
         {selectedCount > 0 && (
           <Button
@@ -58,7 +66,11 @@ function ArchiveSelectionToolbar({
           aria-label={allSelected ? "Auswahl aufheben" : "Alle auswählen"}
           onClick={onToggleAllSelected}
         >
-          {allSelected ? <SquareCheck className="size-5" /> : <Square className="size-5" />}
+          {allSelected ? (
+            <SquareCheck className="size-5" />
+          ) : (
+            <Square className="size-5" />
+          )}
           Alle
         </Button>
         <Button

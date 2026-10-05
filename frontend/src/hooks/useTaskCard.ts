@@ -4,7 +4,10 @@ import { isDoneForCurrentPeriod } from "@/utils/taskCompletions";
 
 type UseTaskCardParams = {
   progress: number | null | undefined;
-  task: Pick<Task, "frequency" | "dateCreated" | "completions" | "lastAmountDidAt" | "project">;
+  task: Pick<
+    Task,
+    "frequency" | "dateCreated" | "completions" | "lastAmountDidAt" | "project"
+  >;
   onToggleFavorite?: () => void;
   onToggleEdit?: () => void;
   onToggleMenu?: () => void;
@@ -27,7 +30,7 @@ function useTaskCard({
 }: UseTaskCardParams) {
   const clampedProgress = useMemo(
     () => Math.min(100, Math.max(0, progress ?? 0)),
-    [progress]
+    [progress],
   );
 
   // Ob das aktuelle Frequenz-Intervall bereits erledigt ist (#152: für

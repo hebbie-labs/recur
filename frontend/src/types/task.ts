@@ -88,7 +88,9 @@ export type ServerOwnedFields =
   | "reminderLeadTime";
 
 /** Payload shape for creating a new task (no id/dateCreated yet). */
-export type NewTask = Omit<Task, ServerOwnedFields> & { projectId?: string | null };
+export type NewTask = Omit<Task, ServerOwnedFields> & {
+  projectId?: string | null;
+};
 
 /** Options for patchTask: partial task fields plus query-param flags. */
 export type PatchTaskOptions = {

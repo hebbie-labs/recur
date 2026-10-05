@@ -11,11 +11,17 @@ function urlBase64ToUint8Array(base64Url: string): Uint8Array {
 }
 
 export function isPushSupported(): boolean {
-  return typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window;
+  return (
+    typeof window !== "undefined" &&
+    "serviceWorker" in navigator &&
+    "PushManager" in window
+  );
 }
 
 async function getVapidPublicKey(): Promise<string> {
-  const response = await api.get<{ publicKey: string }>("/push/vapid-public-key");
+  const response = await api.get<{ publicKey: string }>(
+    "/push/vapid-public-key",
+  );
   return response.data.publicKey;
 }
 
@@ -25,12 +31,16 @@ async function getVapidPublicKey(): Promise<string> {
 // konfiguriert ist - der Aufrufer setzt den pushEnabled-Toggle dann zurück.
 export async function enablePushNotifications(): Promise<void> {
   if (!isPushSupported()) {
-    throw new Error("Push-Benachrichtigungen werden von diesem Browser nicht unterstützt");
+    throw new Error(
+      "Push-Benachrichtigungen werden von diesem Browser nicht unterstützt",
+    );
   }
 
   const publicKey = await getVapidPublicKey();
   if (!publicKey) {
-    throw new Error("Push-Benachrichtigungen sind serverseitig nicht konfiguriert");
+    throw new Error(
+      "Push-Benachrichtigungen sind serverseitig nicht konfiguriert",
+    );
   }
 
   const permission = await Notification.requestPermission();
@@ -65,5 +75,7 @@ export async function disablePushNotifications(): Promise<void> {
   }
 
   await subscription.unsubscribe();
-  await api.delete("/push/subscriptions", { params: { endpoint: subscription.endpoint } });
+  await api.delete("/push/subscriptions", {
+    params: { endpoint: subscription.endpoint },
+  });
 }

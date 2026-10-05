@@ -58,12 +58,14 @@ function DefaultLayout({ children, pageTitle }: DefaultLayoutProps) {
     icon: Icon,
   }));
 
-  const mobileDestinations = MOBILE_NAV_ROUTES.map(({ path, label, icon: Icon }) => ({
-    path,
-    navigate: () => router.push(path),
-    label,
-    icon: Icon,
-  }));
+  const mobileDestinations = MOBILE_NAV_ROUTES.map(
+    ({ path, label, icon: Icon }) => ({
+      path,
+      navigate: () => router.push(path),
+      label,
+      icon: Icon,
+    }),
+  );
 
   // isPrimaryRoute (Avatar vs. Zurück-Chevron in der AppBar) richtet sich auf
   // Mobile nach den 3 Bottom-Nav-Zielen, nicht nach allen 5 Desktop-Routen -
@@ -86,7 +88,7 @@ function DefaultLayout({ children, pageTitle }: DefaultLayoutProps) {
             <div
               className={cn(
                 "flex mx-auto w-full max-w-6xl px-4 py-6",
-                isMobile ? "pb-32" : "pb-24"
+                isMobile ? "pb-32" : "pb-24",
               )}
             >
               <main className="w-full">{children}</main>
@@ -94,8 +96,12 @@ function DefaultLayout({ children, pageTitle }: DefaultLayoutProps) {
 
             <Toaster
               position="bottom-left"
-              offset={isMobile ? { bottom: MOBILE_BOTTOM_CLEARANCE } : undefined}
-              mobileOffset={isMobile ? { bottom: MOBILE_BOTTOM_CLEARANCE } : undefined}
+              offset={
+                isMobile ? { bottom: MOBILE_BOTTOM_CLEARANCE } : undefined
+              }
+              mobileOffset={
+                isMobile ? { bottom: MOBILE_BOTTOM_CLEARANCE } : undefined
+              }
             />
             {/* Mobile: der "+"-Button sitzt jetzt in der AppBar statt hier (#208) - Desktop unverändert. */}
             {!isMobile && FAB_ROUTES.has(pathname) && (
@@ -103,7 +109,10 @@ function DefaultLayout({ children, pageTitle }: DefaultLayoutProps) {
             )}
 
             {isMobile && (
-              <BottomNavigation destinations={mobileDestinations} activeValue={activeValue} />
+              <BottomNavigation
+                destinations={mobileDestinations}
+                activeValue={activeValue}
+              />
             )}
           </SidebarInset>
         </SidebarProvider>

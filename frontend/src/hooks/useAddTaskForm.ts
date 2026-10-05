@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { createTask, setTaskReminderLeadTime } from "@/services/taskService";
-import { TaskCategory, TaskFrequency, type NewTask, type Task } from "@/types/task";
+import {
+  TaskCategory,
+  TaskFrequency,
+  type NewTask,
+  type Task,
+} from "@/types/task";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
 import type { FormValues } from "@/components/organisms/task/Form";
 import {
@@ -49,7 +54,7 @@ function useAddTaskForm({ onClose, onTaskCreated }: UseAddTaskFormParams) {
       startTime: resolveStartTime(
         values.startDate,
         values.startTimeOfDay,
-        values.frequency
+        values.frequency,
       ),
       projectId: values.projectId || null,
     };
@@ -63,7 +68,7 @@ function useAddTaskForm({ onClose, onTaskCreated }: UseAddTaskFormParams) {
       if (values.reminderLeadTime) {
         createdTask = await setTaskReminderLeadTime(
           createdTask.id,
-          values.reminderLeadTime
+          values.reminderLeadTime,
         );
       }
 
@@ -81,7 +86,7 @@ function useAddTaskForm({ onClose, onTaskCreated }: UseAddTaskFormParams) {
       showErrorToast(
         err instanceof Error
           ? err.message
-          : "Fehler beim Erstellen der Aufgabe."
+          : "Fehler beim Erstellen der Aufgabe.",
       );
       if (isMountedRef.current) {
         setLoading(false);

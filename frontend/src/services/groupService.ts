@@ -52,7 +52,9 @@ function getGroups(): Promise<Group[]> {
       // authentifiziert, z.B. Logout-Race), um das nicht wie einen echten
       // Fehler zu behandeln.
       if (isUnauthorized(err)) throw err;
-      throw new Error(extractErrorMessage(err, "Fehler beim Abrufen der Gruppen"));
+      throw new Error(
+        extractErrorMessage(err, "Fehler beim Abrufen der Gruppen"),
+      );
     });
 }
 
@@ -61,7 +63,9 @@ function createGroup(name: string): Promise<Group> {
     .post("/group", { name })
     .then((response) => response.data as Group)
     .catch((err: unknown) => {
-      throw new Error(extractErrorMessage(err, "Fehler beim Erstellen der Gruppe"));
+      throw new Error(
+        extractErrorMessage(err, "Fehler beim Erstellen der Gruppe"),
+      );
     });
 }
 
@@ -70,7 +74,9 @@ function getGroup(groupId: string): Promise<Group> {
     .get(`/group/${groupId}`)
     .then((response) => response.data as Group)
     .catch((err: unknown) => {
-      throw new Error(extractErrorMessage(err, "Fehler beim Abrufen der Gruppe"));
+      throw new Error(
+        extractErrorMessage(err, "Fehler beim Abrufen der Gruppe"),
+      );
     });
 }
 
@@ -79,7 +85,9 @@ function deleteGroup(groupId: string): Promise<void> {
     .delete(`/group/${groupId}`)
     .then(() => {})
     .catch((err: unknown) => {
-      throw new Error(extractErrorMessage(err, "Fehler beim Löschen der Gruppe"));
+      throw new Error(
+        extractErrorMessage(err, "Fehler beim Löschen der Gruppe"),
+      );
     });
 }
 
@@ -90,7 +98,9 @@ function leaveGroup(groupId: string, successorId?: string): Promise<void> {
     })
     .then(() => {})
     .catch((err: unknown) => {
-      throw new Error(extractErrorMessage(err, "Fehler beim Verlassen der Gruppe"));
+      throw new Error(
+        extractErrorMessage(err, "Fehler beim Verlassen der Gruppe"),
+      );
     });
 }
 
@@ -99,7 +109,9 @@ function removeMember(groupId: string, memberId: string): Promise<void> {
     .delete(`/group/${groupId}/members/${memberId}`)
     .then(() => {})
     .catch((err: unknown) => {
-      throw new Error(extractErrorMessage(err, "Fehler beim Entfernen des Mitglieds"));
+      throw new Error(
+        extractErrorMessage(err, "Fehler beim Entfernen des Mitglieds"),
+      );
     });
 }
 
@@ -108,7 +120,9 @@ function transferAdmin(groupId: string, newAdminId: string): Promise<Group> {
     .patch(`/group/${groupId}/admin`, null, { params: { newAdminId } })
     .then((response) => response.data as Group)
     .catch((err: unknown) => {
-      throw new Error(extractErrorMessage(err, "Fehler beim Übertragen der Adminrolle"));
+      throw new Error(
+        extractErrorMessage(err, "Fehler beim Übertragen der Adminrolle"),
+      );
     });
 }
 
@@ -117,7 +131,9 @@ function previewInvite(inviteCode: string): Promise<GroupInvitePreview> {
     .get(`/group/invite/${inviteCode}`)
     .then((response) => response.data as GroupInvitePreview)
     .catch((err: unknown) => {
-      throw new Error(extractErrorMessage(err, "Einladungslink ungültig oder abgelaufen"));
+      throw new Error(
+        extractErrorMessage(err, "Einladungslink ungültig oder abgelaufen"),
+      );
     });
 }
 
@@ -126,7 +142,9 @@ function joinGroup(inviteCode: string): Promise<Group> {
     .post(`/group/invite/${inviteCode}/join`)
     .then((response) => response.data as Group)
     .catch((err: unknown) => {
-      throw new Error(extractErrorMessage(err, "Fehler beim Beitreten der Gruppe"));
+      throw new Error(
+        extractErrorMessage(err, "Fehler beim Beitreten der Gruppe"),
+      );
     });
 }
 
@@ -135,7 +153,9 @@ function getProjects(groupId: string): Promise<Project[]> {
     .get(`/group/${groupId}/project`)
     .then((response) => response.data as Project[])
     .catch((err: unknown) => {
-      throw new Error(extractErrorMessage(err, "Fehler beim Abrufen der Projekte"));
+      throw new Error(
+        extractErrorMessage(err, "Fehler beim Abrufen der Projekte"),
+      );
     });
 }
 
@@ -146,7 +166,9 @@ function getAllProjects(): Promise<Record<string, Project[]>> {
     .then((response) => response.data as Record<string, Project[]>)
     .catch((err: unknown) => {
       if (isUnauthorized(err)) throw err;
-      throw new Error(extractErrorMessage(err, "Fehler beim Abrufen der Projekte"));
+      throw new Error(
+        extractErrorMessage(err, "Fehler beim Abrufen der Projekte"),
+      );
     });
 }
 
@@ -155,14 +177,16 @@ function createProject(groupId: string, name: string): Promise<Project> {
     .post(`/group/${groupId}/project`, { name })
     .then((response) => response.data as Project)
     .catch((err: unknown) => {
-      throw new Error(extractErrorMessage(err, "Fehler beim Erstellen des Projekts"));
+      throw new Error(
+        extractErrorMessage(err, "Fehler beim Erstellen des Projekts"),
+      );
     });
 }
 
 function patchProject(
   groupId: string,
   projectId: string,
-  archived: boolean
+  archived: boolean,
 ): Promise<Project> {
   return api
     .patch(`/group/${groupId}/project/${projectId}`, null, {
@@ -170,7 +194,9 @@ function patchProject(
     })
     .then((response) => response.data as Project)
     .catch((err: unknown) => {
-      throw new Error(extractErrorMessage(err, "Fehler beim Aktualisieren des Projekts"));
+      throw new Error(
+        extractErrorMessage(err, "Fehler beim Aktualisieren des Projekts"),
+      );
     });
 }
 
@@ -179,7 +205,9 @@ function deleteProject(groupId: string, projectId: string): Promise<void> {
     .delete(`/group/${groupId}/project/${projectId}`)
     .then(() => {})
     .catch((err: unknown) => {
-      throw new Error(extractErrorMessage(err, "Fehler beim Löschen des Projekts"));
+      throw new Error(
+        extractErrorMessage(err, "Fehler beim Löschen des Projekts"),
+      );
     });
 }
 

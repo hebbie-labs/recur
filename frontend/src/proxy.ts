@@ -4,11 +4,16 @@ const BACKEND_PROXY_PREFIXES = ["/api", "/oauth2", "/login/oauth2"];
 const COMING_SOON_PATH = "/coming-soon";
 // The coming-soon page itself links to these - without this they'd redirect
 // straight back to /coming-soon, making the links dead.
-const COMING_SOON_ALLOWED_PATHS = new Set([COMING_SOON_PATH, "/impressum", "/datenschutz", "/agb"]);
+const COMING_SOON_ALLOWED_PATHS = new Set([
+  COMING_SOON_PATH,
+  "/impressum",
+  "/datenschutz",
+  "/agb",
+]);
 // next-pwa's generated service worker + manifest - must reach the browser
 // as-is even in coming-soon mode, otherwise the SW registration fetches the
 // coming-soon HTML instead of sw.js and gets stuck in a broken state.
-const PWA_ASSET_PATTERN = /^\/(manifest\.json|sw\.js|workbox-.*\.js|fallback-.*\.js|icons\/.*)$/;
+const PWA_ASSET_PATTERN = /^\/(manifest\.json|sw\.js|workbox-.*\.js|fallback-.*\.js|icons\/.*|screenshots\/.*|~offline)$/;
 
 // next.config.ts's rewrites() is resolved once at `next build` time and its
 // destination gets frozen into .next/routes-manifest.json - reading
@@ -19,7 +24,9 @@ const PWA_ASSET_PATTERN = /^\/(manifest\.json|sw\.js|workbox-.*\.js|fallback-.*\
 // template substitution, not next.config.ts's rewrites().
 export default function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
-  const isBackendRequest = BACKEND_PROXY_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  const isBackendRequest = BACKEND_PROXY_PREFIXES.some((prefix) =>
+    pathname.startsWith(prefix),
+  );
 
   // Backend calls must not be redirected to /coming-soon: axios follows the
   // redirect and gets the placeholder HTML back with a 200, which the
@@ -27,7 +34,10 @@ export default function proxy(request: NextRequest) {
   // as the task list -> "tasks.filter is not a function" crash). A plain
   // 503 lets the existing error handling treat it as "not logged in".
   if (process.env.COMING_SOON_MODE === "true" && isBackendRequest) {
-    return NextResponse.json({ message: "Service unavailable" }, { status: 503 });
+    return NextResponse.json(
+      { message: "Service unavailable" },
+      { status: 503 },
+    );
   }
 
   // www./main runs the same image as dev/prod with this env var set, so the
@@ -56,9 +66,14 @@ export default function proxy(request: NextRequest) {
   // the public one, breaking Google's redirect_uri check.
   const headers = new Headers(request.headers);
   const forwardedHost =
-    request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? url.host;
+    request.headers.get("x-forwarded-host") ??
+    request.headers.get("host") ??
+    url.host;
   headers.set("x-forwarded-host", forwardedHost);
-  headers.set("x-forwarded-proto", request.headers.get("x-forwarded-proto") ?? "https");
+  headers.set(
+    "x-forwarded-proto",
+    request.headers.get("x-forwarded-proto") ?? "https",
+  );
   // Next's own rewrite machinery sets x-forwarded-port to the port this
   // container's dev server is actually listening on (e.g. 3000), which
   // Spring then appends to the host above, producing a public-facing

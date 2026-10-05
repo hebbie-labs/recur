@@ -27,10 +27,7 @@ function SidebarNavigation({
   handleNavigation,
   activeValue,
 }: SidebarNavigationProps) {
-  const { openGroupKey, openGroup } = useSidebarNavGroups(
-    groups,
-    activeValue,
-  );
+  const { openGroupKey, openGroup } = useSidebarNavGroups(groups, activeValue);
 
   return (
     <SidebarGroup>
